@@ -5,9 +5,15 @@ import {
   Zap,
   type LucideIcon,
 } from "lucide-react";
-import { partPalette } from "../engine/parts";
-import type { PartType } from "../engine/types";
+import { partDefinitions, type PartType } from "../engine/parts";
 import { useGameStore } from "../store/gameStore";
+
+const partPalette: { type: PartType; label: string }[] = Object.entries(
+  partDefinitions,
+).map(([type, definition]) => ({
+  type: type as PartType,
+  label: definition.label,
+}));
 
 type PartDefinitionVisual = {
   icon: LucideIcon;

@@ -1,20 +1,25 @@
+import { Trash2 } from "lucide-react";
 import { useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
-import { Trash2 } from "lucide-react";
+import { ConnectionId } from "../engine/connections";
 
 export interface ConnectionContextMenuState {
-  connectionId: string;
+  connectionId: ConnectionId;
   x: number;
   y: number;
 }
 
 interface Props {
   menu: ConnectionContextMenuState;
-  onDelete: (connectionId: string) => void;
+  onDelete: (connectionId: ConnectionId) => void;
   onClose: () => void;
 }
 
-export default function ConnectionContextMenu({ menu, onDelete, onClose }: Props) {
+export default function ConnectionContextMenu({
+  menu,
+  onDelete,
+  onClose,
+}: Props) {
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -34,8 +39,12 @@ export default function ConnectionContextMenu({ menu, onDelete, onClose }: Props
 
   const menuWidth = 180;
   const menuHeight = 42;
-  const left = Math.min(menu.x - menuWidth / 2, window.innerWidth - menuWidth - 8);
-  const top = menu.y - menuHeight - 8 < 8 ? menu.y + 8 : menu.y - menuHeight - 8;
+  const left = Math.min(
+    menu.x - menuWidth / 2,
+    window.innerWidth - menuWidth - 8,
+  );
+  const top =
+    menu.y - menuHeight - 8 < 8 ? menu.y + 8 : menu.y - menuHeight - 8;
 
   return createPortal(
     <div

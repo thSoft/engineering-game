@@ -13,18 +13,11 @@ import ReactFlow, {
   type NodeTypes,
 } from "reactflow";
 import "reactflow/dist/style.css";
+import type { Connection } from "../engine/connections";
+import type { PartId, PartInstance, PartType } from "../engine/parts";
 import { getPartLabel, partDefinitions } from "../engine/parts";
+import type { PortId, PortInstance, PortPosition } from "../engine/ports";
 import { getDefinition } from "../engine/ports";
-import { resolveFlowStates } from "../engine/simulation";
-import type {
-  Connection,
-  PartId,
-  PartInstance,
-  PartType,
-  PortId,
-  PortInstance,
-  PortPosition,
-} from "../engine/types";
 import { useGameStore } from "../store/gameStore";
 import ConnectionContextMenu, {
   type ConnectionContextMenuState,
@@ -67,11 +60,9 @@ function buildNodeData(
   ports: PortInstance[],
   selectedPort: PortInstance | undefined,
   connections: Connection[],
-  flowStates: Map<PortId, boolean>,
   onContextMenu: (partId: PartId, x: number, y: number) => void,
   onPortClick: (portId: PortId) => void,
   onPortMove: (portId: PortId, position: PortPosition) => void,
-  onStateToggle: (portId: PortId) => void,
   selected: boolean,
 ): PartNodeData {
   const partPorts = ports.filter((port) => port.partId === part.id);
@@ -89,15 +80,7 @@ function buildNodeData(
           offset: (index + 1) / (inputPorts.length + 1),
         },
         kind: getDefinition(port).kind,
-        stateValue:
-          getDefinition(port).kind === "state"
-            ? (part.state as Record<string, unknown>)[port.stateKey ?? ""] ===
-              true
-            : undefined,
-        flowState:
-          getDefinition(port).kind === "flow"
-            ? flowStates.get(port.id)
-            : undefined,
+        state: port.state,
         visual: getPortVisual(port, selectedPort, connections),
       })),
     outputPorts: partPorts
@@ -110,22 +93,20 @@ function buildNodeData(
           offset: (index + 1) / (outputPorts.length + 1),
         },
         kind: getDefinition(port).kind,
-        stateValue:
-          getDefinition(port).kind === "state"
-            ? (part.state as Record<string, unknown>)[port.stateKey ?? ""] ===
-              true
-            : undefined,
-        flowState:
-          getDefinition(port).kind === "flow"
-            ? flowStates.get(port.id)
-            : undefined,
+        state: port.state,
         visual: getPortVisual(port, selectedPort, connections),
       })),
-    state: part.state,
+    state: part.parameters,
     onContextMenu,
     onPortClick,
     onPortMove,
-    onStateToggle,
+    onStateToggle: (portId) => {
+      const gameState = useGameStore.getState();
+      const oldPortState = gameState.parts
+        .flatMap((part) => Object.values(part.ports))
+        .find((p) => p.id === portId)?.state;
+      gameState.setPortState(portId, { on: !oldPortState?.on });
+    },
   };
 }
 
@@ -135,11 +116,10 @@ function buildEdge(
   connection: Connection,
   portById: Map<PortId, PortInstance>,
   selected: boolean,
-  flowStates: Map<PortId, boolean>,
 ): Edge {
   const from = portById.get(connection.fromPortId);
   const to = portById.get(connection.toPortId);
-  const flowOn = flowStates.get(connection.fromPortId);
+  const flowOn = from?.state.on ?? false;
   const color = selected
     ? selectedColor
     : from
@@ -163,11 +143,9 @@ function buildEdge(
 
 export default function GraphEditor() {
   const parts = useGameStore((s) => s.parts);
-  const ports = useGameStore((s) => s.ports);
   const connections = useGameStore((s) => s.connections);
   const movePart = useGameStore((s) => s.movePart);
   const movePort = useGameStore((s) => s.movePort);
-  const toggleBooleanStatePort = useGameStore((s) => s.toggleBooleanStatePort);
   const deletePart = useGameStore((s) => s.deletePart);
   const addConnection = useGameStore((s) => s.addConnection);
   const deleteConnection = useGameStore((s) => s.deleteConnection);
@@ -178,16 +156,15 @@ export default function GraphEditor() {
     useState<ConnectionContextMenuState | null>(null);
   const [pendingPortId, setPendingPortId] = useState<string | null>(null);
 
+  const ports = useMemo(
+    () => parts.flatMap((part) => Array.from(Object.values(part.ports))),
+    [parts],
+  );
   const portById = useMemo(() => new Map(ports.map((p) => [p.id, p])), [ports]);
 
   const pendingPort = useMemo(
     () => (pendingPortId ? portById.get(pendingPortId) : undefined),
     [pendingPortId, portById],
-  );
-
-  const flowStates = useMemo(
-    () => resolveFlowStates(parts, ports, connections),
-    [parts, ports, connections],
   );
 
   const openMenu = useCallback((partId: string, x: number, y: number) => {
@@ -262,11 +239,9 @@ export default function GraphEditor() {
           ports,
           pendingPort,
           connections,
-          flowStates,
           openMenu,
           handlePortClick,
           movePort,
-          toggleBooleanStatePort,
           part.id === menu?.partId,
         ),
       })),
@@ -275,11 +250,9 @@ export default function GraphEditor() {
       ports,
       pendingPort,
       connections,
-      flowStates,
       openMenu,
       handlePortClick,
       movePort,
-      toggleBooleanStatePort,
       menu,
     ],
   );
@@ -291,10 +264,9 @@ export default function GraphEditor() {
           connection,
           portById,
           connection.id === connectionMenu?.connectionId,
-          flowStates,
         ),
       ),
-    [connections, portById, connectionMenu, flowStates],
+    [connections, portById, connectionMenu],
   );
 
   const onNodesChange = useCallback(

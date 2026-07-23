@@ -1,9 +1,9 @@
 import { Boxes, Cpu } from "lucide-react";
 import { useState } from "react";
 import { ReactFlowProvider } from "reactflow";
-import GraphEditor from "./components/GraphEditor";
-import PartPalette from "./components/PartPalette";
-import { useGameStore } from "./store/gameStore";
+import { useGameStore } from "../store/gameStore";
+import GraphEditor from "./GraphEditor";
+import PartPalette from "./PartPalette";
 
 function App() {
   const currentPuzzleName = useGameStore((s) => s.currentPuzzleName);

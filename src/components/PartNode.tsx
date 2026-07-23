@@ -6,14 +6,14 @@ import {
   useUpdateNodeInternals,
   type NodeProps,
 } from "reactflow";
+import type { AnyPartParameters, PartId, PartType } from "../engine/parts";
 import type {
-  AnyPartState,
-  PartType,
+  AnyPortState,
+  PortId,
   PortKind,
   PortPosition,
   PortSide,
-  SwitchState,
-} from "../engine/types";
+} from "../engine/ports";
 import { selectedColor } from "./GraphEditor";
 
 export type PortVisualState = "idle" | "selected" | "connectable" | "blocked";
@@ -23,8 +23,7 @@ export interface PortInfo {
   name: string;
   position: PortPosition;
   kind: PortKind;
-  stateValue?: boolean;
-  flowState?: boolean;
+  state: AnyPortState;
   visual: PortVisualState;
 }
 
@@ -34,11 +33,11 @@ export interface PartNodeData {
   inputPorts: PortInfo[];
   outputPorts: PortInfo[];
   selected?: boolean;
-  state?: AnyPartState;
-  onContextMenu?: (partId: string, x: number, y: number) => void;
-  onPortClick?: (portId: string) => void;
-  onPortMove?: (portId: string, position: PortPosition) => void;
-  onStateToggle?: (portId: string) => void;
+  state?: AnyPartParameters;
+  onContextMenu?: (partId: PartId, x: number, y: number) => void;
+  onPortClick?: (portId: PortId) => void;
+  onPortMove?: (portId: PortId, position: PortPosition) => void;
+  onStateToggle?: (portId: PortId) => void;
 }
 
 interface PartStatusVisual {
@@ -49,8 +48,8 @@ interface PartStatusVisual {
 interface PartVisualInfo {
   Icon: LucideIcon;
   iconClassName: string;
-  accent: (state?: AnyPartState) => string;
-  status: (state?: AnyPartState) => PartStatusVisual | null;
+  accent: (state?: AnyPartParameters) => string;
+  status: (state?: AnyPartParameters) => PartStatusVisual | null;
 }
 
 const PART_VISUALS: Record<PartType, PartVisualInfo> = {
@@ -64,16 +63,13 @@ const PART_VISUALS: Record<PartType, PartVisualInfo> = {
     Icon: ToggleRight,
     iconClassName: "text-sky-400",
     accent: () => "border-sky-500/50 shadow-sky-500/10",
-    status: (state) => ({
-      label: (state as SwitchState | undefined)?.on ? "ON" : "OFF",
-      className: "text-slate-400",
-    }),
+    status: () => null, // TODO: Show "on" or "off" status based on toggle port state
   },
   LIGHT_BULB: {
     Icon: Lightbulb,
     iconClassName: "text-yellow-400",
     accent: () => "border-slate-600/50 shadow-slate-900/20",
-    status: () => null,
+    status: () => null, // TODO: Show "on" or "off" status based on power in port state
   },
 };
 
@@ -289,14 +285,14 @@ function PartNode({ id, data }: NodeProps<PartNodeData>) {
 
       {ports.map((port) => {
         const direction = inputPorts.includes(port) ? "input" : "output";
-        const portColor = getPortColor(port.kind, port.flowState, port.visual);
+        const portColor = getPortColor(port.kind, port.state.on, port.visual);
         return (
-          <div
+          <div /* Port */
             key={port.id}
             className="absolute z-10 h-0 w-0"
             style={anchorStyle(port.position)}
           >
-            <div
+            <div /* Port label */
               className={`nodrag nopan absolute flex items-center gap-1 whitespace-nowrap text-[11px] transition-colors`}
               style={{
                 ...labelStyle(port.position.side),
@@ -312,7 +308,7 @@ function PartNode({ id, data }: NodeProps<PartNodeData>) {
                 onPointerUp={(e) =>
                   handlePortPointerUp(e, port.id, port.visual)
                 }
-                title={`${port.kind} port${port.kind === "flow" ? ` (${port.flowState})` : ""}`}
+                title={`${port.kind} port${port.kind === "flow" ? ` (${port.state.on})` : ""}`}
                 className="cursor-grab active:cursor-grabbing"
               >
                 {port.name}
@@ -322,10 +318,10 @@ function PartNode({ id, data }: NodeProps<PartNodeData>) {
                   type="button"
                   onPointerDown={(e) => e.stopPropagation()}
                   onClick={(e) => handleStateToggle(e, port.id)}
-                  className={`rounded px-1 py-px text-[9px] font-bold leading-none transition ${port.stateValue ? "bg-violet-400/25 text-violet-100 ring-1 ring-violet-300/60" : "bg-slate-700 text-slate-400 ring-1 ring-slate-600"}`}
-                  aria-label={`Set ${port.name} ${port.stateValue ? "off" : "on"}`}
+                  className={`rounded px-1 py-px text-[9px] font-bold leading-none transition ${port.state.on ? "bg-violet-400/25 text-violet-100 ring-1 ring-violet-300/60" : "bg-slate-700 text-slate-400 ring-1 ring-slate-600"}`}
+                  aria-label={`Set ${port.name} ${port.state.on ? "off" : "on"}`}
                 >
-                  {port.stateValue ? "ON" : "OFF"}
+                  {port.state.on ? "ON" : "OFF"}
                 </button>
               )}
             </div>
@@ -344,7 +340,7 @@ function PartNode({ id, data }: NodeProps<PartNodeData>) {
                 pointerEvents: "all",
                 backgroundColor: portColor,
               }}
-              title={`${port.kind} port${port.kind === "flow" ? ` (${port.flowState ? "on" : "off"})` : ""}`}
+              title={`${port.kind} port${port.kind === "flow" ? ` (${port.state.on ? "on" : "off"})` : ""}`}
               className={`nodrag nopan ${HANDLE_CLASSES[port.visual]} cursor-grab active:cursor-grabbing`}
             />
           </div>

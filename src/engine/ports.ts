@@ -1,28 +1,78 @@
-import type { PortDefinition, PortDefinitionId, PortInstance } from "./types";
+import { PartId } from "./parts";
+
+export type PortId = string;
+
+export type PortSide = "top" | "right" | "bottom" | "left";
+
+/** A normalized position along one edge of its owning part node. */
+export interface PortPosition {
+  side: PortSide;
+  offset: number;
+}
+
+export type AnyPortState = PortStateMap[PortDefinitionId];
+
+export interface PortInstance<T extends PortDefinitionId = PortDefinitionId> {
+  id: PortId;
+  partId: PartId;
+  definitionId: PortDefinitionId;
+  state: PortStateMap[T];
+  position: PortPosition;
+}
+
+export type PortDirection = "input" | "output";
+
+export type PortKind = "state" | "flow" | "event";
+
+export interface PortDefinition<T extends PortDefinitionId = PortDefinitionId> {
+  label: string;
+  direction: PortDirection;
+  kind: PortKind;
+  defaultState: PortStateMap[T];
+}
+
+export function getDefinition(
+  port: Omit<PortInstance, "state">,
+): PortDefinition {
+  return portDefinitions[port.definitionId];
+}
+
+export type PortDefinitionId =
+  | "POWER_IN"
+  | "POWER_OUT"
+  | "TOGGLE"
+  | "LIGHT_OUT";
+
+export type PortStateMap = {
+  POWER_OUT: { on: boolean };
+  POWER_IN: { on: boolean };
+  TOGGLE: { on: boolean };
+  LIGHT_OUT: { on: boolean };
+};
 
 export const portDefinitions: { [K in PortDefinitionId]: PortDefinition } = {
   POWER_OUT: {
     label: "power",
     direction: "output",
     kind: "flow",
+    defaultState: { on: false },
   },
   POWER_IN: {
     label: "power",
     direction: "input",
     kind: "flow",
+    defaultState: { on: false },
   },
   TOGGLE: {
     label: "toggle",
     direction: "input",
     kind: "state",
+    defaultState: { on: false },
   },
   LIGHT_OUT: {
     label: "light",
     direction: "output",
     kind: "flow",
+    defaultState: { on: false },
   },
 };
-
-export function getDefinition(port: PortInstance): PortDefinition {
-  return portDefinitions[port.definitionId];
-}
