@@ -21,7 +21,7 @@ type PartDefinitionVisual = {
   description: string;
 };
 
-const PART_DEFINITION_VISUALS: Record<PartType, PartDefinitionVisual> = {
+export const PART_DEFINITION_VISUALS: Record<PartType, PartDefinitionVisual> = {
   POWER_SOURCE: {
     icon: Zap,
     color:

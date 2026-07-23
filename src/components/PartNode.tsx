@@ -1,4 +1,4 @@
-import { Lightbulb, ToggleRight, Zap, type LucideIcon } from "lucide-react";
+import { Plus } from "lucide-react";
 import { memo, useEffect, useRef } from "react";
 import {
   Handle,
@@ -15,6 +15,7 @@ import type {
   PortSide,
 } from "../engine/ports";
 import { selectedColor } from "./GraphEditor";
+import { PART_DEFINITION_VISUALS } from "./PartPalette";
 
 export type PortVisualState = "idle" | "selected" | "connectable" | "blocked";
 
@@ -39,39 +40,6 @@ export interface PartNodeData {
   onPortMove?: (portId: PortId, position: PortPosition) => void;
   onStateToggle?: (portId: PortId) => void;
 }
-
-interface PartStatusVisual {
-  label: string;
-  className: string;
-}
-
-interface PartVisualInfo {
-  Icon: LucideIcon;
-  iconClassName: string;
-  accent: (state?: AnyPartParameters) => string;
-  status: (state?: AnyPartParameters) => PartStatusVisual | null;
-}
-
-const PART_VISUALS: Record<PartType, PartVisualInfo> = {
-  POWER_SOURCE: {
-    Icon: Zap,
-    iconClassName: "text-amber-400",
-    accent: () => "border-amber-500/50 shadow-amber-500/10",
-    status: () => null,
-  },
-  SWITCH: {
-    Icon: ToggleRight,
-    iconClassName: "text-sky-400",
-    accent: () => "border-sky-500/50 shadow-sky-500/10",
-    status: () => null, // TODO: Show "on" or "off" status based on toggle port state
-  },
-  LIGHT_BULB: {
-    Icon: Lightbulb,
-    iconClassName: "text-yellow-400",
-    accent: () => "border-slate-600/50 shadow-slate-900/20",
-    status: () => null, // TODO: Show "on" or "off" status based on power in port state
-  },
-};
 
 // Per-visual-state styling for handles
 const HANDLE_CLASSES: Record<PortVisualState, string> = {
@@ -184,10 +152,7 @@ function PartNode({ id, data }: NodeProps<PartNodeData>) {
   } | null>(null);
   const ignoreNodeClick = useRef(false);
   const updateNodeInternals = useUpdateNodeInternals();
-  const visual = PART_VISUALS[type];
-  const accent = visual.accent(state);
-  const status = visual.status(state);
-  const { Icon } = visual;
+  const visual = PART_DEFINITION_VISUALS[type];
   const ports = [...inputPorts, ...outputPorts];
 
   useEffect(() => {
@@ -263,25 +228,21 @@ function PartNode({ id, data }: NodeProps<PartNodeData>) {
     onStateToggle?.(portId);
   };
 
+  const Icon = visual?.icon ?? Plus;
+
   return (
     <div
       ref={nodeRef}
       onClick={handleNodeClick}
-      className={`rounded-lg border bg-slate-800 px-3 py-2 shadow-lg min-w-[140px] cursor-pointer transition-shadow ${accent}`}
+      className={`rounded-lg border bg-slate-800 px-3 py-2 shadow-lg min-w-[140px] cursor-pointer transition-shadow ${visual.color ?? "border-slate-700/60"}`}
       style={{
         boxShadow: selected ? `0 0 1px 2px ${selectedColor}` : undefined,
       }}
     >
       <div className="flex items-center gap-2 mb-1">
-        <Icon size={16} className={visual.iconClassName} />
+        <Icon size={16} />
         <span className="text-sm font-semibold text-slate-100">{label}</span>
       </div>
-
-      {status && (
-        <div className={`text-[11px] mb-1 ${status.className}`}>
-          {status.label}
-        </div>
-      )}
 
       {ports.map((port) => {
         const direction = inputPorts.includes(port) ? "input" : "output";
