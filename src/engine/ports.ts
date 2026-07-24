@@ -52,13 +52,13 @@ export type PortStateMap = {
 
 export const portDefinitions: { [K in PortDefinitionId]: PortDefinition } = {
   POWER_OUT: {
-    label: "power",
+    label: "power out",
     direction: "output",
     kind: "flow",
     defaultState: { on: false },
   },
   POWER_IN: {
-    label: "power",
+    label: "power in",
     direction: "input",
     kind: "flow",
     defaultState: { on: false },

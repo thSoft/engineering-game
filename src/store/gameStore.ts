@@ -37,7 +37,7 @@ export interface GameState {
 
 function createEmptyPuzzle(): Puzzle {
   return {
-    name: "Empty Puzzle",
+    name: "Lamp",
     parts: [],
     connections: [],
   };

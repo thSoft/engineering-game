@@ -1,4 +1,4 @@
-import { Plus } from "lucide-react";
+import { Box } from "lucide-react";
 import { memo, useEffect, useRef } from "react";
 import {
   Handle,
@@ -15,7 +15,14 @@ import type {
   PortSide,
 } from "../engine/ports";
 import { selectedColor } from "./GraphEditor";
-import { PART_DEFINITION_VISUALS } from "./PartPalette";
+import { getColorClasses, PART_DEFINITION_VISUALS } from "./PartPalette";
+import {
+  connectableColor,
+  eventColor,
+  flowOffColor,
+  flowOnColor,
+  stateColor,
+} from "./designTokens";
 
 export type PortVisualState = "idle" | "selected" | "connectable" | "blocked";
 
@@ -34,7 +41,7 @@ export interface PartNodeData {
   inputPorts: PortInfo[];
   outputPorts: PortInfo[];
   selected?: boolean;
-  state?: AnyPartParameters;
+  parameters?: AnyPartParameters;
   onContextMenu?: (partId: PartId, x: number, y: number) => void;
   onPortClick?: (portId: PortId) => void;
   onPortMove?: (portId: PortId, position: PortPosition) => void;
@@ -43,18 +50,12 @@ export interface PartNodeData {
 
 // Per-visual-state styling for handles
 const HANDLE_CLASSES: Record<PortVisualState, string> = {
-  idle: "!w-3 !h-3 !border-2 !border-slate-900 transition-all",
-  selected:
-    "!w-4 !h-4 !border-2 !border-white !ring-2 !ring-white/40 !ring-offset-1 !ring-offset-slate-900 transition-all",
+  idle: "",
+  selected: "!ring-2 !ring-white/40 !ring-offset-1 !ring-offset-slate-900",
   connectable:
-    "!w-3.5 !h-3.5 !border-2 !border-slate-900 !ring-2 !ring-emerald-300/60 !ring-offset-1 !ring-offset-slate-900 transition-all animate-pulse",
-  blocked: "!w-3 !h-3 !border-2 !border-slate-900 !opacity-30 transition-all",
+    "ring-2 !ring-emerald-300/60 !ring-offset-1 !ring-offset-slate-900 animate-pulse",
+  blocked: "!opacity-30",
 };
-
-export const stateColor = "#A78BFA";
-export const eventColor = "#FB923C";
-export const flowOffColor = "#8CA0B3";
-export const flowOnColor = "yellow";
 
 export function getPortColor(
   portKind: PortKind,
@@ -63,13 +64,13 @@ export function getPortColor(
 ): string {
   if (visual === "selected") return selectedColor;
   if (visual === "blocked") return "#334155";
-  if (visual === "connectable") return "#6ee7b7";
+  if (visual === "connectable") return connectableColor;
   if (portKind === "state") return stateColor;
   if (portKind === "event") return eventColor;
   return portFlowState ? flowOnColor : flowOffColor;
 }
 
-function handlePosition(side: PortSide): Position {
+function getHandlePosition(side: PortSide): Position {
   return {
     top: Position.Top,
     right: Position.Right,
@@ -78,38 +79,45 @@ function handlePosition(side: PortSide): Position {
   }[side];
 }
 
-function anchorStyle({ side, offset }: PortPosition): React.CSSProperties {
+function getAnchorStyle({ side, offset }: PortPosition): React.CSSProperties {
   const value = `${offset * 100}%`;
   if (side === "top") return { left: value, top: 0 };
   if (side === "right") return { left: "100%", top: value };
   if (side === "bottom") return { left: value, top: "100%" };
-  return { left: 0, top: value };
+  if (side === "left") return { left: 0, top: value };
+  return {};
 }
 
-function labelStyle(side: PortSide): React.CSSProperties {
+function getLabelStyle(side: PortSide): React.CSSProperties {
+  const padded = `calc(100% + 8px)`;
+  const middle = "50%";
+  const centerHorizontally = "translateX(-50%)";
+  const centerVertically = "translateY(-50%)";
   if (side === "top")
     return {
-      bottom: "calc(100% + 8px)",
-      left: "50%",
-      transform: "translateX(-50%)",
+      bottom: padded,
+      left: middle,
+      transform: centerHorizontally,
     };
   if (side === "right")
     return {
-      left: "calc(100% + 8px)",
-      top: "50%",
-      transform: "translateY(-50%)",
+      left: padded,
+      top: middle,
+      transform: centerVertically,
     };
   if (side === "bottom")
     return {
-      left: "50%",
-      top: "calc(100% + 8px)",
-      transform: "translateX(-50%)",
+      left: middle,
+      top: padded,
+      transform: centerHorizontally,
     };
-  return {
-    right: "calc(100% + 8px)",
-    top: "50%",
-    transform: "translateY(-50%)",
-  };
+  if (side === "left")
+    return {
+      right: padded,
+      top: middle,
+      transform: centerVertically,
+    };
+  return {};
 }
 
 function constrainToBorder(
@@ -127,7 +135,9 @@ function constrainToBorder(
     return { side: "right", offset: rect.height ? y / rect.height : 0.5 };
   if (nearest === rect.height - y)
     return { side: "bottom", offset: rect.width ? x / rect.width : 0.5 };
-  return { side: "left", offset: rect.height ? y / rect.height : 0.5 };
+  if (nearest === x)
+    return { side: "left", offset: rect.height ? y / rect.height : 0.5 };
+  return { side: "top", offset: 0 };
 }
 
 function PartNode({ id, data }: NodeProps<PartNodeData>) {
@@ -137,7 +147,7 @@ function PartNode({ id, data }: NodeProps<PartNodeData>) {
     inputPorts,
     outputPorts,
     selected,
-    state,
+    parameters,
     onContextMenu,
     onPortClick,
     onPortMove,
@@ -228,13 +238,13 @@ function PartNode({ id, data }: NodeProps<PartNodeData>) {
     onStateToggle?.(portId);
   };
 
-  const Icon = visual?.icon ?? Plus;
+  const Icon = visual?.icon ?? Box;
 
   return (
     <div
       ref={nodeRef}
       onClick={handleNodeClick}
-      className={`rounded-lg border bg-slate-800 px-3 py-2 shadow-lg min-w-[140px] cursor-pointer transition-shadow ${visual.color ?? "border-slate-700/60"}`}
+      className={`rounded-lg border bg-slate-800 px-3 py-2 shadow-lg min-w-[140px] cursor-pointer transition-shadow ${getColorClasses(visual?.colorName)}`}
       style={{
         boxShadow: selected ? `0 0 1px 2px ${selectedColor}` : undefined,
       }}
@@ -247,18 +257,29 @@ function PartNode({ id, data }: NodeProps<PartNodeData>) {
       {ports.map((port) => {
         const direction = inputPorts.includes(port) ? "input" : "output";
         const portColor = getPortColor(port.kind, port.state.on, port.visual);
+        const positionRotation =
+          port.position.side === "top"
+            ? 0
+            : port.position.side === "right"
+              ? 90
+              : port.position.side === "bottom"
+                ? 180
+                : 270;
+        const directionRotation = direction === "input" ? 180 : 0;
         return (
           <div /* Port */
             key={port.id}
-            className="absolute z-10 h-0 w-0"
-            style={anchorStyle(port.position)}
+            className="absolute z-10"
+            style={getAnchorStyle(port.position)}
           >
             <div /* Port label */
               className={`nodrag nopan absolute flex items-center gap-1 whitespace-nowrap text-[11px] transition-colors`}
               style={{
-                ...labelStyle(port.position.side),
-                pointerEvents: "all",
+                ...getLabelStyle(port.position.side),
                 color: portColor,
+                backgroundColor: "rgba(15, 23, 42, 0.8)",
+                padding: "1px",
+                borderRadius: "4px",
               }}
             >
               <span
@@ -289,7 +310,7 @@ function PartNode({ id, data }: NodeProps<PartNodeData>) {
             <Handle
               id={port.id}
               type={direction === "input" ? "target" : "source"}
-              position={handlePosition(port.position.side)}
+              position={getHandlePosition(port.position.side)}
               isConnectable={false}
               onPointerDown={(e) => handlePortPointerDown(e, port.id)}
               onPointerMove={handlePortPointerMove}
@@ -297,13 +318,21 @@ function PartNode({ id, data }: NodeProps<PartNodeData>) {
               style={{
                 left: 0,
                 top: 0,
-                transform: "translate(-50%, -50%)",
+                transform: `translate(-50%, -50%) rotate(${positionRotation + directionRotation}deg)`,
                 pointerEvents: "all",
-                backgroundColor: portColor,
               }}
               title={`${port.kind} port${port.kind === "flow" ? ` (${port.state.on ? "on" : "off"})` : ""}`}
-              className={`nodrag nopan ${HANDLE_CLASSES[port.visual]} cursor-grab active:cursor-grabbing`}
-            />
+              className={`nodrag nopan !w-3 !h-3 !border-2 !border-slate-900 transition-all ${HANDLE_CLASSES[port.visual]} cursor-grab active:cursor-grabbing`}
+            >
+              <svg
+                height="8px"
+                width="8px"
+                viewBox="0 0 200 200"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <polygon points="100,10 190,180 10,180" fill={portColor} />
+              </svg>
+            </Handle>
           </div>
         );
       })}

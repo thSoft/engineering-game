@@ -1,12 +1,10 @@
 import { Boxes, Cpu } from "lucide-react";
 import { useState } from "react";
 import { ReactFlowProvider } from "reactflow";
-import { useGameStore } from "../store/gameStore";
 import GraphEditor from "./GraphEditor";
 import PartPalette from "./PartPalette";
 
 function App() {
-  const currentPuzzleName = useGameStore((s) => s.currentPuzzleName);
   const [paletteOpen, setPaletteOpen] = useState(false);
 
   return (
@@ -17,10 +15,6 @@ function App() {
         <h1 className="text-sm font-bold tracking-tight text-slate-100 hidden sm:block">
           Engineering Game
         </h1>
-        <span className="text-slate-600 hidden sm:block">/</span>
-        <span className="text-sm text-slate-400 truncate">
-          {currentPuzzleName}
-        </span>
       </header>
 
       {/* ── Body ── */}
@@ -42,6 +36,7 @@ function App() {
               paletteOpen ? "Collapse parts panel" : "Expand parts panel"
             }
             className="flex items-center justify-center h-10 w-full shrink-0 border-b border-slate-700/60 text-slate-500 hover:text-slate-300 hover:bg-slate-700/40 transition"
+            title="Parts"
           >
             <Boxes size={16} />
           </button>

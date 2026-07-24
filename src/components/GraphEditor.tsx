@@ -1,9 +1,6 @@
 import { useCallback, useMemo, useState } from "react";
 import ReactFlow, {
-  Background,
-  BackgroundVariant,
   Controls,
-  MarkerType,
   MiniMap,
   useReactFlow,
   type Edge,
@@ -24,11 +21,11 @@ import ConnectionContextMenu, {
 } from "./ConnectionContextMenu";
 import PartContextMenu, { type ContextMenuState } from "./PartContextMenu";
 import PartNode, {
-  flowOffColor,
   getPortColor,
   type PartNodeData,
   type PortVisualState,
 } from "./PartNode";
+import { connectableColor, flowOffColor } from "./designTokens";
 
 const nodeTypes: NodeTypes = { part: PartNode };
 
@@ -96,7 +93,7 @@ function buildNodeData(
         state: port.state,
         visual: getPortVisual(port, selectedPort, connections),
       })),
-    state: part.parameters,
+    parameters: part.parameters,
     onContextMenu,
     onPortClick,
     onPortMove,
@@ -134,10 +131,6 @@ function buildEdge(
     animated: flowOn,
     selected,
     style: { strokeWidth: selected ? 3 : 2, stroke: color },
-    markerEnd: {
-      type: MarkerType.ArrowClosed,
-      color: color,
-    },
   };
 }
 
@@ -330,9 +323,19 @@ export default function GraphEditor() {
     <div className="h-full w-full" onDragOver={onDragOver} onDrop={onDrop}>
       {pendingPortId && (
         <div className="absolute top-3 left-1/2 -translate-x-1/2 z-10 pointer-events-none">
-          <div className="flex items-center gap-2 rounded-full bg-slate-800/95 border border-emerald-500/40 shadow-lg shadow-emerald-500/10 px-4 py-1.5 text-xs text-emerald-300 font-medium backdrop-blur">
-            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse shrink-0" />
-            Click a highlighted port to connect — or click canvas to cancel
+          <div
+            className={`flex items-center gap-2 rounded-full bg-slate-800/95 border shadow-lg px-4 py-1.5 text-xs font-medium`}
+            style={{
+              color: connectableColor,
+              borderColor: connectableColor,
+              boxShadow: `0 0 3px ${connectableColor}`,
+            }}
+          >
+            <span
+              className="w-2 h-2 rounded-full animate-pulse"
+              style={{ backgroundColor: connectableColor }}
+            />
+            Click a highlighted port to connect, or click canvas to cancel
           </div>
         </div>
       )}
@@ -354,12 +357,6 @@ export default function GraphEditor() {
         fitViewOptions={{ padding: 0.25 }}
         proOptions={{ hideAttribution: true }}
       >
-        <Background
-          variant={BackgroundVariant.Dots}
-          gap={20}
-          size={1}
-          color="#334155"
-        />
         <Controls className="!bg-slate-800 !border-slate-700" />
         <MiniMap
           className="!bg-slate-800 !border-slate-700"

@@ -17,30 +17,32 @@ const partPalette: { type: PartType; label: string }[] = Object.entries(
 
 type PartDefinitionVisual = {
   icon: LucideIcon;
-  color: string;
+  colorName: string;
   description: string;
 };
 
 export const PART_DEFINITION_VISUALS: Record<PartType, PartDefinitionVisual> = {
   POWER_SOURCE: {
     icon: Zap,
-    color:
-      "text-amber-400 bg-amber-400/10 border-amber-500/30 hover:border-amber-400/60",
+    colorName: "emerald",
     description: "Emits power",
   },
   SWITCH: {
     icon: ToggleRight,
-    color:
-      "text-sky-400 bg-sky-400/10 border-sky-500/30 hover:border-sky-400/60",
+    colorName: "sky",
     description: "Toggles power flow",
   },
   LIGHT_BULB: {
     icon: Lightbulb,
-    color:
-      "text-yellow-400 bg-yellow-400/10 border-yellow-500/30 hover:border-yellow-400/60",
+    colorName: "yellow",
     description: "Lights up on power",
   },
 };
+
+export function getColorClasses(colorName?: string) {
+  const realColor = colorName ?? "slate";
+  return `text-${realColor}-400 bg-${realColor}-400/10 border-${realColor}-500/30 hover:border-${realColor}-400/60`;
+}
 
 interface Props {
   onAdd?: () => void;
@@ -72,11 +74,10 @@ export default function PartPalette({ onAdd }: Props) {
 
       <div className="p-2 space-y-1.5 flex-1 overflow-y-auto">
         {partPalette.map(({ type, label }) => {
-          const Icon = PART_DEFINITION_VISUALS[type]?.icon ?? Plus;
-          const color =
-            PART_DEFINITION_VISUALS[type]?.color ??
-            "text-slate-400 bg-slate-700/40 border-slate-600/40 hover:border-slate-500/60";
-          const desc = PART_DEFINITION_VISUALS[type]?.description ?? "";
+          const visual = PART_DEFINITION_VISUALS[type];
+          const Icon = visual?.icon ?? Plus;
+          const color = getColorClasses(visual?.colorName);
+          const desc = visual?.description ?? "";
 
           return (
             <div
