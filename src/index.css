@@ -1,33 +1,4 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
-
-.react-flow__edge-path {
-  stroke: #34d399;
-  stroke-width: 2;
-}
-
-.react-flow__edge.animated .react-flow__edge-path {
-  stroke: #34d399;
-}
-
-.react-flow__handle {
-  width: 10px;
-  height: 10px;
-  min-width: 10px;
-  min-height: 10px;
-}
-
-.react-flow__controls button {
-  background-color: #1e293b;
-  border-bottom: 1px solid #334155;
-  color: #cbd5e1;
-  fill: #cbd5e1;
-}
-
-.react-flow__controls button:hover {
-  background-color: #334155;
-}
+@import "tailwindcss";
 
 .react-flow__minimap {
   border-radius: 6px;

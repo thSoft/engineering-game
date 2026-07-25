@@ -1,11 +1,11 @@
-import { Box } from "lucide-react";
-import { memo, useEffect, useRef } from "react";
 import {
   Handle,
   Position,
   useUpdateNodeInternals,
   type NodeProps,
-} from "reactflow";
+} from "@xyflow/react";
+import { Box } from "lucide-react";
+import { memo, useEffect, useRef } from "react";
 import type { AnyPartParameters, PartId, PartType } from "../engine/parts";
 import type {
   PortDefinition,
@@ -16,7 +16,7 @@ import type {
   PortPosition,
   PortSide,
 } from "../engine/ports";
-import { selectedColor } from "./GraphEditor";
+import { PartNodeType, selectedColor } from "./GraphEditor";
 import { getColorStyle, PART_DEFINITION_VISUALS } from "./PartPalette";
 import {
   connectableColor,
@@ -34,7 +34,7 @@ export interface PortInfo<T extends PortDefinitionId = PortDefinitionId> {
   visual: PortVisualState;
 }
 
-export interface PartNodeData {
+export type PartNodeData = {
   label: string;
   type: PartType;
   inputPorts: PortInfo[];
@@ -45,7 +45,7 @@ export interface PartNodeData {
   onPortClick?: (portId: PortId) => void;
   onPortMove?: (portId: PortId, position: PortPosition) => void;
   onStateToggle?: (portId: PortId) => void;
-}
+};
 
 // Per-visual-state styling for handles
 const HANDLE_CLASSES: Record<PortVisualState, string> = {
@@ -139,7 +139,7 @@ function constrainToBorder(
   return { side: "top", offset: 0 };
 }
 
-function PartNode({ id, data }: NodeProps<PartNodeData>) {
+function PartNode({ id, data }: NodeProps<PartNodeType>) {
   const {
     label,
     type,
@@ -328,6 +328,7 @@ function PartNode({ id, data }: NodeProps<PartNodeData>) {
                 top: 0,
                 transform: `translate(-50%, -50%) rotate(${positionRotation + directionRotation}deg)`,
                 pointerEvents: "all",
+                backgroundColor: "#0a0a0a",
               }}
               title={`${port.definition.kind} port${port.definition.kind === "flow" ? ` (${port.instance.state.on ? "on" : "off"})` : ""}`}
               className={`nodrag nopan !w-3 !h-3 !border-2 !border-slate-900 transition-all ${HANDLE_CLASSES[port.visual]} cursor-grab active:cursor-grabbing`}

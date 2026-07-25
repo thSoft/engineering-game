@@ -1,15 +1,15 @@
-import { useCallback, useMemo, useState } from "react";
-import ReactFlow, {
+import {
   Controls,
-  MiniMap,
+  NodeTypes,
+  ReactFlow,
   useReactFlow,
   type Edge,
   type EdgeChange,
   type Node,
   type NodeChange,
-  type NodeTypes,
-} from "reactflow";
-import "reactflow/dist/style.css";
+} from "@xyflow/react";
+import "@xyflow/react/dist/style.css";
+import { useCallback, useMemo, useState } from "react";
 import type { Connection } from "../engine/connections";
 import type { PartId, PartInstance, PartType } from "../engine/parts";
 import { getPartLabel, partDefinitions } from "../engine/parts";
@@ -123,6 +123,8 @@ function buildEdge(
   };
 }
 
+export type PartNodeType = Node<PartNodeData, "part">;
+
 export default function GraphEditor() {
   const parts = useGameStore((s) => getCurrentPuzzle(s)?.parts ?? []);
   const connections = useGameStore(
@@ -212,7 +214,7 @@ export default function GraphEditor() {
   // Zustand is the single source of truth for positions.
   // Nodes and edges are derived purely from store state on every render —
   // no separate RF state, no sync effects, no position divergence possible.
-  const nodes: Node<PartNodeData>[] = useMemo(
+  const nodes: PartNodeType[] = useMemo(
     () =>
       parts.map((part) => ({
         id: part.id,
@@ -347,13 +349,9 @@ export default function GraphEditor() {
         fitView
         fitViewOptions={{ padding: 0.25 }}
         proOptions={{ hideAttribution: true }}
+        colorMode="dark"
       >
-        <Controls className="!bg-slate-800 !border-slate-700" />
-        <MiniMap
-          className="!bg-slate-800 !border-slate-700"
-          nodeColor={() => "#475569"}
-          maskColor="rgba(15, 23, 42, 0.7)"
-        />
+        <Controls />
       </ReactFlow>
 
       {menu && (

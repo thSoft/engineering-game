@@ -1,6 +1,6 @@
+import { ReactFlowProvider } from "@xyflow/react";
 import { Boxes, Cpu } from "lucide-react";
 import { useState } from "react";
-import { ReactFlowProvider } from "reactflow";
 import { puzzleDefinitions } from "../engine/puzzles";
 import { useGameStore } from "../store/gameStore";
 import GraphEditor from "./GraphEditor";
