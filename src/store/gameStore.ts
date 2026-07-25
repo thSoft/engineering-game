@@ -281,12 +281,8 @@ function computePropagatedPortStates(
           if (fromPort) {
             inputPortStates.set(definitionId, fromPort.state);
           }
-        }
-        if (
-          inputPortStates.get(definitionId) === undefined &&
-          definition.kind === "flow"
-        ) {
-          inputPortStates.set(definitionId, getDefinition(port).defaultState);
+        } else {
+          inputPortStates.set(definitionId, port.state);
         }
       }
     }
