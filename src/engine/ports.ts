@@ -38,12 +38,14 @@ export function getDefinition(
 }
 
 export type PortDefinitionId =
+  | "PLUGGED"
   | "POWER_IN"
   | "POWER_OUT"
   | "TOGGLE"
   | "LIGHT_OUT";
 
 export type PortStateMap = {
+  PLUGGED: { on: boolean };
   POWER_OUT: { on: boolean };
   POWER_IN: { on: boolean };
   TOGGLE: { on: boolean };
@@ -51,6 +53,12 @@ export type PortStateMap = {
 };
 
 export const portDefinitions: { [K in PortDefinitionId]: PortDefinition } = {
+  PLUGGED: {
+    label: "plugged",
+    direction: "input",
+    kind: "state",
+    defaultState: { on: false },
+  },
   POWER_OUT: {
     label: "power out",
     direction: "output",

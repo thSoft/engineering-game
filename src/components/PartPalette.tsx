@@ -1,8 +1,8 @@
 import {
   Lightbulb,
+  Plug,
   Plus,
   ToggleRight,
-  Zap,
   type LucideIcon,
 } from "lucide-react";
 import { partDefinitions, type PartType } from "../engine/parts";
@@ -22,17 +22,17 @@ type PartDefinitionVisual = {
 };
 
 export const PART_DEFINITION_VISUALS: Record<PartType, PartDefinitionVisual> = {
-  POWER_SOURCE: {
-    icon: Zap,
+  PLUG: {
+    icon: Plug,
     colorName: "emerald",
-    description: "Emits power",
+    description: "Emits power if plugged in",
   },
   SWITCH: {
     icon: ToggleRight,
     colorName: "sky",
     description: "Toggles power flow",
   },
-  LIGHT_BULB: {
+  LIGHTBULB: {
     icon: Lightbulb,
     colorName: "yellow",
     description: "Lights up on power",

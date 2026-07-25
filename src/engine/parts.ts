@@ -38,19 +38,25 @@ export function getPartLabel(type: PartType): string {
   return partDefinitions[type]?.label ?? type;
 }
 
-export type PartType = "POWER_SOURCE" | "SWITCH" | "LIGHT_BULB";
+export type PartType = "PLUG" | "SWITCH" | "LIGHTBULB";
 
 export interface PartParametersMap {
-  POWER_SOURCE: {};
+  PLUG: {};
   SWITCH: {};
-  LIGHT_BULB: {};
+  LIGHTBULB: {};
 }
 
-export const powerSource: PartDefinition<"POWER_SOURCE"> = {
-  label: "Power Source",
+export const plug: PartDefinition<"PLUG"> = {
+  label: "Plug",
   defaultParameters: {},
   createPorts(partId: PartId) {
     return {
+      PLUGGED: {
+        id: nanoid(),
+        partId,
+        definitionId: "PLUGGED",
+        position: { side: "top", offset: 0.5 },
+      },
       POWER_OUT: {
         id: nanoid(),
         partId,
@@ -59,9 +65,15 @@ export const powerSource: PartDefinition<"POWER_SOURCE"> = {
       },
     };
   },
-  computeOutputState(): Map<PortDefinitionId, AnyPortState> {
+  computeOutputState(
+    _: PartInstance<"PLUG">,
+    inputStates: Map<PortDefinitionId, AnyPortState>,
+  ): Map<PortDefinitionId, AnyPortState> {
     const outputState = new Map<PortDefinitionId, AnyPortState>();
-    outputState.set("POWER_OUT", { on: true });
+    const pluggedPortState = inputStates.get("PLUGGED");
+    if (pluggedPortState) {
+      outputState.set("POWER_OUT", { on: pluggedPortState.on });
+    }
     return outputState;
   },
 };
@@ -107,8 +119,8 @@ export const switchPart: PartDefinition<"SWITCH"> = {
   },
 };
 
-export const lightBulb: PartDefinition<"LIGHT_BULB"> = {
-  label: "Light Bulb",
+export const lightbulb: PartDefinition<"LIGHTBULB"> = {
+  label: "Lightbulb",
   defaultParameters: {},
   createPorts(partId: PartId) {
     return {
@@ -127,7 +139,7 @@ export const lightBulb: PartDefinition<"LIGHT_BULB"> = {
     };
   },
   computeOutputState(
-    _: PartInstance<"LIGHT_BULB">,
+    _: PartInstance<"LIGHTBULB">,
     inputStates: Map<PortDefinitionId, AnyPortState>,
   ): Map<PortDefinitionId, AnyPortState> {
     const outputState = new Map<PortDefinitionId, AnyPortState>();
@@ -142,7 +154,7 @@ export const lightBulb: PartDefinition<"LIGHT_BULB"> = {
 export const partDefinitions: {
   [K in keyof PartParametersMap]: PartDefinition<K>;
 } = {
-  POWER_SOURCE: powerSource,
+  PLUG: plug,
   SWITCH: switchPart,
-  LIGHT_BULB: lightBulb,
+  LIGHTBULB: lightbulb,
 };
