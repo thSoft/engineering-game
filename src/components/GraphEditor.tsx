@@ -15,7 +15,7 @@ import type { PartId, PartInstance, PartType } from "../engine/parts";
 import { getPartLabel, partDefinitions } from "../engine/parts";
 import type { PortId, PortInstance, PortPosition } from "../engine/ports";
 import { getDefinition } from "../engine/ports";
-import { useGameStore } from "../store/gameStore";
+import { getCurrentPuzzle, useGameStore } from "../store/gameStore";
 import ConnectionContextMenu, {
   type ConnectionContextMenuState,
 } from "./ConnectionContextMenu";
@@ -37,12 +37,11 @@ function getPortVisual(
   if (!selectedPort) return "idle";
   if (!selectedPort.id) return "idle";
   if (candidatePort.id === selectedPort.id) return "selected";
-  if (
-    getDefinition(candidatePort).direction ===
-    getDefinition(selectedPort).direction
-  )
+  const selectedPortDefinition = getDefinition(selectedPort);
+  const candidatePortDefinition = getDefinition(candidatePort);
+  if (candidatePortDefinition.direction === selectedPortDefinition.direction)
     return "blocked";
-  if (getDefinition(candidatePort).kind !== getDefinition(selectedPort).kind)
+  if (candidatePortDefinition.kind !== selectedPortDefinition.kind)
     return "blocked";
   const targetAlreadyConnected = connections.some(
     (connection) => connection.toPortId === candidatePort.id,
@@ -69,28 +68,16 @@ function buildNodeData(
     selected,
     inputPorts: partPorts
       .filter((port) => getDefinition(port).direction === "input")
-      .map((port, index, inputPorts) => ({
-        id: port.id,
-        name: getDefinition(port).label,
-        position: port.position ?? {
-          side: "left",
-          offset: (index + 1) / (inputPorts.length + 1),
-        },
-        kind: getDefinition(port).kind,
-        state: port.state,
+      .map((port) => ({
+        instance: port,
+        definition: getDefinition(port),
         visual: getPortVisual(port, selectedPort, connections),
       })),
     outputPorts: partPorts
       .filter((port) => getDefinition(port).direction === "output")
-      .map((port, index, outputPorts) => ({
-        id: port.id,
-        name: getDefinition(port).label,
-        position: port.position ?? {
-          side: "right",
-          offset: (index + 1) / (outputPorts.length + 1),
-        },
-        kind: getDefinition(port).kind,
-        state: port.state,
+      .map((port) => ({
+        instance: port,
+        definition: getDefinition(port),
         visual: getPortVisual(port, selectedPort, connections),
       })),
     parameters: part.parameters,
@@ -99,7 +86,9 @@ function buildNodeData(
     onPortMove,
     onStateToggle: (portId) => {
       const gameState = useGameStore.getState();
-      const oldPortState = gameState.parts
+      const currentLevel = getCurrentPuzzle(gameState);
+      if (!currentLevel) return;
+      const oldPortState = currentLevel.parts
         .flatMap((part) => Object.values(part.ports))
         .find((p) => p.id === portId)?.state;
       gameState.setPortState(portId, { on: !oldPortState?.on });
@@ -135,8 +124,10 @@ function buildEdge(
 }
 
 export default function GraphEditor() {
-  const parts = useGameStore((s) => s.parts);
-  const connections = useGameStore((s) => s.connections);
+  const parts = useGameStore((s) => getCurrentPuzzle(s)?.parts ?? []);
+  const connections = useGameStore(
+    (s) => getCurrentPuzzle(s)?.connections ?? [],
+  );
   const movePart = useGameStore((s) => s.movePart);
   const movePort = useGameStore((s) => s.movePort);
   const deletePart = useGameStore((s) => s.deletePart);

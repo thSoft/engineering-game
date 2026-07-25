@@ -1,5 +1,6 @@
 import { nanoid } from "nanoid";
 import {
+  getDefinition,
   PortDefinitionId,
   type AnyPortState,
   type PortInstance,
@@ -158,3 +159,28 @@ export const partDefinitions: {
   SWITCH: switchPart,
   LIGHTBULB: lightbulb,
 };
+
+export function createPart<T extends PartType>(
+  partId: string,
+  type: T,
+  position: NodePosition,
+): PartInstance<T> {
+  const definition = partDefinitions[type];
+  return {
+    id: partId,
+    type,
+    position,
+    parameters: definition.defaultParameters,
+    ports: Object.fromEntries(
+      Object.entries(definition.createPorts(partId)).map(
+        ([definitionId, port]) => [
+          definitionId,
+          {
+            ...port,
+            state: getDefinition(port).defaultState,
+          },
+        ],
+      ),
+    ),
+  };
+}

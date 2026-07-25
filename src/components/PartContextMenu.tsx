@@ -1,16 +1,17 @@
-import { useEffect, useRef } from 'react';
-import { createPortal } from 'react-dom';
-import { Trash2 } from 'lucide-react';
+import { Trash2 } from "lucide-react";
+import { useEffect, useRef } from "react";
+import { createPortal } from "react-dom";
+import { PartId } from "../engine/parts";
 
 export interface ContextMenuState {
-  partId: string;
+  partId: PartId;
   x: number;
   y: number;
 }
 
 interface Props {
   menu: ContextMenuState;
-  onDelete: (partId: string) => void;
+  onDelete: (partId: PartId) => void;
   onClose: () => void;
 }
 
@@ -20,16 +21,16 @@ export default function PartContextMenu({ menu, onDelete, onClose }: Props) {
   // Close on outside click or Escape
   useEffect(() => {
     const handleKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
+      if (e.key === "Escape") onClose();
     };
     const handlePointer = (e: PointerEvent) => {
       if (ref.current && !ref.current.contains(e.target as Node)) onClose();
     };
-    document.addEventListener('keydown', handleKey);
-    document.addEventListener('pointerdown', handlePointer);
+    document.addEventListener("keydown", handleKey);
+    document.addEventListener("pointerdown", handlePointer);
     return () => {
-      document.removeEventListener('keydown', handleKey);
-      document.removeEventListener('pointerdown', handlePointer);
+      document.removeEventListener("keydown", handleKey);
+      document.removeEventListener("pointerdown", handlePointer);
     };
   }, [onClose]);
 
@@ -38,9 +39,10 @@ export default function PartContextMenu({ menu, onDelete, onClose }: Props) {
   const menuHeight = 42;
   const vw = window.innerWidth;
   const left = Math.min(menu.x - menuWidth / 2, vw - menuWidth - 8);
-  const top = menu.y - menuHeight - 8 < 8
-    ? menu.y + 8       // flip below if too close to top
-    : menu.y - menuHeight - 8;
+  const top =
+    menu.y - menuHeight - 8 < 8
+      ? menu.y + 8 // flip below if too close to top
+      : menu.y - menuHeight - 8;
 
   return createPortal(
     <div
@@ -51,13 +53,16 @@ export default function PartContextMenu({ menu, onDelete, onClose }: Props) {
     >
       <button
         role="menuitem"
-        onClick={() => { onDelete(menu.partId); onClose(); }}
+        onClick={() => {
+          onDelete(menu.partId);
+          onClose();
+        }}
         className="flex w-full items-center gap-2.5 px-3 py-2 text-rose-400 hover:bg-rose-500/10 transition text-left"
       >
         <Trash2 size={14} className="shrink-0" />
         <span className="text-xs font-medium">Delete part</span>
       </button>
     </div>,
-    document.body
+    document.body,
   );
 }

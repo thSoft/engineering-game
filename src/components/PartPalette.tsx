@@ -17,31 +17,35 @@ const partPalette: { type: PartType; label: string }[] = Object.entries(
 
 type PartDefinitionVisual = {
   icon: LucideIcon;
-  colorName: string;
+  color: string;
   description: string;
 };
 
 export const PART_DEFINITION_VISUALS: Record<PartType, PartDefinitionVisual> = {
   PLUG: {
     icon: Plug,
-    colorName: "emerald",
+    color: "#00d492",
     description: "Emits power if plugged in",
   },
   SWITCH: {
     icon: ToggleRight,
-    colorName: "sky",
+    color: "#00bcff",
     description: "Toggles power flow",
   },
   LIGHTBULB: {
     icon: Lightbulb,
-    colorName: "yellow",
+    color: "#fdc700",
     description: "Lights up on power",
   },
 };
 
-export function getColorClasses(colorName?: string) {
-  const realColor = colorName ?? "slate";
-  return `text-${realColor}-400 bg-${realColor}-400/10 border-${realColor}-500/30 hover:border-${realColor}-400/60`;
+export function getColorStyle(color?: string) {
+  const realColor = color ?? "#f1f5f9";
+  return {
+    borderColor: `${realColor}99`,
+    backgroundColor: `${color}19`,
+    color: color,
+  };
 }
 
 interface Props {
@@ -76,8 +80,8 @@ export default function PartPalette({ onAdd }: Props) {
         {partPalette.map(({ type, label }) => {
           const visual = PART_DEFINITION_VISUALS[type];
           const Icon = visual?.icon ?? Plus;
-          const color = getColorClasses(visual?.colorName);
-          const desc = visual?.description ?? "";
+          const colorStyle = getColorStyle(visual?.color);
+          const description = visual?.description ?? "";
 
           return (
             <div
@@ -85,8 +89,9 @@ export default function PartPalette({ onAdd }: Props) {
               draggable
               onDragStart={(e) => handleDragStart(e, type)}
               onClick={() => handleClick(type)}
-              className={`flex flex-col gap-0.5 rounded-lg border px-2.5 py-2 cursor-grab active:cursor-grabbing select-none transition ${color}`}
+              className={`flex flex-col gap-0.5 rounded-lg border px-2.5 py-2 cursor-grab active:cursor-grabbing select-none transition`}
               title={`Click or drag to add ${label}`}
+              style={colorStyle}
             >
               <div className="flex items-center gap-2">
                 <Icon size={14} />
@@ -94,9 +99,9 @@ export default function PartPalette({ onAdd }: Props) {
                   {label}
                 </span>
               </div>
-              {desc && (
+              {description && (
                 <span className="text-[10px] text-slate-500 leading-tight pl-5">
-                  {desc}
+                  {description}
                 </span>
               )}
             </div>

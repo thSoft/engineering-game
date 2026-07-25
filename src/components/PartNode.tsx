@@ -8,14 +8,16 @@ import {
 } from "reactflow";
 import type { AnyPartParameters, PartId, PartType } from "../engine/parts";
 import type {
-  AnyPortState,
+  PortDefinition,
+  PortDefinitionId,
   PortId,
+  PortInstance,
   PortKind,
   PortPosition,
   PortSide,
 } from "../engine/ports";
 import { selectedColor } from "./GraphEditor";
-import { getColorClasses, PART_DEFINITION_VISUALS } from "./PartPalette";
+import { getColorStyle, PART_DEFINITION_VISUALS } from "./PartPalette";
 import {
   connectableColor,
   eventColor,
@@ -26,12 +28,9 @@ import {
 
 export type PortVisualState = "idle" | "selected" | "connectable" | "blocked";
 
-export interface PortInfo {
-  id: string;
-  name: string;
-  position: PortPosition;
-  kind: PortKind;
-  state: AnyPortState;
+export interface PortInfo<T extends PortDefinitionId = PortDefinitionId> {
+  instance: PortInstance<T>;
+  definition: PortDefinition<T>;
   visual: PortVisualState;
 }
 
@@ -147,7 +146,6 @@ function PartNode({ id, data }: NodeProps<PartNodeData>) {
     inputPorts,
     outputPorts,
     selected,
-    parameters,
     onContextMenu,
     onPortClick,
     onPortMove,
@@ -244,9 +242,10 @@ function PartNode({ id, data }: NodeProps<PartNodeData>) {
     <div
       ref={nodeRef}
       onClick={handleNodeClick}
-      className={`rounded-lg border bg-slate-800 px-3 py-2 shadow-lg min-w-[140px] cursor-pointer transition-shadow ${getColorClasses(visual?.colorName)}`}
+      className={`rounded-lg border bg-slate-800 px-3 py-2 shadow-lg min-w-[140px] cursor-pointer transition-shadow`}
       style={{
         boxShadow: selected ? `0 0 1px 2px ${selectedColor}` : undefined,
+        ...getColorStyle(visual?.color),
       }}
     >
       <div className="flex items-center gap-2 mb-1">
@@ -256,72 +255,81 @@ function PartNode({ id, data }: NodeProps<PartNodeData>) {
 
       {ports.map((port) => {
         const direction = inputPorts.includes(port) ? "input" : "output";
-        const portColor = getPortColor(port.kind, port.state.on, port.visual);
+        const portColor = getPortColor(
+          port.definition.kind,
+          port.instance.state.on,
+          port.visual,
+        );
         const positionRotation =
-          port.position.side === "top"
+          port.instance.position.side === "top"
             ? 0
-            : port.position.side === "right"
+            : port.instance.position.side === "right"
               ? 90
-              : port.position.side === "bottom"
+              : port.instance.position.side === "bottom"
                 ? 180
                 : 270;
         const directionRotation = direction === "input" ? 180 : 0;
         return (
           <div /* Port */
-            key={port.id}
+            key={port.instance.id}
             className="absolute z-10"
-            style={getAnchorStyle(port.position)}
+            style={getAnchorStyle(port.instance.position)}
           >
             <div /* Port label */
               className={`nodrag nopan absolute flex items-center gap-1 whitespace-nowrap text-[11px] transition-colors`}
               style={{
-                ...getLabelStyle(port.position.side),
+                ...getLabelStyle(port.instance.position.side),
                 color: portColor,
                 backgroundColor: "rgba(15, 23, 42, 0.8)",
                 padding: "1px",
                 borderRadius: "4px",
               }}
             >
+              {/*isExposed(port, puzzle) && <Eye size={10} />*/}
               <span
                 role="button"
                 tabIndex={0}
-                onPointerDown={(e) => handlePortPointerDown(e, port.id)}
+                onPointerDown={(e) =>
+                  handlePortPointerDown(e, port.instance.id)
+                }
                 onPointerMove={handlePortPointerMove}
                 onPointerUp={(e) =>
-                  handlePortPointerUp(e, port.id, port.visual)
+                  handlePortPointerUp(e, port.instance.id, port.visual)
                 }
-                title={`${port.kind} port${port.kind === "flow" ? ` (${port.state.on})` : ""}`}
+                title={`${port.definition.kind} port${port.definition.kind === "flow" ? ` (${port.instance.state.on})` : ""}`}
                 className="cursor-grab active:cursor-grabbing"
               >
-                {port.name}
+                {port.definition.label}
               </span>
-              {port.kind === "state" && (
+              {port.definition.kind === "state" && (
                 <button
                   type="button"
                   onPointerDown={(e) => e.stopPropagation()}
-                  onClick={(e) => handleStateToggle(e, port.id)}
-                  className={`rounded px-1 py-px text-[9px] font-bold leading-none transition ${port.state.on ? "bg-violet-400/25 text-violet-100 ring-1 ring-violet-300/60" : "bg-slate-700 text-slate-400 ring-1 ring-slate-600"}`}
-                  aria-label={`Set ${port.name} ${port.state.on ? "off" : "on"}`}
+                  onClick={(e) => handleStateToggle(e, port.instance.id)}
+                  className={`rounded px-1 py-px text-[9px] font-bold leading-none transition ${port.instance.state.on ? "bg-violet-400/25 text-violet-100 ring-1 ring-violet-300/60" : "bg-slate-700 text-slate-400 ring-1 ring-slate-600"}`}
+                  aria-label={`Set ${port.definition.label} ${port.instance.state.on ? "off" : "on"}`}
                 >
-                  {port.state.on ? "ON" : "OFF"}
+                  {port.instance.state.on ? "ON" : "OFF"}
                 </button>
               )}
             </div>
             <Handle
-              id={port.id}
+              id={port.instance.id}
               type={direction === "input" ? "target" : "source"}
-              position={getHandlePosition(port.position.side)}
+              position={getHandlePosition(port.instance.position.side)}
               isConnectable={false}
-              onPointerDown={(e) => handlePortPointerDown(e, port.id)}
+              onPointerDown={(e) => handlePortPointerDown(e, port.instance.id)}
               onPointerMove={handlePortPointerMove}
-              onPointerUp={(e) => handlePortPointerUp(e, port.id, port.visual)}
+              onPointerUp={(e) =>
+                handlePortPointerUp(e, port.instance.id, port.visual)
+              }
               style={{
                 left: 0,
                 top: 0,
                 transform: `translate(-50%, -50%) rotate(${positionRotation + directionRotation}deg)`,
                 pointerEvents: "all",
               }}
-              title={`${port.kind} port${port.kind === "flow" ? ` (${port.state.on ? "on" : "off"})` : ""}`}
+              title={`${port.definition.kind} port${port.definition.kind === "flow" ? ` (${port.instance.state.on ? "on" : "off"})` : ""}`}
               className={`nodrag nopan !w-3 !h-3 !border-2 !border-slate-900 transition-all ${HANDLE_CLASSES[port.visual]} cursor-grab active:cursor-grabbing`}
             >
               <svg

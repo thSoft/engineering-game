@@ -1,11 +1,16 @@
 import { Boxes, Cpu } from "lucide-react";
 import { useState } from "react";
 import { ReactFlowProvider } from "reactflow";
+import { puzzleDefinitions } from "../engine/puzzles";
+import { useGameStore } from "../store/gameStore";
 import GraphEditor from "./GraphEditor";
 import PartPalette from "./PartPalette";
 
 function App() {
   const [paletteOpen, setPaletteOpen] = useState(false);
+  const currentPuzzleDefinitionId = useGameStore(
+    (s) => s.currentPuzzleDefinitionId,
+  );
 
   return (
     <div className="h-screen w-screen flex flex-col bg-slate-900 text-slate-100 overflow-hidden">
@@ -15,6 +20,11 @@ function App() {
         <h1 className="text-sm font-bold tracking-tight text-slate-100 hidden sm:block">
           Engineering Game
         </h1>
+        <span className="text-slate-600 hidden sm:block">/</span>
+        <span className="text-sm text-slate-400 truncate">
+          {puzzleDefinitions[currentPuzzleDefinitionId]?.name ??
+            "Unknown puzzle"}
+        </span>
       </header>
 
       {/* ── Body ── */}
