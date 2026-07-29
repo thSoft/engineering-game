@@ -1,15 +1,16 @@
 import { Connection } from "./connections";
 import { createPart, PartId, PartInstance, PartType } from "./parts";
 import { PortDefinitionId, PortInstance } from "./ports";
+import { action, assertion, TestCase } from "./tests";
 
-export interface PortInstanceId {
+export interface PortInstanceId<T extends PortDefinitionId = PortDefinitionId> {
   partId: PartId;
-  portDefinitionId: PortDefinitionId;
+  portDefinitionId: T;
 }
 
-function portOf(
+function portOf<T extends PortDefinitionId = PortDefinitionId>(
   part: PartInstance,
-  portDefinitionId: PortDefinitionId,
+  portDefinitionId: T,
 ): PortInstanceId {
   return {
     partId: part.id,
@@ -22,6 +23,7 @@ export interface PuzzleDefinition {
   availablePartTypes: PartType[];
   initialPartInstances: PartInstance[];
   exposedPortInstances: PortInstanceId[];
+  testCase: TestCase;
 }
 
 export interface PuzzleState {
@@ -58,6 +60,21 @@ export const puzzleDefinitions: {
         portOf(switchPart, "TOGGLE"),
         portOf(lightbulb, "LIGHT_OUT"),
       ],
+      testCase: {
+        initialState: [],
+        steps: [
+          action(plug.id, "PLUGGED", { on: true }),
+          action(switchPart.id, "TOGGLE", { on: true }),
+          assertion(lightbulb.id, "LIGHT_OUT", { on: true }),
+        ],
+      },
     };
   })(),
 };
+
+export function createPuzzle(definitionId: PuzzleDefinitionId): PuzzleState {
+  return {
+    parts: puzzleDefinitions[definitionId].initialPartInstances,
+    connections: [],
+  };
+}

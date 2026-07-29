@@ -1,4 +1,5 @@
-import { PartId } from "./parts";
+import { PartId, PartInstance } from "./parts";
+import { PortInstanceId } from "./puzzles";
 
 export type PortId = string;
 
@@ -35,6 +36,15 @@ export function getDefinition(
   port: Omit<PortInstance, "state">,
 ): PortDefinition {
   return portDefinitions[port.definitionId];
+}
+
+export function getPortId(
+  parts: PartInstance[],
+  instanceId: PortInstanceId,
+): PortId | undefined {
+  const part = parts.find((part) => part.id === instanceId.partId);
+  if (!part) return;
+  return part.ports[instanceId.portDefinitionId]?.id;
 }
 
 export type PortDefinitionId =

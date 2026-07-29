@@ -1,7 +1,8 @@
 import { ReactFlowProvider } from "@xyflow/react";
-import { Boxes, Cpu } from "lucide-react";
+import { Boxes, Check, Cpu } from "lucide-react";
 import { useState } from "react";
 import { puzzleDefinitions } from "../engine/puzzles";
+import { evaluateTestCase } from "../engine/tests";
 import { useGameStore } from "../store/gameStore";
 import GraphEditor from "./GraphEditor";
 import PartPalette from "./PartPalette";
@@ -11,7 +12,11 @@ function App() {
   const currentPuzzleDefinitionId = useGameStore(
     (s) => s.currentPuzzleDefinitionId,
   );
+  const puzzleState = useGameStore(
+    (s) => s.puzzleStates[currentPuzzleDefinitionId],
+  );
 
+  const currentPuzzleDefinition = puzzleDefinitions[currentPuzzleDefinitionId];
   return (
     <div className="h-screen w-screen flex flex-col bg-slate-900 text-slate-100 overflow-hidden">
       {/* ── Header ── */}
@@ -20,11 +25,32 @@ function App() {
         <h1 className="text-sm font-bold tracking-tight text-slate-100 hidden sm:block">
           Engineering Game
         </h1>
-        <span className="text-slate-600 hidden sm:block">/</span>
-        <span className="text-sm text-slate-400 truncate">
-          {puzzleDefinitions[currentPuzzleDefinitionId]?.name ??
-            "Unknown puzzle"}
-        </span>
+        {currentPuzzleDefinition && (
+          <>
+            <span className="text-slate-600 hidden sm:block">/</span>
+            <span className="text-sm text-slate-400 truncate">
+              {currentPuzzleDefinition.name}
+            </span>
+          </>
+        )}
+        {puzzleState && (
+          <button
+            onClick={() => {
+              const result = evaluateTestCase(
+                puzzleState,
+                puzzleDefinitions[currentPuzzleDefinitionId].testCase,
+              );
+              const success = result.stepResults.every(
+                (result) => result.success,
+              );
+              alert(success ? "PASS" : "FAIL");
+            }}
+            style={{ display: "flex", alignItems: "center" }}
+          >
+            <Check size={14} />
+            &nbsp; Verify
+          </button>
+        )}
       </header>
 
       {/* ── Body ── */}
