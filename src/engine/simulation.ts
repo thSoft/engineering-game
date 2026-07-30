@@ -12,7 +12,7 @@ import {
   type PortInstance,
   getDefinition,
 } from "./ports";
-import type { PuzzleState } from "./puzzles";
+import { PortInstanceId } from "./puzzles";
 
 export function computePropagatedPortStates(
   sourcePortId: string,
@@ -127,11 +127,11 @@ function computeOutputStateForPart<K extends keyof PartParametersMap>(
 }
 
 export function updateParts(
-  state: PuzzleState,
+  parts: PartInstance[],
   portId: PortId,
   newState: AnyPortState,
 ) {
-  return state.parts.map((part) => ({
+  return parts.map((part) => ({
     ...part,
     ports: Object.fromEntries(
       Object.entries(part.ports).map(([definitionId, port]) =>
@@ -141,4 +141,27 @@ export function updateParts(
       ),
     ),
   }));
+}
+
+export function updatePartsWithPortInstanceId(
+  parts: PartInstance[],
+  portInstanceId: PortInstanceId,
+  newState: AnyPortState,
+) {
+  return parts.map((part) => {
+    if (part.id === portInstanceId.partId) {
+      return {
+        ...part,
+        ports: Object.fromEntries(
+          Object.entries(part.ports).map(([definitionId, port]) =>
+            port.definitionId === portInstanceId.portDefinitionId
+              ? [definitionId, { ...port, state: newState }]
+              : [definitionId, port],
+          ),
+        ),
+      };
+    } else {
+      return part;
+    }
+  });
 }

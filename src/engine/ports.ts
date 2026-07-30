@@ -17,7 +17,7 @@ export interface PortInstance<T extends PortDefinitionId = PortDefinitionId> {
   id: PortId;
   partId: PartId;
   definitionId: PortDefinitionId;
-  state: PortStateMap[T];
+  state: PortStateMap[T]; // TODO remove, use only PortInstanceState instead
   position: PortPosition;
 }
 

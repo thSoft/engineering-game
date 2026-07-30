@@ -145,7 +145,7 @@ export const useGameStore = create<GameState>()(
 
         setPortState: (portId, newState) => {
           setCurrentPuzzle((state) => {
-            const updatedParts = updateParts(state, portId, newState);
+            const updatedParts = updateParts(state.parts, portId, newState);
             const propagatedParts = computePropagatedPortStates(
               portId,
               state.connections,

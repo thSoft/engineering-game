@@ -44,13 +44,20 @@ export function isExposed(
 
 export type PuzzleDefinitionId = "DESK_LAMP";
 
+export const DESK_LAMP_PLUG = "plug";
+export const DESK_LAMP_SWITCH = "switch";
+export const DESK_LAMP_LIGHTBULB = "lightbulb";
+
 export const puzzleDefinitions: {
   [K in PuzzleDefinitionId]: PuzzleDefinition;
 } = {
   DESK_LAMP: (() => {
-    const plug = createPart("plug", "PLUG", { x: 0, y: 0 });
-    const switchPart = createPart("switch", "SWITCH", { x: 0, y: 150 });
-    const lightbulb = createPart("lightbulb", "LIGHTBULB", { x: 0, y: 300 });
+    const plug = createPart(DESK_LAMP_PLUG, "PLUG", { x: 0, y: 0 });
+    const switchPart = createPart(DESK_LAMP_SWITCH, "SWITCH", { x: 0, y: 150 });
+    const lightbulb = createPart(DESK_LAMP_LIGHTBULB, "LIGHTBULB", {
+      x: 0,
+      y: 300,
+    });
     return {
       name: "Desk Lamp",
       availablePartTypes: ["PLUG", "SWITCH", "LIGHTBULB"],

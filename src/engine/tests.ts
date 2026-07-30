@@ -1,7 +1,11 @@
 import { PartId, PartInstance } from "./parts";
 import { getPortId, PortDefinitionId, PortStateMap } from "./ports";
 import { PortInstanceId, PuzzleState } from "./puzzles";
-import { computePropagatedPortStates, updateParts } from "./simulation";
+import {
+  computePropagatedPortStates,
+  updateParts,
+  updatePartsWithPortInstanceId,
+} from "./simulation";
 
 export interface PortInstanceState<
   T extends PortDefinitionId = PortDefinitionId,
@@ -133,16 +137,25 @@ export function evaluateTestCase(
     testCase: testCase,
     stepResults: testCase.steps.reduce((previousResults, step, index) => {
       const previousResult = previousResults[index];
-      const oldStates = previousResult.state.states;
-      function computeNewStates(
+      const statesBeforeStep = previousResult.state.states;
+      function computeStatesAfterStep(
         action: PortInstanceState,
       ): PortInstanceState[] {
         const portId = getPortId(puzzleState.parts, action.portInstanceId);
         if (!portId) {
-          return oldStates;
+          return statesBeforeStep;
         }
+        const partsWithStatesBeforeStep = statesBeforeStep.reduce(
+          (previousParts, oldState) =>
+            updatePartsWithPortInstanceId(
+              previousParts,
+              oldState.portInstanceId,
+              oldState.state,
+            ),
+          puzzleState.parts,
+        );
         const updatedParts = portId
-          ? updateParts(puzzleState, portId, action.state)
+          ? updateParts(partsWithStatesBeforeStep, portId, action.state)
           : puzzleState.parts;
         const propagatedParts = computePropagatedPortStates(
           portId,
@@ -151,14 +164,14 @@ export function evaluateTestCase(
         );
         return getPortInstanceStates(propagatedParts);
       }
-      const newState =
+      const stateAfterStep =
         step.type === "ACTION"
           ? {
-              states: computeNewStates(step.action),
+              states: computeStatesAfterStep(step.action),
             }
           : previousResult.state;
       function checkPortState(assertion: PortInstanceState): boolean {
-        const actualState = findMatchingState(oldStates, assertion);
+        const actualState = findMatchingState(statesBeforeStep, assertion);
         return deepEqual(actualState?.state, assertion.state);
       }
       const success =
@@ -167,7 +180,7 @@ export function evaluateTestCase(
         ...previousResults,
         {
           step: step,
-          state: newState,
+          state: stateAfterStep,
           success: success,
         },
       ];
