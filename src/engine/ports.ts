@@ -1,8 +1,6 @@
 import { PartId, PartInstance } from "./parts";
 import { PortInstanceId } from "./puzzles";
 
-export type PortId = string;
-
 export type PortSide = "top" | "right" | "bottom" | "left";
 
 /** A normalized position along one edge of its owning part node. */
@@ -11,7 +9,11 @@ export interface PortPosition {
   offset: number;
 }
 
-export type AnyPortState = PortStateMap[PortDefinitionId];
+export type PortDirection = "input" | "output";
+
+export type PortKind = "state" | "flow" | "event";
+
+export type PortId = string;
 
 export interface PortInstance<T extends PortDefinitionId = PortDefinitionId> {
   id: PortId;
@@ -21,16 +23,14 @@ export interface PortInstance<T extends PortDefinitionId = PortDefinitionId> {
   position: PortPosition;
 }
 
-export type PortDirection = "input" | "output";
-
-export type PortKind = "state" | "flow" | "event";
-
 export interface PortDefinition<T extends PortDefinitionId = PortDefinitionId> {
   label: string;
   direction: PortDirection;
   kind: PortKind;
   defaultState: PortStateMap[T];
 }
+
+export type AnyPortState = PortStateMap[PortDefinitionId];
 
 export function getDefinition(
   port: Omit<PortInstance, "state">,

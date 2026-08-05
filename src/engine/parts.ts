@@ -10,7 +10,7 @@ export type PartId = string;
 
 export type AnyPartParameters = PartParametersMap[PartType];
 
-export type NodePosition = {
+export type PartPosition = {
   x: number;
   y: number;
 };
@@ -18,7 +18,7 @@ export type NodePosition = {
 export interface PartInstance<T extends PartType = PartType> {
   id: PartId;
   type: T;
-  position: NodePosition;
+  position: PartPosition;
   parameters: PartParametersMap[T];
   ports: Partial<Record<PortDefinitionId, PortInstance>>;
 }
@@ -163,7 +163,7 @@ export const partDefinitions: {
 export function createPart<T extends PartType>(
   partId: string,
   type: T,
-  position: NodePosition,
+  position: PartPosition,
 ): PartInstance<T> {
   const definition = partDefinitions[type];
   return {

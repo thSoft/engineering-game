@@ -2,7 +2,7 @@ import { nanoid } from "nanoid";
 import { create } from "zustand";
 import { persist, type StorageValue } from "zustand/middleware";
 import type { Connection, ConnectionId } from "../engine/connections";
-import type { NodePosition, PartId, PartType } from "../engine/parts";
+import type { PartId, PartPosition, PartType } from "../engine/parts";
 import { createPart, partDefinitions } from "../engine/parts";
 import type {
   AnyPortState,
@@ -22,9 +22,9 @@ export interface GameState {
   puzzleStates: Partial<Record<PuzzleDefinitionId, PuzzleState>>;
   currentPuzzleDefinitionId: PuzzleDefinitionId;
 
-  addPart: (type: PartType, position: NodePosition) => void;
+  addPart: (type: PartType, position: PartPosition) => void;
   deletePart: (partId: PartId) => void;
-  movePart: (partId: PartId, position: NodePosition) => void;
+  movePart: (partId: PartId, position: PartPosition) => void;
   movePort: (portId: PortId, position: PortPosition) => void;
   setPortState: (portId: PortId, state: AnyPortState) => void;
   addConnection: (fromPortId: PortId, toPortId: PortId) => void;

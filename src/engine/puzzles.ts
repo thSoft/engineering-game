@@ -42,6 +42,13 @@ export function isExposed(
   );
 }
 
+export function createPuzzle(definitionId: PuzzleDefinitionId): PuzzleState {
+  return {
+    parts: puzzleDefinitions[definitionId].initialPartInstances,
+    connections: [],
+  };
+}
+
 export type PuzzleDefinitionId = "DESK_LAMP";
 
 export const DESK_LAMP_PLUG = "plug";
@@ -78,10 +85,3 @@ export const puzzleDefinitions: {
     };
   })(),
 };
-
-export function createPuzzle(definitionId: PuzzleDefinitionId): PuzzleState {
-  return {
-    parts: puzzleDefinitions[definitionId].initialPartInstances,
-    connections: [],
-  };
-}
