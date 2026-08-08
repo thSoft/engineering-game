@@ -1,7 +1,7 @@
 import { Trash2 } from "lucide-react";
 import { useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
-import { ConnectionId } from "../engine/connections";
+import { ConnectionId } from "../engine/new";
 
 export interface ConnectionContextMenuState {
   connectionId: ConnectionId;

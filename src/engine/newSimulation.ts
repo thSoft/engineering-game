@@ -1,10 +1,9 @@
 import {
   Connection,
   deepEqual,
+  getDefinitionOfPart,
   LevelState,
   PartDefinition,
-  partDefinitions,
-  PartDefinitionWithHelpers,
   PartId,
   PartInstance,
   PortInstanceState,
@@ -15,17 +14,6 @@ import {
   TestResult,
   TestStepResult,
 } from "./new";
-
-export function getDefinitionOfPart(
-  partId: PartId,
-  parts: PartInstance[],
-): PartDefinitionWithHelpers<any, any, any> | undefined {
-  const partInstance = parts.find((part) => part.id === partId);
-  if (!partInstance) return undefined;
-  return partDefinitions.find(
-    (definition) => definition.id === partInstance.definitionId,
-  );
-}
 
 export function computePropagatedPortStates(
   firstPortRef: PortRef,

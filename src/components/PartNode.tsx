@@ -6,16 +6,14 @@ import {
 } from "@xyflow/react";
 import { Box } from "lucide-react";
 import { memo, useEffect, useRef } from "react";
-import type { AnyPartParameters, PartId, PartType } from "../engine/parts";
 import type {
-  PortDefinition,
-  PortDefinitionId,
-  PortId,
+  ParameterValues,
+  PartDefinitionId,
+  PartId,
   PortInstance,
-  PortKind,
-  PortPosition,
-  PortSide,
-} from "../engine/ports";
+} from "../engine/new";
+import { deepEqual, getPortPath, PortRef } from "../engine/new";
+import { PortKind, PortPosition, PortSide } from "../engine/ports";
 import { PartNodeType, selectedColor } from "./GraphEditor";
 import { getColorStyle, PART_DEFINITION_VISUALS } from "./PartPalette";
 import {
@@ -28,23 +26,25 @@ import {
 
 export type PortVisualState = "idle" | "selected" | "connectable" | "blocked";
 
-export interface PortInfo<T extends PortDefinitionId = PortDefinitionId> {
-  instance: PortInstance<T>;
-  definition: PortDefinition<T>;
+export interface PortInfo {
+  instance: PortInstance;
+  ref: PortRef;
+  value: any;
   visual: PortVisualState;
 }
 
 export type PartNodeData = {
+  partId: PartId;
   label: string;
-  type: PartType;
+  type: PartDefinitionId;
   inputPorts: PortInfo[];
   outputPorts: PortInfo[];
   selected?: boolean;
-  parameters?: AnyPartParameters;
+  parameters?: ParameterValues<any>;
   onContextMenu?: (partId: PartId, x: number, y: number) => void;
-  onPortClick?: (portId: PortId) => void;
-  onPortMove?: (portId: PortId, position: PortPosition) => void;
-  onStateToggle?: (portId: PortId) => void;
+  onPortClick?: (portRef: PortRef) => void;
+  onPortMove?: (portRef: PortRef, position: PortPosition) => void;
+  onStateToggle?: (portRef: PortRef) => void;
 };
 
 // Per-visual-state styling for handles
@@ -139,7 +139,7 @@ function constrainToBorder(
   return { side: "top", offset: 0 };
 }
 
-function PartNode({ id, data }: NodeProps<PartNodeType>) {
+function PartNode({ data }: NodeProps<PartNodeType>) {
   const {
     label,
     type,
@@ -153,7 +153,7 @@ function PartNode({ id, data }: NodeProps<PartNodeType>) {
   } = data;
   const nodeRef = useRef<HTMLDivElement>(null);
   const draggedPort = useRef<{
-    id: string;
+    portRef: PortRef;
     startX: number;
     startY: number;
     moved: boolean;
@@ -164,8 +164,8 @@ function PartNode({ id, data }: NodeProps<PartNodeType>) {
   const ports = [...inputPorts, ...outputPorts];
 
   useEffect(() => {
-    updateNodeInternals(id);
-  }, [id, updateNodeInternals, inputPorts, outputPorts]);
+    updateNodeInternals(data.partId);
+  }, [data.partId, updateNodeInternals, inputPorts, outputPorts]);
 
   const handleNodeClick = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -177,20 +177,24 @@ function PartNode({ id, data }: NodeProps<PartNodeType>) {
     const rect = nodeRef.current?.getBoundingClientRect();
     const x = rect ? rect.left + rect.width / 2 : e.clientX;
     const y = rect ? rect.top : e.clientY;
-    onContextMenu(id, x, y);
+    onContextMenu(data.partId, x, y);
   };
 
-  const finishPortGesture = (portId: string, visual: PortVisualState) => {
+  const finishPortGesture = (portRef: PortRef, visual: PortVisualState) => {
     const drag = draggedPort.current;
     if (!drag) return;
     draggedPort.current = null;
 
-    if (!drag.moved && drag.id === portId && visual !== "blocked") {
-      onPortClick?.(portId);
+    if (
+      !drag.moved &&
+      deepEqual(drag.portRef, portRef) &&
+      visual !== "blocked"
+    ) {
+      onPortClick?.(portRef);
     }
   };
 
-  const handlePortPointerDown = (e: React.PointerEvent, portId: string) => {
+  const handlePortPointerDown = (e: React.PointerEvent, portKey: string) => {
     // Own the gesture so React Flow does not start its native drag-to-connect
     // interaction while this handle is being repositioned.
     e.preventDefault();
@@ -198,7 +202,7 @@ function PartNode({ id, data }: NodeProps<PartNodeType>) {
     ignoreNodeClick.current = true;
     e.currentTarget.setPointerCapture(e.pointerId);
     draggedPort.current = {
-      id: portId,
+      portRef: { partId: data.partId, portKey: portKey },
       startX: e.clientX,
       startY: e.clientY,
       moved: false,
@@ -216,24 +220,24 @@ function PartNode({ id, data }: NodeProps<PartNodeType>) {
     if (!drag.moved) return;
 
     e.preventDefault();
-    onPortMove?.(drag.id, constrainToBorder(e.clientX, e.clientY, rect));
+    onPortMove?.(drag.portRef, constrainToBorder(e.clientX, e.clientY, rect));
   };
 
   const handlePortPointerUp = (
     e: React.PointerEvent,
-    portId: string,
+    portRef: PortRef,
     visual: PortVisualState,
   ) => {
     if (e.currentTarget.hasPointerCapture(e.pointerId))
       e.currentTarget.releasePointerCapture(e.pointerId);
     ignoreNodeClick.current = true;
-    finishPortGesture(portId, visual);
+    finishPortGesture(portRef, visual);
   };
 
-  const handleStateToggle = (e: React.MouseEvent, portId: string) => {
+  const handleStateToggle = (e: React.MouseEvent, portRef: PortRef) => {
     e.preventDefault();
     e.stopPropagation();
-    onStateToggle?.(portId);
+    onStateToggle?.(portRef);
   };
 
   const Icon = visual?.icon ?? Box;
@@ -254,10 +258,11 @@ function PartNode({ id, data }: NodeProps<PartNodeType>) {
       </div>
 
       {ports.map((port) => {
+        const portDefinition = port.instance.definition;
         const direction = inputPorts.includes(port) ? "input" : "output";
         const portColor = getPortColor(
-          port.definition.kind,
-          port.instance.state.on,
+          portDefinition.kind,
+          Boolean(port.value), // TODO handle generic type
           port.visual,
         );
         const positionRotation =
@@ -269,9 +274,10 @@ function PartNode({ id, data }: NodeProps<PartNodeType>) {
                 ? 180
                 : 270;
         const directionRotation = direction === "input" ? 180 : 0;
+        const portValue = port.value; // TODO handle generic type
         return (
           <div /* Port */
-            key={port.instance.id}
+            key={port.instance.key}
             className="absolute z-10"
             style={getAnchorStyle(port.instance.position)}
           >
@@ -290,39 +296,37 @@ function PartNode({ id, data }: NodeProps<PartNodeType>) {
                 role="button"
                 tabIndex={0}
                 onPointerDown={(e) =>
-                  handlePortPointerDown(e, port.instance.id)
+                  handlePortPointerDown(e, port.instance.key)
                 }
                 onPointerMove={handlePortPointerMove}
                 onPointerUp={(e) =>
-                  handlePortPointerUp(e, port.instance.id, port.visual)
+                  handlePortPointerUp(e, port.ref, port.visual)
                 }
-                title={`${port.definition.kind} port${port.definition.kind === "flow" ? ` (${port.instance.state.on})` : ""}`}
+                title={`${portDefinition.kind} port${portDefinition.kind === "flow" ? ` (${Boolean(port.value)})` : ""}`} // TODO
                 className="cursor-grab active:cursor-grabbing"
               >
-                {port.definition.label}
+                {portDefinition.label}
               </span>
-              {port.definition.kind === "state" && (
+              {portDefinition.kind === "state" && (
                 <button
                   type="button"
                   onPointerDown={(e) => e.stopPropagation()}
-                  onClick={(e) => handleStateToggle(e, port.instance.id)}
-                  className={`rounded px-1 py-px text-[9px] font-bold leading-none transition ${port.instance.state.on ? "bg-violet-400/25 text-violet-100 ring-1 ring-violet-300/60" : "bg-slate-700 text-slate-400 ring-1 ring-slate-600"}`}
-                  aria-label={`Set ${port.definition.label} ${port.instance.state.on ? "off" : "on"}`}
+                  onClick={(e) => handleStateToggle(e, port.ref)}
+                  className={`rounded px-1 py-px text-[9px] font-bold leading-none transition ${portValue ? "bg-violet-400/25 text-violet-100 ring-1 ring-violet-300/60" : "bg-slate-700 text-slate-400 ring-1 ring-slate-600"}`}
+                  aria-label={`Set ${portDefinition.label} ${portValue ? "off" : "on"}`}
                 >
-                  {port.instance.state.on ? "ON" : "OFF"}
+                  {portValue ? "ON" : "OFF"}
                 </button>
               )}
             </div>
             <Handle
-              id={port.instance.id}
+              id={getPortPath(port.ref)}
               type={direction === "input" ? "target" : "source"}
               position={getHandlePosition(port.instance.position.side)}
               isConnectable={false}
-              onPointerDown={(e) => handlePortPointerDown(e, port.instance.id)}
+              onPointerDown={(e) => handlePortPointerDown(e, port.instance.key)}
               onPointerMove={handlePortPointerMove}
-              onPointerUp={(e) =>
-                handlePortPointerUp(e, port.instance.id, port.visual)
-              }
+              onPointerUp={(e) => handlePortPointerUp(e, port.ref, port.visual)}
               style={{
                 left: 0,
                 top: 0,
@@ -330,7 +334,7 @@ function PartNode({ id, data }: NodeProps<PartNodeType>) {
                 pointerEvents: "all",
                 backgroundColor: "#0a0a0a",
               }}
-              title={`${port.definition.kind} port${port.definition.kind === "flow" ? ` (${port.instance.state.on ? "on" : "off"})` : ""}`}
+              title={`${portDefinition.kind} port${portDefinition.kind === "flow" ? ` (${port.value ? "on" : "off"})` : ""}`}
               className={`nodrag nopan !w-3 !h-3 !border-2 !border-slate-900 transition-all ${HANDLE_CLASSES[port.visual]} cursor-grab active:cursor-grabbing`}
             >
               <svg

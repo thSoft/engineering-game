@@ -10,18 +10,32 @@ import {
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 import { useCallback, useMemo, useState } from "react";
-import type { Connection } from "../engine/connections";
-import type { PartId, PartInstance, PartType } from "../engine/parts";
-import { getPartLabel, partDefinitions } from "../engine/parts";
-import type { PortId, PortInstance, PortPosition } from "../engine/ports";
-import { getDefinition } from "../engine/ports";
-import { getCurrentPuzzle, useGameStore } from "../store/gameStore";
+import {
+  Connection,
+  ConnectionId,
+  deepEqual,
+  getDefinitionOfPart,
+  getDefinitionOfPort,
+  getPortPath,
+  PartDefinitionId,
+  partDefinitions,
+  PartId,
+  PartInstance,
+  PortInstance,
+  PortRef,
+  refPort,
+  toConnectionId,
+  toPartId,
+} from "../engine/new";
+import { PortPosition } from "../engine/ports";
+import { getCurrentLevel, useGameStore } from "../store/newGameStore";
 import ConnectionContextMenu, {
   type ConnectionContextMenuState,
 } from "./ConnectionContextMenu";
 import PartContextMenu, { type ContextMenuState } from "./PartContextMenu";
 import PartNode, {
   getPortColor,
+  PortInfo,
   type PartNodeData,
   type PortVisualState,
 } from "./PartNode";
@@ -30,21 +44,23 @@ import { connectableColor, flowOffColor } from "./designTokens";
 const nodeTypes: NodeTypes = { part: PartNode };
 
 function getPortVisual(
-  candidatePort: PortInstance,
-  selectedPort: PortInstance | undefined,
+  candidatePort: PortRef,
+  selectedPort: PortRef | undefined,
+  parts: PartInstance[],
   connections: Connection[],
 ): PortVisualState {
   if (!selectedPort) return "idle";
-  if (!selectedPort.id) return "idle";
-  if (candidatePort.id === selectedPort.id) return "selected";
-  const selectedPortDefinition = getDefinition(selectedPort);
-  const candidatePortDefinition = getDefinition(candidatePort);
+  if (deepEqual(candidatePort, selectedPort)) return "selected";
+  const selectedPortDefinition = getDefinitionOfPort(selectedPort, parts);
+  if (!selectedPortDefinition) return "idle";
+  const candidatePortDefinition = getDefinitionOfPort(candidatePort, parts);
+  if (!candidatePortDefinition) return "idle";
   if (candidatePortDefinition.direction === selectedPortDefinition.direction)
     return "blocked";
   if (candidatePortDefinition.kind !== selectedPortDefinition.kind)
     return "blocked";
-  const targetAlreadyConnected = connections.some(
-    (connection) => connection.toPortId === candidatePort.id,
+  const targetAlreadyConnected = connections.some((connection) =>
+    deepEqual(connection.target, candidatePort),
   );
   if (targetAlreadyConnected) return "blocked";
   if (candidatePort.partId === selectedPort.partId) return "blocked";
@@ -53,45 +69,43 @@ function getPortVisual(
 
 function buildNodeData(
   part: PartInstance,
-  ports: PortInstance[],
-  selectedPort: PortInstance | undefined,
+  selectedPortRef: PortRef | undefined,
+  parts: PartInstance[],
   connections: Connection[],
   onContextMenu: (partId: PartId, x: number, y: number) => void,
-  onPortClick: (portId: PortId) => void,
-  onPortMove: (portId: PortId, position: PortPosition) => void,
+  onPortClick: (portRef: PortRef) => void,
+  onPortMove: (portRef: PortRef, position: PortPosition) => void,
   selected: boolean,
-): PartNodeData {
-  const partPorts = ports.filter((port) => port.partId === part.id);
+): PartNodeData | undefined {
+  const partDefinition = getDefinitionOfPart(part.id, parts);
+  if (!partDefinition) return undefined;
+  const partPorts = part.portInstances;
+  const createPortInfo = (port: PortInstance): PortInfo => {
+    const portRef = refPort(part.id, port.key);
+    return {
+      ref: portRef,
+      instance: port,
+      value: null, // TODO compute state
+      visual: getPortVisual(portRef, selectedPortRef, parts, connections),
+    };
+  };
   return {
-    label: getPartLabel(part.type),
-    type: part.type,
+    label: partDefinition.label,
+    partId: part.id,
+    type: partDefinition.id,
     selected,
     inputPorts: partPorts
-      .filter((port) => getDefinition(port).direction === "input")
-      .map((port) => ({
-        instance: port,
-        definition: getDefinition(port),
-        visual: getPortVisual(port, selectedPort, connections),
-      })),
+      .filter((port) => port.definition.direction === "input")
+      .map(createPortInfo),
     outputPorts: partPorts
-      .filter((port) => getDefinition(port).direction === "output")
-      .map((port) => ({
-        instance: port,
-        definition: getDefinition(port),
-        visual: getPortVisual(port, selectedPort, connections),
-      })),
-    parameters: part.parameters,
+      .filter((port) => port.definition.direction === "output")
+      .map(createPortInfo),
+    parameters: part.parameterValues,
     onContextMenu,
     onPortClick,
     onPortMove,
-    onStateToggle: (portId) => {
-      const gameState = useGameStore.getState();
-      const currentLevel = getCurrentPuzzle(gameState);
-      if (!currentLevel) return;
-      const oldPortState = currentLevel.parts
-        .flatMap((part) => Object.values(part.ports))
-        .find((p) => p.id === portId)?.state;
-      gameState.setPortState(portId, { on: !oldPortState?.on });
+    onStateToggle: (_) => {
+      // TODO
     },
   };
 }
@@ -100,23 +114,24 @@ export const selectedColor = "#ffffff";
 
 function buildEdge(
   connection: Connection,
-  portById: Map<PortId, PortInstance>,
   selected: boolean,
+  parts: PartInstance[],
 ): Edge {
-  const from = portById.get(connection.fromPortId);
-  const to = portById.get(connection.toPortId);
-  const flowOn = from?.state.on ?? false;
+  const source = connection.source;
+  const target = connection.target;
+  const flowOn = /* TODO source?.state.on ??*/ false;
+  const sourceDefinition = getDefinitionOfPort(source, parts);
   const color = selected
     ? selectedColor
-    : from
-      ? getPortColor(getDefinition(from).kind, flowOn, "idle")
+    : source
+      ? getPortColor(sourceDefinition?.kind ?? "state", flowOn, "idle")
       : flowOffColor;
   return {
     id: connection.id,
-    source: from?.partId ?? "",
-    target: to?.partId ?? "",
-    sourceHandle: connection.fromPortId,
-    targetHandle: connection.toPortId,
+    source: source.partId,
+    target: target.partId,
+    sourceHandle: getPortPath(source),
+    targetHandle: getPortPath(target),
     animated: flowOn,
     selected,
     style: { strokeWidth: selected ? 3 : 2, stroke: color },
@@ -126,9 +141,9 @@ function buildEdge(
 export type PartNodeType = Node<PartNodeData, "part">;
 
 export default function GraphEditor() {
-  const parts = useGameStore((s) => getCurrentPuzzle(s)?.parts ?? []);
+  const parts = useGameStore((s) => getCurrentLevel(s)?.parts ?? []);
   const connections = useGameStore(
-    (s) => getCurrentPuzzle(s)?.connections ?? [],
+    (s) => getCurrentLevel(s)?.connections ?? [],
   );
   const movePart = useGameStore((s) => s.movePart);
   const movePort = useGameStore((s) => s.movePort);
@@ -140,75 +155,56 @@ export default function GraphEditor() {
   const [menu, setMenu] = useState<ContextMenuState | null>(null);
   const [connectionMenu, setConnectionMenu] =
     useState<ConnectionContextMenuState | null>(null);
-  const [pendingPortId, setPendingPortId] = useState<string | null>(null);
-
-  const ports = useMemo(
-    () => parts.flatMap((part) => Array.from(Object.values(part.ports))),
-    [parts],
-  );
-  const portById = useMemo(() => new Map(ports.map((p) => [p.id, p])), [ports]);
-
-  const pendingPort = useMemo(
-    () => (pendingPortId ? portById.get(pendingPortId) : undefined),
-    [pendingPortId, portById],
+  const [pendingPortRef, setPendingPortRef] = useState<PortRef | undefined>(
+    undefined,
   );
 
-  const openMenu = useCallback((partId: string, x: number, y: number) => {
+  const openMenu = useCallback((partId: PartId, x: number, y: number) => {
     setMenu({ partId, x, y });
     setConnectionMenu(null);
-    setPendingPortId(null);
+    setPendingPortRef(undefined);
   }, []);
 
   const openConnectionMenu = useCallback(
-    (connectionId: string, x: number, y: number) => {
+    (connectionId: ConnectionId, x: number, y: number) => {
       setConnectionMenu({ connectionId, x, y });
       setMenu(null);
-      setPendingPortId(null);
+      setPendingPortRef(undefined);
     },
     [],
   );
 
   const handlePortClick = useCallback(
-    (portId: string) => {
-      const port = portById.get(portId);
-      if (!port) return;
+    (portRef: PortRef) => {
+      const portDefinition = getDefinitionOfPort(portRef, parts);
+      if (!portDefinition) return;
 
-      if (!pendingPortId) {
-        setPendingPortId(portId);
+      if (!pendingPortRef) {
+        setPendingPortRef(portRef);
         return;
       }
-      if (pendingPortId === portId) {
-        setPendingPortId(null);
+      if (deepEqual(pendingPortRef, portRef)) {
+        setPendingPortRef(undefined);
         return;
       }
+      const pendingPortDefinition = getDefinitionOfPort(pendingPortRef, parts);
+      if (!pendingPortDefinition) return;
 
-      const pendingPort = portById.get(pendingPortId);
-      if (!pendingPort) {
-        setPendingPortId(null);
-        return;
-      }
-
-      if (
-        getDefinition(port).direction === getDefinition(pendingPort).direction
-      ) {
-        setPendingPortId(portId);
+      if (portDefinition.direction === pendingPortDefinition.direction) {
+        setPendingPortRef(portRef);
         return;
       }
 
-      if (getDefinition(port).kind !== getDefinition(pendingPort).kind) return;
+      if (portDefinition.kind !== pendingPortDefinition.kind) return;
 
-      const fromId =
-        getDefinition(pendingPort).direction === "output"
-          ? pendingPortId
-          : portId;
-      const toId =
-        getDefinition(pendingPort).direction === "output"
-          ? portId
-          : pendingPortId;
-      addConnection(fromId, toId);
-      setPendingPortId(null);
+      const sourceRef =
+        pendingPortDefinition.direction === "output" ? pendingPortRef : portRef;
+      const targetRef =
+        pendingPortDefinition.direction === "output" ? portRef : pendingPortRef;
+      addConnection(sourceRef, targetRef);
+      setPendingPortRef(undefined);
     },
-    [pendingPortId, portById, addConnection],
+    [pendingPortRef],
   );
 
   // Zustand is the single source of truth for positions.
@@ -216,25 +212,30 @@ export default function GraphEditor() {
   // no separate RF state, no sync effects, no position divergence possible.
   const nodes: PartNodeType[] = useMemo(
     () =>
-      parts.map((part) => ({
-        id: part.id,
-        type: "part",
-        position: part.position,
-        data: buildNodeData(
+      parts.flatMap((part) => {
+        const data = buildNodeData(
           part,
-          ports,
-          pendingPort,
+          pendingPortRef,
+          parts,
           connections,
           openMenu,
           handlePortClick,
           movePort,
           part.id === menu?.partId,
-        ),
-      })),
+        );
+        if (!data) return [];
+        return [
+          {
+            id: part.id,
+            type: "part",
+            position: part.position,
+            data: data,
+          },
+        ];
+      }),
     [
       parts,
-      ports,
-      pendingPort,
+      pendingPortRef,
       connections,
       openMenu,
       handlePortClick,
@@ -248,23 +249,23 @@ export default function GraphEditor() {
       connections.map((connection) =>
         buildEdge(
           connection,
-          portById,
           connection.id === connectionMenu?.connectionId,
+          parts,
         ),
       ),
-    [connections, portById, connectionMenu],
+    [connections, parts, connectionMenu],
   );
 
   const onNodesChange = useCallback(
-    (changes: NodeChange[]) => {
+    (changes: NodeChange<PartNodeType>[]) => {
       for (const change of changes) {
         if (change.type === "position" && change.position) {
           // Write every drag tick — Zustand is authoritative for positions
-          movePart(change.id, change.position);
+          movePart(toPartId(change.id), change.position);
         }
         if (change.type === "remove") {
-          deletePart(change.id);
-          setPendingPortId(null);
+          deletePart(toPartId(change.id));
+          setPendingPortRef(undefined);
         }
       }
       // applyNodeChanges is not called — RF reads positions from the store,
@@ -276,7 +277,8 @@ export default function GraphEditor() {
   const onEdgesChange = useCallback(
     (changes: EdgeChange[]) => {
       for (const change of changes) {
-        if (change.type === "remove") deleteConnection(change.id);
+        if (change.type === "remove")
+          deleteConnection(toConnectionId(change.id));
       }
       // Same pattern: edges derive from store, no RF edge state to patch.
     },
@@ -293,12 +295,18 @@ export default function GraphEditor() {
   const onDrop = useCallback(
     (e: React.DragEvent<HTMLDivElement>) => {
       e.preventDefault();
-      const type = e.dataTransfer.getData(
+      const partDefinitionId = e.dataTransfer.getData(
         "application/x-part-type",
-      ) as PartType;
-      if (!type || !(type in partDefinitions)) return;
+      ) as PartDefinitionId;
+      if (
+        !partDefinitionId ||
+        !partDefinitions.some(
+          (definition) => definition.id === partDefinitionId,
+        )
+      )
+        return;
       const flowPosition = screenToFlowPosition({ x: e.clientX, y: e.clientY });
-      addPart(type, {
+      addPart(partDefinitionId, {
         x: flowPosition.x,
         y: flowPosition.y,
       });
@@ -309,12 +317,12 @@ export default function GraphEditor() {
   const onPaneClick = useCallback(() => {
     setMenu(null);
     setConnectionMenu(null);
-    setPendingPortId(null);
+    setPendingPortRef(undefined);
   }, []);
 
   return (
     <div className="h-full w-full" onDragOver={onDragOver} onDrop={onDrop}>
-      {pendingPortId && (
+      {pendingPortRef && (
         <div className="absolute top-3 left-1/2 -translate-x-1/2 z-10 pointer-events-none">
           <div
             className={`flex items-center gap-2 rounded-full bg-slate-800/95 border shadow-lg px-4 py-1.5 text-xs font-medium`}
@@ -341,7 +349,11 @@ export default function GraphEditor() {
         onEdgesChange={onEdgesChange}
         onPaneClick={onPaneClick}
         onEdgeClick={(event, edge) =>
-          openConnectionMenu(edge.id, event.clientX, event.clientY)
+          openConnectionMenu(
+            toConnectionId(edge.id),
+            event.clientX,
+            event.clientY,
+          )
         }
         nodesConnectable={false}
         deleteKeyCode="Delete"
@@ -359,7 +371,7 @@ export default function GraphEditor() {
           menu={menu}
           onDelete={(id) => {
             deletePart(id);
-            setPendingPortId(null);
+            setPendingPortRef(undefined);
           }}
           onClose={() => setMenu(null)}
         />

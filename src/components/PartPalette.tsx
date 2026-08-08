@@ -1,17 +1,18 @@
 import {
-  Lightbulb,
-  Plug,
+  Lightbulb as LightbulbIcon,
+  Plug as PlugIcon,
   Plus,
   ToggleRight,
   type LucideIcon,
 } from "lucide-react";
-import { partDefinitions, type PartType } from "../engine/parts";
-import { useGameStore } from "../store/gameStore";
+import { Lightbulb, PartDefinitionId, Plug, Switch } from "../engine/new";
+import { partDefinitions } from "../engine/parts";
+import { useGameStore } from "../store/newGameStore";
 
-const partPalette: { type: PartType; label: string }[] = Object.entries(
+const partPalette: { type: PartDefinitionId; label: string }[] = Object.entries(
   partDefinitions,
 ).map(([type, definition]) => ({
-  type: type as PartType,
+  type: type as PartDefinitionId,
   label: definition.label,
 }));
 
@@ -21,19 +22,22 @@ type PartDefinitionVisual = {
   description: string;
 };
 
-export const PART_DEFINITION_VISUALS: Record<PartType, PartDefinitionVisual> = {
-  PLUG: {
-    icon: Plug,
+export const PART_DEFINITION_VISUALS: Record<
+  PartDefinitionId,
+  PartDefinitionVisual
+> = {
+  [Plug.id]: {
+    icon: PlugIcon,
     color: "#00d492",
     description: "Emits power if plugged in",
   },
-  SWITCH: {
+  [Switch.id]: {
     icon: ToggleRight,
     color: "#00bcff",
     description: "Toggles power flow",
   },
-  LIGHTBULB: {
-    icon: Lightbulb,
+  [Lightbulb.id]: {
+    icon: LightbulbIcon,
     color: "#fdc700",
     description: "Lights up on power",
   },
@@ -55,15 +59,15 @@ interface Props {
 export default function PartPalette({ onAdd }: Props) {
   const addPart = useGameStore((s) => s.addPart);
 
-  const handleClick = (type: PartType) => {
-    addPart(type, {
+  const handleClick = (definitionId: PartDefinitionId) => {
+    addPart(definitionId, {
       x: 180 + Math.random() * 160,
       y: 80 + Math.random() * 240,
     });
     onAdd?.();
   };
 
-  const handleDragStart = (e: React.DragEvent, type: PartType) => {
+  const handleDragStart = (e: React.DragEvent, type: PartDefinitionId) => {
     e.dataTransfer.setData("application/x-part-type", type);
     e.dataTransfer.effectAllowed = "copy";
   };

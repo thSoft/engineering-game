@@ -31,9 +31,9 @@ function testPuzzleWithConnections(
   connections: Connection[],
   expectedSuccess: boolean,
 ) {
-  const puzzleState = getInitialLevelState(levelDefinition);
-  puzzleState.connections = connections;
-  const result = evaluateTestCase(puzzleState, levelDefinition.testCase);
+  const levelState = getInitialLevelState(levelDefinition);
+  levelState.connections = connections;
+  const result = evaluateTestCase(levelState, levelDefinition.testCase);
   expect(result.stepResults.every((stepResult) => stepResult.success)).toBe(
     expectedSuccess,
   );

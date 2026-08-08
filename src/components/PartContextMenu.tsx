@@ -1,7 +1,7 @@
 import { Trash2 } from "lucide-react";
 import { useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
-import { PartId } from "../engine/parts";
+import { PartId } from "../engine/new";
 
 export interface ContextMenuState {
   partId: PartId;

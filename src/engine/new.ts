@@ -1,7 +1,7 @@
 import { nanoid } from "nanoid";
 import z from "zod";
 import { PartPosition } from "./parts";
-import { PortKind, PortPosition } from "./ports";
+import { PortDirection, PortKind, PortPosition } from "./ports";
 
 // Parameters
 
@@ -13,7 +13,9 @@ export type ParameterDefinition<T> = {
 
 type ParameterValue<P> = P extends ParameterDefinition<infer T> ? T : never;
 
-type ParameterValues<T extends Record<string, ParameterDefinition<any>>> = {
+export type ParameterValues<
+  T extends Record<string, ParameterDefinition<any>>,
+> = {
   [K in keyof T]: ParameterValue<T[K]>;
 };
 
@@ -128,6 +130,12 @@ export const partDefinitions: PartDefinitionWithHelpers<any, any, any>[] = [
   Lightbulb,
 ];
 
+export function getPartDefinitionById(
+  definitionId: PartDefinitionId,
+): PartDefinitionWithHelpers<any, any, any> | undefined {
+  return partDefinitions.find((definition) => definition.id === definitionId);
+}
+
 export type PartDefinitionId = string & { __brand: "PartDefinitionId" };
 
 export type PartDefinition<
@@ -170,42 +178,23 @@ export function definePart<
       ...definition.outputPorts,
     },
     instance: (id: string, position: PartPosition) => {
-      const partId = id as PartId;
-      const inputPortRef = (portKey: keyof I) => ({
-        partId: partId,
-        portKey,
-      });
-      const outputPortRef = (portKey: keyof O) => ({
-        partId: partId,
-        portKey,
-      });
-      return {
-        id: partId,
+      return createPartInstance<P, I, O>(
+        id,
         position,
-        definitionId: partDefinitionId,
-        parameterValues: Object.fromEntries(
-          Object.entries(definition.parameters).map(([paramKey, paramDef]) => [
-            paramKey,
-            paramDef.defaultValue,
-          ]),
-        ),
-        portInstances: Object.entries({
-          ...definition.inputPorts,
-          ...definition.outputPorts,
-        }).map(([portKey, portDef]) => ({
-          key: portKey,
-          position: portDef.defaultPosition,
-        })),
-
-        in: inputPortRef,
-        out: outputPortRef,
-        act: (portKey: keyof I, value: PortValue<I[typeof portKey]>) =>
-          action(inputPortRef(portKey), value),
-        assert: (portKey: keyof O, value: PortValue<O[typeof portKey]>) =>
-          assertion(outputPortRef(portKey), value),
-      };
+        partDefinitionId,
+        definition,
+      );
     },
   };
+}
+
+export function getDefinitionOfPart(
+  partId: PartId,
+  parts: PartInstance[],
+): PartDefinitionWithHelpers<any, any, any> | undefined {
+  const partInstance = parts.find((part) => part.id === partId);
+  if (!partInstance) return undefined;
+  return getPartDefinitionById(partInstance.definitionId);
 }
 
 // Level definitions
@@ -244,6 +233,74 @@ export type LevelDefinition = {
   testCase: TestCase;
 };
 
+export function createPartInstance<
+  const P extends Record<string, ParameterDefinition<any>>,
+  const I extends Record<string, PortDefinition<any>>,
+  const O extends Record<string, PortDefinition<any>>,
+>(
+  id: string,
+  position: PartPosition,
+  partDefinitionId: PartDefinitionId,
+  definition: Omit<PartDefinition<P, I, O>, "id">,
+) {
+  const partId = toPartId(id);
+  const inputPortRef = (portKey: keyof I) => ({
+    partId: partId,
+    portKey,
+  });
+  const outputPortRef = (portKey: keyof O) => ({
+    partId: partId,
+    portKey,
+  });
+  const createPortInstance = (
+    [portKey, portDefinition]: [string, PortDefinition<any>],
+    direction: PortDirection,
+  ): PortInstance => ({
+    key: portKey,
+    definition: {
+      ...portDefinition,
+      direction: direction,
+    },
+    position: portDefinition.defaultPosition,
+  });
+  return {
+    id: partId,
+    position,
+    definitionId: partDefinitionId,
+    parameterValues: Object.fromEntries(
+      Object.entries(definition.parameters).map(([paramKey, paramDef]) => [
+        paramKey,
+        paramDef.defaultValue,
+      ]),
+    ),
+    portInstances: [
+      ...Object.entries(definition.inputPorts).map((entry) =>
+        createPortInstance(entry, "input"),
+      ),
+      ...Object.entries(definition.outputPorts).map((entry) =>
+        createPortInstance(entry, "output"),
+      ),
+    ],
+
+    in: inputPortRef,
+    out: outputPortRef,
+    act: (portKey: keyof I, value: PortValue<I[typeof portKey]>) =>
+      action(inputPortRef(portKey), value),
+    assert: (portKey: keyof O, value: PortValue<O[typeof portKey]>) =>
+      assertion(outputPortRef(portKey), value),
+  };
+}
+
+export function toPartId(id: string) {
+  return id as PartId;
+}
+
+export function getLevelDefinition(
+  levelDefinitionId: LevelDefinitionId,
+): LevelDefinition | undefined {
+  return levelDefinitions.find((def) => def.id === levelDefinitionId);
+}
+
 export type PartInstance = {
   id: PartId;
   position: PartPosition;
@@ -254,6 +311,7 @@ export type PartInstance = {
 
 export type PortInstance = {
   key: string;
+  definition: PortDefinitionWithHelpers<any>;
   position: PortPosition;
 };
 
@@ -281,6 +339,31 @@ export type PortRef<
 
 export function refPort(partId: PartId, portKey: string): PortRef {
   return { partId, portKey };
+}
+
+export function getPortPath(portRef: PortRef): string {
+  return `${portRef.partId}:${String(portRef.portKey)}`;
+}
+
+export type PortDefinitionWithHelpers<T> = PortDefinition<T> & {
+  direction: PortDirection;
+};
+
+export function getDefinitionOfPort(
+  portRef: PortRef,
+  parts: PartInstance[],
+): PortDefinitionWithHelpers<any> | undefined {
+  const partDefinition = getDefinitionOfPart(portRef.partId, parts);
+  if (!partDefinition) return undefined;
+  const inputDefinition = partDefinition.inputPorts[portRef.portKey];
+  if (inputDefinition) {
+    return { ...inputDefinition, direction: "input" };
+  }
+  const outputDefinition = partDefinition.outputPorts[portRef.portKey];
+  if (outputDefinition) {
+    return { ...outputDefinition, direction: "output" };
+  }
+  return undefined;
 }
 
 export function deepEqual(a: any, b: any) {
@@ -401,6 +484,10 @@ export type LevelState = {
 
 export type ConnectionId = string & { __brand: "ConnectionId" };
 
+export function toConnectionId(id: string) {
+  return id as ConnectionId;
+}
+
 export type Connection = {
   id: ConnectionId;
   source: OutputPortRef<any, any>;
@@ -412,7 +499,7 @@ export function connect(
   target: InputPortRef<any, any>,
 ): Connection {
   return {
-    id: nanoid() as ConnectionId,
+    id: toConnectionId(nanoid()),
     source,
     target,
   };
@@ -423,4 +510,12 @@ export function connect(
 export type GameState = {
   levelStates: Partial<Record<LevelDefinitionId, LevelState>>;
   currentLevelDefinitionId: LevelDefinitionId;
+
+  addPart: (definitionId: PartDefinitionId, position: PartPosition) => void;
+  deletePart: (partId: PartId) => void;
+  movePart: (partId: PartId, position: PartPosition) => void;
+  movePort: (portRef: PortRef, position: PortPosition) => void;
+  addConnection: (source: PortRef, target: PortRef) => void;
+  deleteConnection: (connectionId: ConnectionId) => void;
+  loadLevel: (definitionId: LevelDefinitionId) => void;
 };
