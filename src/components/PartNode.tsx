@@ -4,16 +4,22 @@ import {
   useUpdateNodeInternals,
   type NodeProps,
 } from "@xyflow/react";
-import { Box } from "lucide-react";
+import { Box, Eye } from "lucide-react";
 import { memo, useEffect, useRef } from "react";
 import type {
   ParameterValues,
   PartDefinitionId,
   PartId,
   PortInstance,
-} from "../engine/new";
-import { deepEqual, getPortPath, PortRef } from "../engine/new";
-import { PortKind, PortPosition, PortSide } from "../engine/ports";
+} from "../engine/parts";
+import {
+  deepEqual,
+  getPortPath,
+  PortKind,
+  PortPosition,
+  PortRef,
+  PortSide,
+} from "../engine/parts";
 import { PartNodeType, selectedColor } from "./GraphEditor";
 import { getColorStyle, PART_DEFINITION_VISUALS } from "./PartPalette";
 import {
@@ -31,12 +37,13 @@ export interface PortInfo {
   ref: PortRef;
   value: any;
   visual: PortVisualState;
+  exposed: boolean;
 }
 
 export type PartNodeData = {
   partId: PartId;
   label: string;
-  type: PartDefinitionId;
+  definitionId: PartDefinitionId;
   inputPorts: PortInfo[];
   outputPorts: PortInfo[];
   selected?: boolean;
@@ -142,7 +149,7 @@ function constrainToBorder(
 function PartNode({ data }: NodeProps<PartNodeType>) {
   const {
     label,
-    type,
+    definitionId: type,
     inputPorts,
     outputPorts,
     selected,
@@ -291,7 +298,7 @@ function PartNode({ data }: NodeProps<PartNodeType>) {
                 borderRadius: "4px",
               }}
             >
-              {/*isExposed(port, puzzle) && <Eye size={10} />*/}
+              {port.exposed && <Eye size={10} />}
               <span
                 role="button"
                 tabIndex={0}

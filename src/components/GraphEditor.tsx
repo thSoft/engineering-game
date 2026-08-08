@@ -13,6 +13,12 @@ import { useCallback, useMemo, useState } from "react";
 import {
   Connection,
   ConnectionId,
+  getLevelDefinitionById,
+  isExposed,
+  LevelDefinition,
+  toConnectionId,
+} from "../engine/levels";
+import {
   deepEqual,
   getDefinitionOfPart,
   getDefinitionOfPort,
@@ -22,16 +28,16 @@ import {
   PartId,
   PartInstance,
   PortInstance,
+  PortPosition,
   PortRef,
   refPort,
-  toConnectionId,
   toPartId,
-} from "../engine/new";
-import { PortPosition } from "../engine/ports";
-import { getCurrentLevel, useGameStore } from "../store/newGameStore";
+} from "../engine/parts";
+import { getCurrentLevel, useGameStore } from "../store/gameStore";
 import ConnectionContextMenu, {
   type ConnectionContextMenuState,
 } from "./ConnectionContextMenu";
+import { connectableColor, flowOffColor } from "./designTokens";
 import PartContextMenu, { type ContextMenuState } from "./PartContextMenu";
 import PartNode, {
   getPortColor,
@@ -39,7 +45,6 @@ import PartNode, {
   type PartNodeData,
   type PortVisualState,
 } from "./PartNode";
-import { connectableColor, flowOffColor } from "./designTokens";
 
 const nodeTypes: NodeTypes = { part: PartNode };
 
@@ -76,6 +81,7 @@ function buildNodeData(
   onPortClick: (portRef: PortRef) => void,
   onPortMove: (portRef: PortRef, position: PortPosition) => void,
   selected: boolean,
+  levelDefinition: LevelDefinition | undefined,
 ): PartNodeData | undefined {
   const partDefinition = getDefinitionOfPart(part.id, parts);
   if (!partDefinition) return undefined;
@@ -87,12 +93,13 @@ function buildNodeData(
       instance: port,
       value: null, // TODO compute state
       visual: getPortVisual(portRef, selectedPortRef, parts, connections),
+      exposed: levelDefinition ? isExposed(portRef, levelDefinition) : false,
     };
   };
   return {
     label: partDefinition.label,
     partId: part.id,
-    type: partDefinition.id,
+    definitionId: partDefinition.id,
     selected,
     inputPorts: partPorts
       .filter((port) => port.definition.direction === "input")
@@ -142,6 +149,9 @@ export type PartNodeType = Node<PartNodeData, "part">;
 
 export default function GraphEditor() {
   const parts = useGameStore((s) => getCurrentLevel(s)?.parts ?? []);
+  const currentLevelDefinition = useGameStore((s) =>
+    getLevelDefinitionById(s.currentLevelDefinitionId),
+  );
   const connections = useGameStore(
     (s) => getCurrentLevel(s)?.connections ?? [],
   );
@@ -222,6 +232,7 @@ export default function GraphEditor() {
           handlePortClick,
           movePort,
           part.id === menu?.partId,
+          currentLevelDefinition,
         );
         if (!data) return [];
         return [

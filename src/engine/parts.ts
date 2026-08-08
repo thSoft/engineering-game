@@ -1,186 +1,345 @@
-import { nanoid } from "nanoid";
-import {
-  getDefinition,
-  PortDefinitionId,
-  type AnyPortState,
-  type PortInstance,
-} from "./ports";
+import z from "zod";
+import { action, assertion } from "./levels";
 
-export type PartId = string;
+// Part definitions
 
-export type AnyPartParameters = PartParametersMap[PartType];
+export const Plug = definePart("PLUG", {
+  label: "Plug",
+  parameters: {},
+  inputPorts: {
+    plugged: {
+      label: "plugged",
+      kind: "flow",
+      schema: z.boolean(),
+      defaultValue: false,
+      defaultPosition: { side: "top", offset: 0.5 },
+    },
+  },
+  outputPorts: {
+    powerOut: {
+      label: "power out",
+      kind: "flow",
+      schema: z.boolean(),
+      defaultValue: false,
+      defaultPosition: { side: "bottom", offset: 0.5 },
+    },
+  },
+  compute: (inputs) => ({
+    powerOut: inputs.plugged,
+  }),
+});
+
+export const Switch = definePart("SWITCH", {
+  label: "Switch",
+  parameters: {},
+  inputPorts: {
+    powerIn: {
+      label: "power in",
+      kind: "flow",
+      schema: z.boolean(),
+      defaultValue: false,
+      defaultPosition: { side: "top", offset: 0.5 },
+    },
+    toggle: {
+      label: "toggle",
+      kind: "state",
+      schema: z.boolean(),
+      defaultValue: false,
+      defaultPosition: { side: "left", offset: 0.5 },
+    },
+  },
+  outputPorts: {
+    powerOut: {
+      label: "power out",
+      kind: "flow",
+      schema: z.boolean(),
+      defaultValue: false,
+      defaultPosition: { side: "bottom", offset: 0.5 },
+    },
+  },
+  compute: (inputs) => ({
+    powerOut: inputs.powerIn && inputs.toggle,
+  }),
+});
+
+export const Lightbulb = definePart("LIGHTBULB", {
+  label: "Lightbulb",
+  parameters: {},
+  inputPorts: {
+    powerIn: {
+      label: "power in",
+      kind: "flow",
+      schema: z.boolean(),
+      defaultValue: false,
+      defaultPosition: { side: "top", offset: 0.5 },
+    },
+  },
+  outputPorts: {
+    lit: {
+      label: "lit",
+      kind: "flow",
+      schema: z.boolean(),
+      defaultValue: false,
+      defaultPosition: { side: "bottom", offset: 0.5 },
+    },
+  },
+  compute: (inputs) => ({
+    lit: inputs.powerIn,
+  }),
+});
+
+export const partDefinitions: PartDefinitionWithHelpers<any, any, any>[] = [
+  Plug,
+  Switch,
+  Lightbulb,
+];
+
+// Part types and functions
+
+export function getPartDefinitionById(
+  definitionId: PartDefinitionId,
+): PartDefinitionWithHelpers<any, any, any> | undefined {
+  return partDefinitions.find((definition) => definition.id === definitionId);
+}
+
+export type PartDefinitionId = string & { __brand: "PartDefinitionId" };
+
+export type PartDefinition<
+  P extends Record<string, ParameterDefinition<any>>,
+  I extends Record<string, PortDefinition<any>>,
+  O extends Record<string, PortDefinition<any>>,
+> = {
+  id: PartDefinitionId;
+  label: string;
+  parameters: P;
+  inputPorts: I;
+  outputPorts: O;
+  compute: (
+    inputPortValues: PortValues<I>,
+    parameters: ParameterValues<P>,
+  ) => PortValues<O>;
+};
 
 export type PartPosition = {
   x: number;
   y: number;
 };
 
-export interface PartInstance<T extends PartType = PartType> {
+export type PartDefinitionWithHelpers<
+  P extends Record<string, ParameterDefinition<any>>,
+  I extends Record<string, PortDefinition<any>>,
+  O extends Record<string, PortDefinition<any>>,
+> = PartDefinition<P, I, O> & {
+  allPorts: I & O;
+  instance: (id: PartId, position: PartPosition) => PartInstance;
+};
+
+export function definePart<
+  const P extends Record<string, ParameterDefinition<any>>,
+  const I extends Record<string, PortDefinition<any>>,
+  const O extends Record<string, PortDefinition<any>>,
+>(id: string, definition: Omit<PartDefinition<P, I, O>, "id">) {
+  const partDefinitionId = id as PartDefinitionId;
+  return {
+    id: partDefinitionId,
+    ...definition,
+
+    allPorts: {
+      ...definition.inputPorts,
+      ...definition.outputPorts,
+    },
+    instance: (id: string, position: PartPosition) => {
+      return createPartInstance<P, I, O>(
+        id,
+        position,
+        partDefinitionId,
+        definition,
+      );
+    },
+  };
+}
+
+export type PartId = string & { __brand: "PartId" };
+
+export type PartInstance = {
   id: PartId;
-  type: T;
   position: PartPosition;
-  parameters: PartParametersMap[T];
-  ports: Partial<Record<PortDefinitionId, PortInstance>>;
-}
-
-export interface PartDefinition<T extends PartType> {
-  label: string;
-  defaultParameters: PartParametersMap[T];
-  createPorts(
-    partId: PartId,
-  ): Partial<Record<PortDefinitionId, Omit<PortInstance, "state">>>;
-  computeOutputState(
-    part: PartInstance<T>,
-    inputStates: Map<PortDefinitionId, AnyPortState>,
-  ): Map<PortDefinitionId, AnyPortState>;
-}
-
-export function getPartLabel(type: PartType): string {
-  return partDefinitions[type]?.label ?? type;
-}
-
-export type PartType = "PLUG" | "SWITCH" | "LIGHTBULB";
-
-export interface PartParametersMap {
-  PLUG: {};
-  SWITCH: {};
-  LIGHTBULB: {};
-}
-
-export const plug: PartDefinition<"PLUG"> = {
-  label: "Plug",
-  defaultParameters: {},
-  createPorts(partId: PartId) {
-    return {
-      PLUGGED: {
-        id: nanoid(),
-        partId,
-        definitionId: "PLUGGED",
-        position: { side: "top", offset: 0.5 },
-      },
-      POWER_OUT: {
-        id: nanoid(),
-        partId,
-        definitionId: "POWER_OUT",
-        position: { side: "bottom", offset: 0.5 },
-      },
-    };
-  },
-  computeOutputState(
-    _: PartInstance<"PLUG">,
-    inputStates: Map<PortDefinitionId, AnyPortState>,
-  ): Map<PortDefinitionId, AnyPortState> {
-    const outputState = new Map<PortDefinitionId, AnyPortState>();
-    const pluggedPortState = inputStates.get("PLUGGED");
-    if (pluggedPortState) {
-      outputState.set("POWER_OUT", { on: pluggedPortState.on });
-    }
-    return outputState;
-  },
+  definitionId: PartDefinitionId;
+  parameterValues: ParameterValues<any>;
+  portInstances: PortInstance[];
 };
 
-export const switchPart: PartDefinition<"SWITCH"> = {
-  label: "Switch",
-  defaultParameters: {},
-  createPorts(partId: PartId) {
-    return {
-      TOGGLE: {
-        id: nanoid(),
-        partId,
-        definitionId: "TOGGLE",
-        position: { side: "left", offset: 0.5 },
-      },
-      POWER_IN: {
-        id: nanoid(),
-        partId,
-        definitionId: "POWER_IN",
-        position: { side: "top", offset: 0.5 },
-      },
-      POWER_OUT: {
-        id: nanoid(),
-        partId,
-        definitionId: "POWER_OUT",
-        position: { side: "bottom", offset: 0.5 },
-      },
-    };
-  },
-  computeOutputState(
-    part: PartInstance<"SWITCH">,
-    inputStates: Map<PortDefinitionId, AnyPortState>,
-  ): Map<PortDefinitionId, AnyPortState> {
-    const outputState = new Map<PortDefinitionId, AnyPortState>();
-    const powerInPortState = inputStates.get("POWER_IN");
-    const togglePortState = part.ports["TOGGLE"];
-    if (powerInPortState && togglePortState) {
-      outputState.set("POWER_OUT", {
-        on: powerInPortState.on && togglePortState.state.on,
-      });
-    }
-    return outputState;
-  },
-};
-
-export const lightbulb: PartDefinition<"LIGHTBULB"> = {
-  label: "Lightbulb",
-  defaultParameters: {},
-  createPorts(partId: PartId) {
-    return {
-      POWER_IN: {
-        id: nanoid(),
-        partId,
-        definitionId: "POWER_IN",
-        position: { side: "top", offset: 0.5 },
-      },
-      LIGHT_OUT: {
-        id: nanoid(),
-        partId,
-        definitionId: "LIGHT_OUT",
-        position: { side: "bottom", offset: 0.5 },
-      },
-    };
-  },
-  computeOutputState(
-    _: PartInstance<"LIGHTBULB">,
-    inputStates: Map<PortDefinitionId, AnyPortState>,
-  ): Map<PortDefinitionId, AnyPortState> {
-    const outputState = new Map<PortDefinitionId, AnyPortState>();
-    const powerInPortState = inputStates.get("POWER_IN");
-    if (powerInPortState) {
-      outputState.set("LIGHT_OUT", { on: powerInPortState.on });
-    }
-    return outputState;
-  },
-};
-
-export const partDefinitions: {
-  [K in keyof PartParametersMap]: PartDefinition<K>;
-} = {
-  PLUG: plug,
-  SWITCH: switchPart,
-  LIGHTBULB: lightbulb,
-};
-
-export function createPart<T extends PartType>(
-  partId: string,
-  type: T,
+export function createPartInstance<
+  const P extends Record<string, ParameterDefinition<any>>,
+  const I extends Record<string, PortDefinition<any>>,
+  const O extends Record<string, PortDefinition<any>>,
+>(
+  id: string,
   position: PartPosition,
-): PartInstance<T> {
-  const definition = partDefinitions[type];
+  partDefinitionId: PartDefinitionId,
+  definition: Omit<PartDefinition<P, I, O>, "id">,
+) {
+  const partId = toPartId(id);
+  const inputPortRef = (portKey: keyof I) => ({
+    partId: partId,
+    portKey,
+  });
+  const outputPortRef = (portKey: keyof O) => ({
+    partId: partId,
+    portKey,
+  });
+  const createPortInstance = (
+    [portKey, portDefinition]: [string, PortDefinition<any>],
+    direction: PortDirection,
+  ): PortInstance => ({
+    key: portKey,
+    definition: {
+      ...portDefinition,
+      direction: direction,
+    },
+    position: portDefinition.defaultPosition,
+  });
   return {
     id: partId,
-    type,
     position,
-    parameters: definition.defaultParameters,
-    ports: Object.fromEntries(
-      Object.entries(definition.createPorts(partId)).map(
-        ([definitionId, port]) => [
-          definitionId,
-          {
-            ...port,
-            state: getDefinition(port).defaultState,
-          },
-        ],
-      ),
+    definitionId: partDefinitionId,
+    parameterValues: Object.fromEntries(
+      Object.entries(definition.parameters).map(([paramKey, paramDef]) => [
+        paramKey,
+        paramDef.defaultValue,
+      ]),
     ),
+    portInstances: [
+      ...Object.entries(definition.inputPorts).map((entry) =>
+        createPortInstance(entry, "input"),
+      ),
+      ...Object.entries(definition.outputPorts).map((entry) =>
+        createPortInstance(entry, "output"),
+      ),
+    ],
+
+    in: inputPortRef,
+    out: outputPortRef,
+    act: (portKey: keyof I, value: PortValue<I[typeof portKey]>) =>
+      action(inputPortRef(portKey), value),
+    assert: (portKey: keyof O, value: PortValue<O[typeof portKey]>) =>
+      assertion(outputPortRef(portKey), value),
   };
+}
+
+export function toPartId(id: string) {
+  return id as PartId;
+}
+
+export function getDefinitionOfPart(
+  partId: PartId,
+  parts: PartInstance[],
+): PartDefinitionWithHelpers<any, any, any> | undefined {
+  const partInstance = parts.find((part) => part.id === partId);
+  if (!partInstance) return undefined;
+  return getPartDefinitionById(partInstance.definitionId);
+}
+
+// Parameters
+
+export type ParameterDefinition<T> = {
+  label: string;
+  schema: z.ZodType<T>;
+  defaultValue: T;
+};
+type ParameterValue<P> = P extends ParameterDefinition<infer T> ? T : never;
+
+export type ParameterValues<
+  T extends Record<string, ParameterDefinition<any>>,
+> = {
+  [K in keyof T]: ParameterValue<T[K]>;
+};
+
+// Ports
+
+export type PortSide = "top" | "right" | "bottom" | "left";
+
+/** A normalized position along one edge of its owning part node. */
+export interface PortPosition {
+  side: PortSide;
+  offset: number;
+}
+
+export type PortDirection = "input" | "output";
+
+export type PortKind = "state" | "flow" | "event";
+
+export type PortDefinition<T> = {
+  label: string;
+  kind: PortKind;
+  schema: z.ZodType<T>;
+  defaultValue: T;
+  defaultPosition: PortPosition;
+};
+
+export type PortValue<P> = P extends PortDefinition<infer T> ? T : never;
+
+type PortValues<T extends Record<string, PortDefinition<any>>> = {
+  [K in keyof T]: PortValue<T[K]>;
+};
+
+export type PortInstance = {
+  key: string;
+  definition: PortDefinitionWithHelpers<any>;
+  position: PortPosition;
+};
+
+export type InputPortRef<
+  P extends PartDefinition<any, any, any>,
+  K extends keyof P["inputPorts"],
+> = {
+  partId: PartId;
+  portKey: K;
+};
+
+export type OutputPortRef<
+  P extends PartDefinition<any, any, any>,
+  K extends keyof P["outputPorts"],
+> = {
+  partId: PartId;
+  portKey: K;
+};
+
+export type PortRef<
+  P extends PartDefinition<any, any, any> = PartDefinition<any, any, any>,
+  IK extends keyof P["inputPorts"] = keyof P["inputPorts"],
+  OK extends keyof P["outputPorts"] = keyof P["outputPorts"],
+> = InputPortRef<P, IK> | OutputPortRef<P, OK>;
+
+export function refPort(partId: PartId, portKey: string): PortRef {
+  return { partId, portKey };
+}
+
+export function getPortPath(portRef: PortRef): string {
+  return `${portRef.partId}:${String(portRef.portKey)}`;
+}
+
+export type PortDefinitionWithHelpers<T> = PortDefinition<T> & {
+  direction: PortDirection;
+};
+
+export function getDefinitionOfPort(
+  portRef: PortRef,
+  parts: PartInstance[],
+): PortDefinitionWithHelpers<any> | undefined {
+  const partDefinition = getDefinitionOfPart(portRef.partId, parts);
+  if (!partDefinition) return undefined;
+  const inputDefinition = partDefinition.inputPorts[portRef.portKey];
+  if (inputDefinition) {
+    return { ...inputDefinition, direction: "input" };
+  }
+  const outputDefinition = partDefinition.outputPorts[portRef.portKey];
+  if (outputDefinition) {
+    return { ...outputDefinition, direction: "output" };
+  }
+  return undefined;
+}
+
+export function deepEqual(a: any, b: any) {
+  return JSON.stringify(a) === JSON.stringify(b);
 }

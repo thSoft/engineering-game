@@ -8,15 +8,15 @@ import {
   lightbulb,
   plug,
   switchPart,
-} from "./new";
-import { evaluateTestCase } from "./newSimulation";
+} from "./levels";
+import { evaluateTestCase } from "./simulation";
 
-// Test desk lamp puzzle in the following cases:
+// Test desk lamp level in the following cases:
 // - no connections
 // - connection between plug and switch, switch and lightbulb
 test("Desk lamp", () => {
-  testPuzzleWithConnections(DeskLamp, [], false);
-  testPuzzleWithConnections(
+  testLevel(DeskLamp, [], false);
+  testLevel(
     DeskLamp,
     [
       connect(plug.out("powerOut"), switchPart.in("powerIn")),
@@ -26,7 +26,7 @@ test("Desk lamp", () => {
   );
 });
 
-function testPuzzleWithConnections(
+function testLevel(
   levelDefinition: LevelDefinition,
   connections: Connection[],
   expectedSuccess: boolean,

@@ -1,231 +1,198 @@
 import { nanoid } from "nanoid";
 import { create } from "zustand";
 import { persist, type StorageValue } from "zustand/middleware";
-import type { Connection, ConnectionId } from "../engine/connections";
-import type { PartId, PartPosition, PartType } from "../engine/parts";
-import { createPart, partDefinitions } from "../engine/parts";
-import type {
-  AnyPortState,
-  PortId,
+import {
+  Connection,
+  ConnectionId,
+  DeskLamp,
+  getInitialLevelState,
+  getLevelDefinitionById,
+  LevelDefinition,
+  LevelDefinitionId,
+  LevelState,
+} from "../engine/levels";
+import {
+  createPartInstance,
+  deepEqual,
+  getDefinitionOfPort,
+  getPartDefinitionById,
+  PartDefinitionId,
+  PartId,
+  PartPosition,
   PortInstance,
   PortPosition,
-} from "../engine/ports";
-import { getDefinition } from "../engine/ports";
-import {
-  createPuzzle,
-  type PuzzleDefinitionId,
-  type PuzzleState,
-} from "../engine/puzzles";
-import { computePropagatedPortStates, updateParts } from "../engine/simulation";
-
-export interface GameState {
-  puzzleStates: Partial<Record<PuzzleDefinitionId, PuzzleState>>;
-  currentPuzzleDefinitionId: PuzzleDefinitionId;
-
-  addPart: (type: PartType, position: PartPosition) => void;
-  deletePart: (partId: PartId) => void;
-  movePart: (partId: PartId, position: PartPosition) => void;
-  movePort: (portId: PortId, position: PortPosition) => void;
-  setPortState: (portId: PortId, state: AnyPortState) => void;
-  addConnection: (fromPortId: PortId, toPortId: PortId) => void;
-  deleteConnection: (connectionId: ConnectionId) => void;
-  loadPuzzle: (definitionId: PuzzleDefinitionId) => void;
-}
-
-export function getCurrentPuzzle(state: GameState): PuzzleState | undefined {
-  return state.puzzleStates[state.currentPuzzleDefinitionId];
-}
+  PortRef,
+  refPort,
+} from "../engine/parts";
 
 export const useGameStore = create<GameState>()(
   persist(
     (set) => {
-      function setCurrentPuzzle(
-        computeNewPuzzleState: (
-          oldPuzzleState: PuzzleState,
-        ) => Partial<PuzzleState>,
+      function setCurrentLevel(
+        computeNewLevelState: (
+          oldLevelState: LevelState,
+        ) => Partial<LevelState>,
       ): void {
         set((state) => {
-          if (state.currentPuzzleDefinitionId in state.puzzleStates) {
+          if (state.currentLevelDefinitionId in state.levelStates) {
             return {
-              puzzleStates: Object.fromEntries(
-                Object.entries(state.puzzleStates).map(
-                  ([puzzleDefinitionId, puzzleState]) => {
+              levelStates: Object.fromEntries(
+                Object.entries(state.levelStates).map(
+                  ([levelDefinitionId, levelState]) => {
                     if (
-                      state.currentPuzzleDefinitionId === puzzleDefinitionId
+                      state.currentLevelDefinitionId === levelDefinitionId &&
+                      levelState
                     ) {
                       return [
-                        puzzleDefinitionId,
+                        levelDefinitionId,
                         {
-                          ...puzzleState,
-                          ...computeNewPuzzleState(puzzleState),
+                          ...levelState,
+                          ...computeNewLevelState(levelState),
                         },
                       ];
                     } else {
-                      return [puzzleDefinitionId, puzzleState];
+                      return [levelDefinitionId, levelState];
                     }
                   },
                 ),
               ),
             };
           } else {
-            const newPuzzle = createPuzzle(state.currentPuzzleDefinitionId);
+            const newLevel = getInitialLevelState(
+              getLevelDefinitionById(state.currentLevelDefinitionId)!,
+            );
             return {
-              puzzleStates: {
-                ...state.puzzleStates,
-                [state.currentPuzzleDefinitionId]: {
-                  ...newPuzzle,
-                  ...computeNewPuzzleState(newPuzzle),
+              levelStates: {
+                ...state.levelStates,
+                [state.currentLevelDefinitionId]: {
+                  ...newLevel,
+                  ...computeNewLevelState(newLevel),
                 },
               },
             };
           }
         });
       }
-      const firstPuzzle: PuzzleDefinitionId = "DESK_LAMP";
-      return {
-        puzzleStates: {
-          [firstPuzzle]: createPuzzle(firstPuzzle),
-        },
-        currentPuzzleDefinitionId: firstPuzzle,
 
-        addPart: (type, position) => {
+      const firstLevel: LevelDefinition = DeskLamp;
+      return {
+        levelStates: {
+          [firstLevel.id]: getInitialLevelState(firstLevel),
+        },
+        currentLevelDefinitionId: firstLevel.id,
+
+        addPart: (definitionId, position) => {
           const partId = nanoid();
-          const definition = partDefinitions[type];
+          const definition = getPartDefinitionById(definitionId);
           if (!definition) return;
 
-          const newPart = createPart(partId, type, position);
-          setCurrentPuzzle((state) => ({
+          const newPart = createPartInstance(
+            partId,
+            position,
+            definitionId,
+            definition,
+          );
+          setCurrentLevel((state) => ({
             parts: [...state.parts, newPart],
           }));
         },
-
         deletePart: (partId) => {
-          setCurrentPuzzle((state) => {
-            const removedPortIds = new Set(
-              Array.from(
-                Object.values(
-                  state.parts.find((port) => port.id === partId)?.ports ?? {},
-                ),
-              ).map((port) => port.id),
-            );
-
+          setCurrentLevel((state) => {
+            const removedPortRefs = (
+              state.parts.find((part) => part.id === partId)?.portInstances ??
+              []
+            ).map((port) => refPort(partId, port.key));
             return {
-              parts: state.parts.filter((port) => port.id !== partId),
+              parts: state.parts.filter((part) => part.id !== partId),
               connections: state.connections.filter(
                 (connection) =>
-                  !removedPortIds.has(connection.fromPortId) &&
-                  !removedPortIds.has(connection.toPortId),
+                  !removedPortRefs.some((ref) =>
+                    deepEqual(ref, connection.source),
+                  ) &&
+                  !removedPortRefs.some((ref) =>
+                    deepEqual(ref, connection.target),
+                  ),
               ),
             };
           });
         },
-
         movePart: (partId, position) => {
-          setCurrentPuzzle((state) => ({
+          setCurrentLevel((state) => ({
             parts: state.parts.map((part) =>
               part.id === partId ? { ...part, position } : part,
             ),
           }));
         },
-
-        movePort: (portId, position) => {
-          setCurrentPuzzle((state) => ({
+        movePort: (portRef, position) => {
+          setCurrentLevel((state) => ({
             parts: state.parts.map((part) => ({
               ...part,
-              ports: Object.fromEntries(
-                Object.entries(part.ports).map(([definitionId, port]) =>
-                  port.id === portId
-                    ? [definitionId, { ...port, position }]
-                    : [definitionId, port],
-                ),
+              portInstances: Object.values(part.portInstances).map((port) =>
+                deepEqual(refPort(part.id, port.key), portRef)
+                  ? { ...port, position }
+                  : port,
               ),
             })),
           }));
         },
+        addConnection: (source, target) => {
+          setCurrentLevel((state) => {
+            const sourceDefinition = getDefinitionOfPort(source, state.parts);
+            const targetDefinition = getDefinitionOfPort(target, state.parts);
+            if (!sourceDefinition || !targetDefinition) {
+              return state;
+            }
 
-        setPortState: (portId, newState) => {
-          setCurrentPuzzle((state) => {
-            const updatedParts = updateParts(state.parts, portId, newState);
-            const propagatedParts = computePropagatedPortStates(
-              portId,
-              state.connections,
-              updatedParts,
-            );
-            return {
-              parts: propagatedParts,
-            };
-          });
-        },
-
-        addConnection: (fromPortId, toPortId) => {
-          setCurrentPuzzle((state) => {
-            let fromPort: PortInstance | undefined;
-            let toPort: PortInstance | undefined;
+            let sourcePortInstance: PortInstance | undefined;
+            let targetPortInstance: PortInstance | undefined;
             for (const part of state.parts) {
-              for (const port of Object.values(part.ports)) {
-                if (port.id === fromPortId) {
-                  fromPort = port;
-                } else if (port.id === toPortId) {
-                  toPort = port;
+              for (const port of part.portInstances) {
+                if (deepEqual(refPort(part.id, port.key), source)) {
+                  sourcePortInstance = port;
+                } else if (deepEqual(refPort(part.id, port.key), target)) {
+                  targetPortInstance = port;
                 }
               }
             }
+
             if (
-              !fromPort ||
-              !toPort ||
-              getDefinition(fromPort).direction !== "output" ||
-              getDefinition(toPort).direction !== "input" ||
-              getDefinition(fromPort).kind !== getDefinition(toPort).kind
+              !sourcePortInstance ||
+              !targetPortInstance ||
+              sourceDefinition.direction !== "output" ||
+              targetDefinition.direction !== "input" ||
+              sourceDefinition.kind !== targetDefinition.kind
             ) {
               return state;
             }
             const exists = state.connections.some(
               (connection) =>
-                connection.fromPortId === fromPortId &&
-                connection.toPortId === toPortId,
+                deepEqual(connection.source, source) &&
+                deepEqual(connection.target, target),
             );
             if (exists) return state;
 
             const newConnection: Connection = {
               id: nanoid(),
-              fromPortId,
-              toPortId,
+              source,
+              target,
             };
             const updatedConnections = [...state.connections, newConnection];
-            const propagatedParts = computePropagatedPortStates(
-              fromPortId,
-              updatedConnections,
-              state.parts,
-            );
-            return { connections: updatedConnections, parts: propagatedParts };
+            return { connections: updatedConnections };
           });
         },
-
         deleteConnection: (connectionId) => {
-          setCurrentPuzzle((state) => {
+          setCurrentLevel((state) => {
             const updatedConnections = state.connections.filter(
               (connection) => connection.id !== connectionId,
             );
-            const connection = state.connections.find(
-              (connection) => connection.id === connectionId,
-            );
-            const toPortId = connection?.toPortId;
-            const propagatedParts = toPortId
-              ? computePropagatedPortStates(
-                  toPortId,
-                  updatedConnections,
-                  state.parts,
-                )
-              : state.parts;
-            return { connections: updatedConnections, parts: propagatedParts };
+            return { connections: updatedConnections };
           });
         },
-
-        loadPuzzle: (definitionId: PuzzleDefinitionId) => {
+        loadLevel: (definitionId) => {
           set({
-            currentPuzzleDefinitionId: definitionId,
+            currentLevelDefinitionId: definitionId,
           });
-          setCurrentPuzzle((state) => state);
+          setCurrentLevel((state) => state);
         },
       };
     },
@@ -246,3 +213,22 @@ export const useGameStore = create<GameState>()(
     },
   ),
 );
+
+export function getCurrentLevel(state: GameState): LevelState | undefined {
+  return state.levelStates[state.currentLevelDefinitionId];
+}
+
+// Game state
+
+export type GameState = {
+  levelStates: Partial<Record<LevelDefinitionId, LevelState>>;
+  currentLevelDefinitionId: LevelDefinitionId;
+
+  addPart: (definitionId: PartDefinitionId, position: PartPosition) => void;
+  deletePart: (partId: PartId) => void;
+  movePart: (partId: PartId, position: PartPosition) => void;
+  movePort: (portRef: PortRef, position: PortPosition) => void;
+  addConnection: (source: PortRef, target: PortRef) => void;
+  deleteConnection: (connectionId: ConnectionId) => void;
+  loadLevel: (definitionId: LevelDefinitionId) => void;
+};

@@ -5,9 +5,14 @@ import {
   ToggleRight,
   type LucideIcon,
 } from "lucide-react";
-import { Lightbulb, PartDefinitionId, Plug, Switch } from "../engine/new";
-import { partDefinitions } from "../engine/parts";
-import { useGameStore } from "../store/newGameStore";
+import {
+  Lightbulb,
+  PartDefinitionId,
+  partDefinitions,
+  Plug,
+  Switch,
+} from "../engine/parts";
+import { useGameStore } from "../store/gameStore";
 
 const partPalette: { type: PartDefinitionId; label: string }[] = Object.entries(
   partDefinitions,

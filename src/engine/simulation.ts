@@ -1,167 +1,228 @@
-import type { Connection } from "./connections";
 import {
-  type PartId,
-  type PartInstance,
-  type PartParametersMap,
-  partDefinitions,
+  Connection,
+  LevelState,
+  PortInstanceState,
+  processTestStep,
+  TestCase,
+  TestResult,
+  TestStepResult,
+} from "./levels";
+import {
+  deepEqual,
+  getDefinitionOfPart,
+  PartDefinition,
+  PartId,
+  PartInstance,
+  PortRef,
+  refPort,
 } from "./parts";
-import {
-  type AnyPortState,
-  type PortDefinitionId,
-  type PortId,
-  type PortInstance,
-  getDefinition,
-} from "./ports";
-import { PortInstanceId } from "./puzzles";
 
 export function computePropagatedPortStates(
-  sourcePortId: string,
+  firstPortRef: PortRef,
   connections: Connection[],
   parts: PartInstance[],
-): PartInstance[] {
-  const portToPartMap = new Map<PortId, PartInstance>();
-  for (const part of parts) {
-    for (const port of Object.values(part.ports)) {
-      portToPartMap.set(port.id, part);
-    }
-  }
-  const sourcePartId = portToPartMap.get(sourcePortId)?.id;
-  if (!sourcePartId) return parts;
+  initialPortStates: PortInstanceState[],
+): PortInstanceState[] {
+  const firstPartId = firstPortRef.partId;
 
   const visitedParts = new Set<PartId>();
-  const queue: PartId[] = [sourcePartId];
-  const updatedParts = structuredClone(parts);
+  const queue: PartId[] = [firstPartId];
+  var portStates = structuredClone(initialPortStates);
 
   while (queue.length > 0) {
-    const currentPartId = queue.shift()!;
-    const currentPart = parts.find((part) => part.id === currentPartId);
+    const currentPartId = queue.shift();
+    if (!currentPartId) continue;
+    const currentPart = getPart(parts, currentPartId);
     if (!currentPart) continue;
+    const partDefinition = getDefinitionOfPart(currentPartId, parts);
+    if (!partDefinition) continue;
     if (visitedParts.has(currentPart.id)) continue;
     visitedParts.add(currentPart.id);
 
     // Compute input port states from connections
-    const inputPortStates = new Map<PortDefinitionId, AnyPortState>();
-    const entries = Object.entries(currentPart.ports) as [
-      [PortDefinitionId, PortInstance],
-    ];
-    for (const [definitionId, port] of entries) {
-      const definition = getDefinition(port);
-      if (definition.direction === "input") {
-        const incomingConnections = connections.filter(
-          (connection) => connection.toPortId === port.id,
+    for (const inputPortKey of Object.keys(partDefinition.inputPorts)) {
+      const currentPortRef = refPort(currentPart.id, inputPortKey);
+      const incomingConnections = getConnectionsWithTarget(
+        currentPortRef,
+        connections,
+      );
+      if (incomingConnections.length > 0) {
+        const sourcePortRef = incomingConnections[0].source;
+        portStates = setPortValue(
+          currentPortRef,
+          getPortValue(sourcePortRef, portStates, parts),
+          portStates,
         );
-        if (incomingConnections.length > 0) {
-          const fromPortId = incomingConnections[0].fromPortId;
-          const fromPort = updatedParts
-            .flatMap((part) => Array.from(Object.values(part.ports)))
-            .find((port) => port.id === fromPortId);
-          if (fromPort) {
-            inputPortStates.set(definitionId, fromPort.state);
-          }
-        } else {
-          if (
-            inputPortStates.get(definitionId) === undefined &&
-            definition.kind === "flow"
-          ) {
-            inputPortStates.set(definitionId, getDefinition(port).defaultState);
-          } else {
-            inputPortStates.set(definitionId, port.state);
-          }
-        }
       }
     }
 
     // Compute output ports from computed input port states using the part's output computation logic
-    const outputPortStates = computeOutputStateForPart(
+    portStates = computeOutputStateForPart(
       currentPart,
-      inputPortStates,
+      partDefinition,
+      portStates,
+      parts,
     );
-
-    // Update the current part's ports with the new states
-    const partIndex = updatedParts.findIndex(
-      (part) => part.id === currentPart.id,
-    );
-    if (partIndex !== -1) {
-      const updatedPart = { ...updatedParts[partIndex] };
-      for (const [definitionId, newState] of [
-        ...inputPortStates.entries(),
-        ...outputPortStates.entries(),
-      ]) {
-        const port = updatedPart.ports[definitionId];
-        if (port) {
-          updatedPart.ports[definitionId] = { ...port, state: newState };
-        }
-      }
-      updatedParts[partIndex] = updatedPart;
-    }
 
     // Enqueue connected parts for further propagation
-    for (const connection of connections) {
-      if (
-        updatedParts
-          .filter((part) => part.id === currentPartId)
-          .flatMap((part) =>
-            Object.values(part.ports)
-              .filter((port) => getDefinition(port).direction === "output")
-              .map((port) => port.id),
-          )
-          .includes(connection.fromPortId)
-      ) {
-        const nextPartId = portToPartMap.get(connection.toPortId)?.id;
-        if (nextPartId && !visitedParts.has(nextPartId)) {
+    for (const outputPortKey of Object.keys(partDefinition.outputPorts)) {
+      const outputPortRef = refPort(currentPart.id, outputPortKey);
+      const outgoingConnections = getConnectionsWithSource(
+        outputPortRef,
+        connections,
+      );
+      for (const connection of outgoingConnections) {
+        const nextPartId = connection.target.partId;
+        if (!visitedParts.has(nextPartId)) {
           queue.push(nextPartId);
         }
       }
     }
   }
-  return updatedParts;
+  return portStates;
 }
 
-function computeOutputStateForPart<K extends keyof PartParametersMap>(
-  part: PartInstance<K>,
-  inputPortStates: Map<PortDefinitionId, AnyPortState>,
-): Map<PortDefinitionId, AnyPortState> {
-  const definition = partDefinitions[part.type];
-  if (!definition) return new Map();
-  return definition.computeOutputState(part, inputPortStates);
+function getPart(parts: PartInstance[], partId: string) {
+  return parts.find((part) => part.id === partId);
 }
 
-export function updateParts(
+function computeOutputStateForPart(
+  partInstance: PartInstance,
+  partDefinition: PartDefinition<any, any, any>,
+  portStates: PortInstanceState[],
   parts: PartInstance[],
-  portId: PortId,
-  newState: AnyPortState,
-) {
-  return parts.map((part) => ({
-    ...part,
-    ports: Object.fromEntries(
-      Object.entries(part.ports).map(([definitionId, port]) =>
-        port.id === portId
-          ? [definitionId, { ...port, state: newState }]
-          : [definitionId, port],
-      ),
-    ),
-  }));
+): PortInstanceState[] {
+  const inputPortStatesRecord = Object.fromEntries(
+    Object.keys(partDefinition.inputPorts).map((portKey) => {
+      const portRef = refPort(partInstance.id, portKey);
+      const state = getPortValue(portRef, portStates, parts);
+      return [portKey, state];
+    }),
+  );
+  const outputPortStatesRecord = partDefinition.compute(
+    inputPortStatesRecord,
+    partInstance.parameterValues,
+  );
+  const outputPortStates = Object.entries(outputPortStatesRecord).map(
+    ([portKey, value]) => ({
+      portRef: refPort(partInstance.id, portKey),
+      value,
+    }),
+  );
+  return applyStates(outputPortStates, portStates);
 }
 
-export function updatePartsWithPortInstanceId(
+function applyStates(
+  newStates: PortInstanceState[],
+  existingStates: PortInstanceState[],
+): PortInstanceState[] {
+  return newStates.reduce(
+    (updatedPortStates, { portRef, value }) =>
+      setPortValue(portRef, value, updatedPortStates),
+    existingStates,
+  );
+}
+
+function getPortValue(
+  portRef: PortRef<any, any>,
+  portStates: PortInstanceState[],
   parts: PartInstance[],
-  portInstanceId: PortInstanceId,
-  newState: AnyPortState,
 ) {
-  return parts.map((part) => {
-    if (part.id === portInstanceId.partId) {
-      return {
-        ...part,
-        ports: Object.fromEntries(
-          Object.entries(part.ports).map(([definitionId, port]) =>
-            port.definitionId === portInstanceId.portDefinitionId
-              ? [definitionId, { ...port, state: newState }]
-              : [definitionId, port],
-          ),
+  const portState = portStates.find((state) =>
+    deepEqual(state.portRef, portRef),
+  );
+  if (portState) {
+    return portState.value;
+  } else {
+    const partDefinition = getDefinitionOfPart(portRef.partId, parts);
+    if (!partDefinition) return;
+    return partDefinition.allPorts[portRef.portKey].defaultValue;
+  }
+}
+
+function setPortValue(
+  portRef: PortRef<any, any>,
+  value: any,
+  portStates: PortInstanceState[],
+): PortInstanceState[] {
+  return [
+    ...portStates.filter((state) => !deepEqual(state.portRef, portRef)),
+    {
+      portRef,
+      value,
+    },
+  ];
+}
+
+function getConnectionsWithTarget(
+  targetPortRef: PortRef<any, any>,
+  connections: Connection[],
+) {
+  return connections.filter((connection) =>
+    deepEqual(connection.target, targetPortRef),
+  );
+}
+
+function getConnectionsWithSource(
+  sourcePortRef: PortRef<any, any>,
+  connections: Connection[],
+) {
+  return connections.filter((connection) =>
+    deepEqual(connection.source, sourcePortRef),
+  );
+}
+
+export function evaluateTestCase(
+  levelState: LevelState,
+  testCase: TestCase,
+): TestResult {
+  const initialStepResults: TestStepResult[] = [
+    {
+      states: applyStates(levelState.actions, testCase.initialState),
+      success: true,
+    },
+  ];
+  const stepResults = testCase.steps.reduce((previousResults, step, index) => {
+    const previousResult = previousResults[index];
+    const statesBeforeStep = previousResult.states;
+    const statesAfterStep = processTestStep(
+      step,
+      (action) => {
+        const updatedStates = setPortValue(
+          action.portRef,
+          action.value,
+          statesBeforeStep,
+        );
+        return computePropagatedPortStates(
+          action.portRef,
+          levelState.connections,
+          levelState.parts,
+          updatedStates,
+        );
+      },
+      () => previousResult.states,
+    );
+    const success = processTestStep(
+      step,
+      () => true,
+      (assertion) =>
+        deepEqual(
+          getPortValue(assertion.portRef, statesBeforeStep, levelState.parts),
+          assertion.value,
         ),
-      };
-    } else {
-      return part;
-    }
-  });
+    );
+    return [
+      ...previousResults,
+      {
+        step: step,
+        states: statesAfterStep,
+        success: success,
+      },
+    ];
+  }, initialStepResults);
+  return {
+    testCase: testCase,
+    stepResults: stepResults,
+    success: stepResults.every((result) => result.success),
+  };
 }

@@ -1,9 +1,9 @@
 import { ReactFlowProvider } from "@xyflow/react";
 import { Boxes, Check, Cpu } from "lucide-react";
 import { useState } from "react";
-import { getLevelDefinition } from "../engine/new";
-import { evaluateTestCase } from "../engine/newSimulation";
-import { useGameStore } from "../store/newGameStore";
+import { getLevelDefinitionById } from "../engine/levels";
+import { evaluateTestCase } from "../engine/simulation";
+import { useGameStore } from "../store/gameStore";
 import GraphEditor from "./GraphEditor";
 import PartPalette from "./PartPalette";
 
@@ -16,7 +16,9 @@ function App() {
     (s) => s.levelStates[currentLevelDefinitionId],
   );
 
-  const currentLevelDefinition = getLevelDefinition(currentLevelDefinitionId);
+  const currentLevelDefinition = getLevelDefinitionById(
+    currentLevelDefinitionId,
+  );
   return (
     <div className="h-screen w-screen flex flex-col bg-slate-900 text-slate-100 overflow-hidden">
       {/* ── Header ── */}
