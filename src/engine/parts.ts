@@ -180,11 +180,15 @@ export function createPartInstance<
   definition: Omit<PartDefinition<P, I, O>, "id">,
 ) {
   const partId = toPartId(id);
-  const inputPortRef = (portKey: keyof I) => ({
+  const inputPortRef = (
+    portKey: keyof I,
+  ): InputPortRef<PartDefinition<P, I, O>, keyof I> => ({
     partId: partId,
     portKey,
   });
-  const outputPortRef = (portKey: keyof O) => ({
+  const outputPortRef = (
+    portKey: keyof O,
+  ): OutputPortRef<PartDefinition<P, I, O>, keyof O> => ({
     partId: partId,
     portKey,
   });
@@ -220,10 +224,16 @@ export function createPartInstance<
 
     in: inputPortRef,
     out: outputPortRef,
-    act: (portKey: keyof I, value: PortValue<I[typeof portKey]>) =>
-      action(inputPortRef(portKey), value),
-    assert: (portKey: keyof O, value: PortValue<O[typeof portKey]>) =>
-      assertion(outputPortRef(portKey), value),
+    act: (
+      time: number,
+      portKey: keyof I,
+      value: PortValue<I[typeof portKey]>,
+    ) => action(time, inputPortRef(portKey), value),
+    assert: (
+      time: number,
+      portKey: keyof O,
+      value: PortValue<O[typeof portKey]>,
+    ) => assertion(time, outputPortRef(portKey), value),
   };
 }
 

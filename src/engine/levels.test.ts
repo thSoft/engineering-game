@@ -1,15 +1,14 @@
 import { expect, test } from "vitest";
+import { connect, Connection } from "./connections";
 import {
-  connect,
-  Connection,
   DeskLamp,
+  evaluateTestCase,
   getInitialLevelState,
   LevelDefinition,
   lightbulb,
   plug,
   switchPart,
 } from "./levels";
-import { evaluateTestCase } from "./simulation";
 
 // Test desk lamp level in the following cases:
 // - no connections
@@ -33,8 +32,8 @@ function testLevel(
 ) {
   const levelState = getInitialLevelState(levelDefinition);
   levelState.connections = connections;
-  const result = evaluateTestCase(levelState, levelDefinition.testCase);
-  expect(result.stepResults.every((stepResult) => stepResult.success)).toBe(
-    expectedSuccess,
-  );
+  const result = evaluateTestCase(levelDefinition.testCase, levelState);
+  expect(
+    result.assertionResults.every((assertionResult) => assertionResult.success),
+  ).toBe(expectedSuccess);
 }

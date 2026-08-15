@@ -1,12 +1,6 @@
-import {
-  Connection,
-  LevelState,
-  PortInstanceState,
-  processTestStep,
-  TestCase,
-  TestResult,
-  TestStepResult,
-} from "./levels";
+import _ from "lodash";
+import { Connection } from "./connections";
+import { Action, LevelState, PortInstanceState } from "./levels";
 import {
   deepEqual,
   getDefinitionOfPart,
@@ -14,17 +8,31 @@ import {
   PartId,
   PartInstance,
   PortRef,
+  PortValue,
   refPort,
 } from "./parts";
 
+export type SimulationInput = {
+  startTime: number;
+  actions: Action<any, any>[];
+};
+
+export type SimulationResult = {
+  input: SimulationInput;
+  actionResults: SimulationActionResult[];
+};
+
+export type SimulationActionResult = {
+  action?: Action<any, any>;
+  states: PortInstanceState[];
+};
+
 export function computePropagatedPortStates(
-  firstPortRef: PortRef,
+  firstPartId: PartId,
   connections: Connection[],
   parts: PartInstance[],
   initialPortStates: PortInstanceState[],
 ): PortInstanceState[] {
-  const firstPartId = firstPortRef.partId;
-
   const visitedParts = new Set<PartId>();
   const queue: PartId[] = [firstPartId];
   var portStates = structuredClone(initialPortStates);
@@ -172,57 +180,81 @@ function getConnectionsWithSource(
   );
 }
 
-export function evaluateTestCase(
+export function simulate(
+  input: SimulationInput,
   levelState: LevelState,
-  testCase: TestCase,
-): TestResult {
-  const initialStepResults: TestStepResult[] = [
-    {
-      states: applyStates(levelState.actions, testCase.initialState),
-      success: true,
+): SimulationResult {
+  const initialStates: PortInstanceState[] = levelState.parts.flatMap(
+    (part) => {
+      const definition = getDefinitionOfPart(part.id, levelState.parts);
+      if (!definition) return [];
+      return Object.keys(definition.inputPorts).map((portKey) => ({
+        portRef: refPort(part.id, portKey),
+        value: definition.inputPorts[portKey].defaultValue,
+      }));
     },
-  ];
-  const stepResults = testCase.steps.reduce((previousResults, step, index) => {
-    const previousResult = previousResults[index];
-    const statesBeforeStep = previousResult.states;
-    const statesAfterStep = processTestStep(
-      step,
-      (action) => {
-        const updatedStates = setPortValue(
-          action.portRef,
-          action.value,
-          statesBeforeStep,
-        );
-        return computePropagatedPortStates(
-          action.portRef,
-          levelState.connections,
-          levelState.parts,
-          updatedStates,
-        );
-      },
-      () => previousResult.states,
-    );
-    const success = processTestStep(
-      step,
-      () => true,
-      (assertion) =>
-        deepEqual(
-          getPortValue(assertion.portRef, statesBeforeStep, levelState.parts),
-          assertion.value,
-        ),
-    );
-    return [
-      ...previousResults,
+  );
+  const propagatedInitialStates = levelState.parts.reduce(
+    (states, part) =>
+      computePropagatedPortStates(
+        part.id,
+        levelState.connections,
+        levelState.parts,
+        states,
+      ),
+    initialStates,
+  );
+  const actionResults: SimulationActionResult[] = input.actions.reduce(
+    (previousResults, action, index) => {
+      const previousResult = previousResults[index];
+      const statesBeforeAction = previousResult.states;
+      const updatedStates = setPortValue(
+        action.portRef,
+        action.value,
+        statesBeforeAction,
+      );
+      const statesAfterAction = computePropagatedPortStates(
+        action.portRef.partId,
+        levelState.connections,
+        levelState.parts,
+        updatedStates,
+      );
+      return [
+        ...previousResults,
+        {
+          action: action,
+          states: statesAfterAction,
+        },
+      ];
+    },
+    [
       {
-        step: step,
-        states: statesAfterStep,
-        success: success,
+        states: propagatedInitialStates,
       },
-    ];
-  }, initialStepResults);
+    ],
+  );
   return {
-    testCase: testCase,
-    stepResults: stepResults,
-    success: stepResults.every((result) => result.success),
+    input: input,
+    actionResults: actionResults,
   };
+}
+
+export function getPortValueAt(
+  portRef: PortRef<any, any>,
+  time: number,
+  simulationResult: SimulationResult,
+): PortValue<any> | undefined {
+  function stateMatches(state: PortInstanceState) {
+    return deepEqual(state.portRef, portRef);
+  }
+  const earlierMatchingResults = simulationResult.actionResults.filter(
+    (result) =>
+      (result.action?.time ?? -Infinity) <= time &&
+      result.states.some(stateMatches),
+  );
+  const latestMatchingResult = _.maxBy(
+    earlierMatchingResults,
+    (result) => result.action?.time ?? -Infinity,
+  );
+  return latestMatchingResult?.states.find(stateMatches)?.value;
 }

@@ -1,8 +1,7 @@
 import { ReactFlowProvider } from "@xyflow/react";
 import { Boxes, Check, Cpu } from "lucide-react";
 import { useState } from "react";
-import { getLevelDefinitionById } from "../engine/levels";
-import { evaluateTestCase } from "../engine/simulation";
+import { evaluateTestCase, getLevelDefinitionById } from "../engine/levels";
 import { useGameStore } from "../store/gameStore";
 import GraphEditor from "./GraphEditor";
 import PartPalette from "./PartPalette";
@@ -41,13 +40,10 @@ function App() {
               <button
                 onClick={() => {
                   const result = evaluateTestCase(
-                    levelState,
                     currentLevelDefinition.testCase,
+                    levelState,
                   );
-                  const success = result.stepResults.every(
-                    (result) => result.success,
-                  );
-                  alert(success ? "PASS" : "FAIL");
+                  alert(result.success ? "PASS" : "FAIL");
                 }}
                 style={{ display: "flex", alignItems: "center" }}
               >

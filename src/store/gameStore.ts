@@ -1,9 +1,8 @@
 import { nanoid } from "nanoid";
 import { create } from "zustand";
 import { persist, type StorageValue } from "zustand/middleware";
+import { Connection, ConnectionId } from "../engine/connections";
 import {
-  Connection,
-  ConnectionId,
   DeskLamp,
   getInitialLevelState,
   getLevelDefinitionById,

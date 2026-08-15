@@ -1,4 +1,4 @@
-import { nanoid } from "nanoid";
+import { Connection } from "./connections";
 import {
   deepEqual,
   InputPortRef,
@@ -11,6 +11,12 @@ import {
   PortValue,
   Switch,
 } from "./parts";
+import {
+  getPortValueAt,
+  simulate,
+  SimulationInput,
+  SimulationResult,
+} from "./simulation";
 
 // Level definitions
 
@@ -27,12 +33,14 @@ export const DeskLamp = defineLevel("DESK_LAMP", {
     lightbulb.out("lit"),
   ],
   testCase: {
-    initialState: [],
-    steps: [
-      plug.act("plugged", true),
-      switchPart.act("toggle", true),
-      lightbulb.assert("lit", true),
-    ],
+    input: {
+      startTime: 0,
+      actions: [
+        plug.act(1, "plugged", true),
+        switchPart.act(2, "toggle", true),
+      ],
+    },
+    assertions: [lightbulb.assert(2, "lit", true)],
   },
 });
 
@@ -65,18 +73,11 @@ export function isExposed(
   );
 }
 
-export type TestCase = {
-  initialState: Action<any, any>[];
-  steps: TestStep[];
-};
-
-export type TestStep = Action<any, any> | Assertion<any, any>;
-
 export type Action<
   P extends PartDefinition<any, any, any>,
   K extends keyof P["inputPorts"],
 > = {
-  type: "ACTION";
+  time: number;
   portRef: InputPortRef<P, K>;
   value: PortValue<P["inputPorts"][K]>;
 };
@@ -85,11 +86,12 @@ export function action<
   P extends PartDefinition<any, any, any>,
   K extends keyof P["inputPorts"],
 >(
+  time: number,
   portRef: InputPortRef<P, K>,
   value: PortValue<P["inputPorts"][K]>,
 ): Action<P, K> {
   return {
-    type: "ACTION",
+    time,
     portRef,
     value,
   };
@@ -99,7 +101,7 @@ export type Assertion<
   P extends PartDefinition<any, any, any>,
   K extends keyof P["outputPorts"],
 > = {
-  type: "ASSERTION";
+  time: number;
   portRef: OutputPortRef<P, K>;
   value: PortValue<P["outputPorts"][K]>;
 };
@@ -108,39 +110,34 @@ export function assertion<
   P extends PartDefinition<any, any, any>,
   K extends keyof P["outputPorts"],
 >(
+  time: number,
   portRef: OutputPortRef<P, K>,
   value: PortValue<P["outputPorts"][K]>,
 ): Assertion<P, K> {
   return {
-    type: "ASSERTION",
+    time,
     portRef,
     value,
   };
 }
 
-export function processTestStep<O>(
-  step: TestStep,
-  ifAction: (action: Action<any, any>) => O,
-  ifAssertion: (assertion: Assertion<any, any>) => O,
-): O {
-  switch (step.type) {
-    case "ACTION":
-      return ifAction(step);
-    case "ASSERTION":
-      return ifAssertion(step);
-  }
-}
+export type TestCase = {
+  input: SimulationInput;
+  assertions: Assertion<any, any>[];
+};
 
-export type TestResult = {
+export type TestCaseResult = {
   testCase: TestCase;
-  stepResults: TestStepResult[];
+  simulationResult: SimulationResult;
+  assertionResults: AssertionResult[];
   success: boolean;
 };
 
-export type TestStepResult = {
-  step?: TestStep;
-  states: PortInstanceState[];
+export type AssertionResult = {
+  assertion: Assertion<any, any>;
+  actualValue: PortValue<any>;
   success: boolean;
+  // TODO trace
 };
 
 export type PortInstanceState<
@@ -165,35 +162,37 @@ export function getInitialLevelState(
   return {
     parts: levelDefinition.fixedParts,
     connections: [],
-    actions: [],
+    simulationInput: { startTime: 0, actions: [] },
   };
 }
 
 export type LevelState = {
   parts: PartInstance[];
   connections: Connection[];
-  actions: Action<any, any>[];
+  simulationInput: SimulationInput;
 };
 
-export type ConnectionId = string & { __brand: "ConnectionId" };
-
-export function toConnectionId(id: string) {
-  return id as ConnectionId;
-}
-
-export type Connection = {
-  id: ConnectionId;
-  source: OutputPortRef<any, any>;
-  target: InputPortRef<any, any>;
-};
-
-export function connect(
-  source: OutputPortRef<any, any>,
-  target: InputPortRef<any, any>,
-): Connection {
+export function evaluateTestCase(
+  testCase: TestCase,
+  levelState: LevelState,
+): TestCaseResult {
+  const simulationResult = simulate(testCase.input, levelState);
+  const assertionResults = testCase.assertions.map((assertion) => {
+    const actualValue = getPortValueAt(
+      assertion.portRef,
+      assertion.time,
+      simulationResult,
+    );
+    return {
+      assertion,
+      actualValue,
+      success: deepEqual(actualValue, assertion.value),
+    };
+  });
   return {
-    id: toConnectionId(nanoid()),
-    source,
-    target,
+    testCase,
+    simulationResult,
+    assertionResults,
+    success: assertionResults.every((result) => result.success),
   };
 }

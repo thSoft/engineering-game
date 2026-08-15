@@ -13,10 +13,12 @@ import { useCallback, useMemo, useState } from "react";
 import {
   Connection,
   ConnectionId,
+  toConnectionId,
+} from "../engine/connections";
+import {
   getLevelDefinitionById,
   isExposed,
   LevelDefinition,
-  toConnectionId,
 } from "../engine/levels";
 import {
   deepEqual,
