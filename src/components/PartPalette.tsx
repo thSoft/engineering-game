@@ -14,13 +14,6 @@ import {
 } from "../engine/parts";
 import { useGameStore } from "../store/gameStore";
 
-const partPalette: { type: PartDefinitionId; label: string }[] = Object.entries(
-  partDefinitions,
-).map(([type, definition]) => ({
-  type: type as PartDefinitionId,
-  label: definition.label,
-}));
-
 type PartDefinitionVisual = {
   icon: LucideIcon;
   color: string;
@@ -86,18 +79,18 @@ export default function PartPalette({ onAdd }: Props) {
       </div>
 
       <div className="p-2 space-y-1.5 flex-1 overflow-y-auto">
-        {partPalette.map(({ type, label }) => {
-          const visual = PART_DEFINITION_VISUALS[type];
+        {partDefinitions.map(({ id, label }) => {
+          const visual = PART_DEFINITION_VISUALS[id];
           const Icon = visual?.icon ?? Plus;
           const colorStyle = getColorStyle(visual?.color);
           const description = visual?.description ?? "";
 
           return (
             <div
-              key={type}
+              key={id}
               draggable
-              onDragStart={(e) => handleDragStart(e, type)}
-              onClick={() => handleClick(type)}
+              onDragStart={(e) => handleDragStart(e, id)}
+              onClick={() => handleClick(id)}
               className={`flex flex-col gap-0.5 rounded-lg border px-2.5 py-2 cursor-grab active:cursor-grabbing select-none transition`}
               title={`Click or drag to add ${label}`}
               style={colorStyle}
