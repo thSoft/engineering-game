@@ -125,10 +125,19 @@ function buildNodeData(
 
 export const selectedColor = "#ffffff";
 
-function buildEdge(connection: Connection, selected: boolean, parts: PartInstance[]): Edge {
+function buildEdge(
+  connection: Connection,
+  selected: boolean,
+  parts: PartInstance[],
+  currentTime: number,
+  simulationResult: SimulationResult | undefined,
+): Edge {
   const source = connection.source;
   const target = connection.target;
-  const flowOn = /* TODO source?.state.on ??*/ false;
+  const sourceValue = simulationResult
+    ? getPortValueAt(source, currentTime, simulationResult)
+    : null;
+  const flowOn = sourceValue === true;
   const sourceDefinition = getDefinitionOfPort(source, parts);
   const color = selected
     ? selectedColor
@@ -261,9 +270,15 @@ export default function GraphEditor() {
   const edges: Edge[] = useMemo(
     () =>
       connections.map((connection) =>
-        buildEdge(connection, connection.id === connectionMenu?.connectionId, parts),
+        buildEdge(
+          connection,
+          connection.id === connectionMenu?.connectionId,
+          parts,
+          currentTime,
+          simulationResult,
+        ),
       ),
-    [connections, parts, connectionMenu],
+    [connections, parts, connectionMenu, currentTime, simulationResult],
   );
 
   const onNodesChange = useCallback(
