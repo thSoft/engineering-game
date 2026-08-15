@@ -1,3 +1,4 @@
+import _ from "lodash";
 import { nanoid } from "nanoid";
 import { create } from "zustand";
 import { persist, type StorageValue } from "zustand/middleware";
@@ -202,14 +203,17 @@ export const useGameStore = create<GameState>()(
             ...state,
             simulationInput: {
               ...state.simulationInput,
-              actions: [
-                ...deleteAction(state, portRef),
-                {
-                  time: state.currentTime,
-                  portRef,
-                  value,
-                },
-              ],
+              actions: _.sortBy(
+                [
+                  ...deleteAction(state, portRef),
+                  {
+                    time: state.currentTime,
+                    portRef,
+                    value,
+                  },
+                ],
+                (action) => action.time,
+              ),
             },
           }));
         },

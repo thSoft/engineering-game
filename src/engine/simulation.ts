@@ -1,5 +1,9 @@
 import _ from "lodash";
-import { Connection } from "./connections";
+import {
+  Connection,
+  getConnectionsWithSource,
+  getConnectionsWithTarget,
+} from "./connections";
 import {
   deepEqual,
   getDefinitionOfPart,
@@ -195,24 +199,6 @@ function setPortValue(
   ];
 }
 
-function getConnectionsWithTarget(
-  targetPortRef: PortRef<any, any>,
-  connections: Connection[],
-) {
-  return connections.filter((connection) =>
-    deepEqual(connection.target, targetPortRef),
-  );
-}
-
-function getConnectionsWithSource(
-  sourcePortRef: PortRef<any, any>,
-  connections: Connection[],
-) {
-  return connections.filter((connection) =>
-    deepEqual(connection.source, sourcePortRef),
-  );
-}
-
 export type LevelState = {
   parts: PartInstance[];
   connections: Connection[];
@@ -244,7 +230,10 @@ export function simulate(
       ),
     initialStates,
   );
-  const actionResults: SimulationActionResult[] = input.actions.reduce(
+  const actionResults: SimulationActionResult[] = _.sortBy(
+    input.actions,
+    (action) => action.time,
+  ).reduce(
     (previousResults, action, index) => {
       const previousResult = previousResults[index];
       const statesBeforeAction = previousResult.states;

@@ -13,6 +13,7 @@ import { useCallback, useMemo, useState } from "react";
 import {
   Connection,
   ConnectionId,
+  getConnectionsWithTarget,
   toConnectionId,
 } from "../engine/connections";
 import {
@@ -106,6 +107,7 @@ function buildNodeData(
       value,
       visual: getPortVisual(portRef, selectedPortRef, parts, connections),
       exposed: levelDefinition ? isExposed(portRef, levelDefinition) : false,
+      connected: getConnectionsWithTarget(portRef, connections).length > 0,
     };
   };
   return {
