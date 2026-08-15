@@ -217,6 +217,7 @@ export type LevelState = {
   parts: PartInstance[];
   connections: Connection[];
   simulationInput: SimulationInput;
+  currentTime: number;
 };
 
 export function simulate(
@@ -286,14 +287,16 @@ export function getPortValueAt(
   function stateMatches(state: PortInstanceState) {
     return deepEqual(state.portRef, portRef);
   }
-  const earlierMatchingResults = simulationResult.actionResults.filter(
-    (result) =>
-      (result.action?.time ?? -Infinity) <= time &&
-      result.states.some(stateMatches),
+  const earlierMatchingResults = _.sortBy(
+    simulationResult.actionResults.filter(
+      (result) => getTime(result) <= time && result.states.some(stateMatches),
+    ),
+    getTime,
   );
-  const latestMatchingResult = _.maxBy(
-    earlierMatchingResults,
-    (result) => result.action?.time ?? -Infinity,
-  );
+  const latestMatchingResult = _.last(earlierMatchingResults);
   return latestMatchingResult?.states.find(stateMatches)?.value;
+}
+
+function getTime(result: SimulationActionResult) {
+  return result.action?.time ?? -Infinity;
 }

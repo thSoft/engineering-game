@@ -130,6 +130,7 @@ export function getInitialLevelState(
     parts: levelDefinition.fixedParts,
     connections: [],
     simulationInput: { startTime: 0, actions: [] },
+    currentTime: 0,
   };
 }
 

@@ -14,6 +14,7 @@ import {
   deepEqual,
   getDefinitionOfPort,
   getPartDefinitionById,
+  InputPortRef,
   PartDefinitionId,
   PartId,
   PartPosition,
@@ -22,7 +23,7 @@ import {
   PortRef,
   refPort,
 } from "../engine/parts";
-import { LevelState } from "../engine/simulation";
+import { Action, LevelState } from "../engine/simulation";
 
 export const useGameStore = create<GameState>()(
   persist(
@@ -193,6 +194,34 @@ export const useGameStore = create<GameState>()(
           });
           setCurrentLevel((state) => state);
         },
+        setCurrentTime(currentTime) {
+          setCurrentLevel((state) => ({ ...state, currentTime: currentTime }));
+        },
+        addAction(portRef, value) {
+          setCurrentLevel((state) => ({
+            ...state,
+            simulationInput: {
+              ...state.simulationInput,
+              actions: [
+                ...deleteAction(state, portRef),
+                {
+                  time: state.currentTime,
+                  portRef,
+                  value,
+                },
+              ],
+            },
+          }));
+        },
+        deleteAction(portRef) {
+          setCurrentLevel((state) => ({
+            ...state,
+            simulationInput: {
+              ...state.simulationInput,
+              actions: deleteAction(state, portRef),
+            },
+          }));
+        },
       };
     },
     {
@@ -213,6 +242,15 @@ export const useGameStore = create<GameState>()(
   ),
 );
 
+function deleteAction(state: LevelState, portRef: any): Action<any, any>[] {
+  return state.simulationInput.actions.filter(
+    (action) =>
+      !(
+        action.time === state.currentTime && deepEqual(action.portRef, portRef)
+      ),
+  );
+}
+
 export function getCurrentLevel(state: GameState): LevelState | undefined {
   return state.levelStates[state.currentLevelDefinitionId];
 }
@@ -230,4 +268,7 @@ export type GameState = {
   addConnection: (source: PortRef, target: PortRef) => void;
   deleteConnection: (connectionId: ConnectionId) => void;
   loadLevel: (definitionId: LevelDefinitionId) => void;
+  setCurrentTime: (currentTime: number) => void;
+  addAction: (portRef: InputPortRef<any, any>, value: any) => void;
+  deleteAction: (portRef: InputPortRef<any, any>) => void;
 };

@@ -14,6 +14,7 @@ function App() {
   const levelState = useGameStore(
     (s) => s.levelStates[currentLevelDefinitionId],
   );
+  const setCurrentTime = useGameStore((s) => s.setCurrentTime);
 
   const currentLevelDefinition = getLevelDefinitionById(
     currentLevelDefinitionId,
@@ -88,6 +89,19 @@ function App() {
           </ReactFlowProvider>
         </div>
       </main>
+      <footer>
+        {levelState && (
+          <>
+            Current time: {levelState?.currentTime} seconds
+            <button onClick={() => setCurrentTime(levelState.currentTime - 1)}>
+              -
+            </button>
+            <button onClick={() => setCurrentTime(levelState.currentTime + 1)}>
+              +
+            </button>
+          </>
+        )}
+      </footer>
     </div>
   );
 }

@@ -35,6 +35,11 @@ import {
   refPort,
   toPartId,
 } from "../engine/parts";
+import {
+  getPortValueAt,
+  simulate,
+  SimulationResult,
+} from "../engine/simulation";
 import { getCurrentLevel, useGameStore } from "../store/gameStore";
 import ConnectionContextMenu, {
   type ConnectionContextMenuState,
@@ -84,16 +89,21 @@ function buildNodeData(
   onPortMove: (portRef: PortRef, position: PortPosition) => void,
   selected: boolean,
   levelDefinition: LevelDefinition | undefined,
+  currentTime: number,
+  simulationResult: SimulationResult | undefined,
 ): PartNodeData | undefined {
   const partDefinition = getDefinitionOfPart(part.id, parts);
   if (!partDefinition) return undefined;
   const partPorts = part.portInstances;
   const createPortInfo = (port: PortInstance): PortInfo => {
     const portRef = refPort(part.id, port.key);
+    const value = simulationResult
+      ? getPortValueAt(portRef, currentTime, simulationResult)
+      : null;
     return {
       ref: portRef,
       instance: port,
-      value: null, // TODO compute state
+      value,
       visual: getPortVisual(portRef, selectedPortRef, parts, connections),
       exposed: levelDefinition ? isExposed(portRef, levelDefinition) : false,
     };
@@ -113,8 +123,14 @@ function buildNodeData(
     onContextMenu,
     onPortClick,
     onPortMove,
-    onStateToggle: (_) => {
-      // TODO
+    onStateToggle: (portRef: PortRef) => {
+      const value = simulationResult
+        ? getPortValueAt(portRef, currentTime, simulationResult)
+        : null;
+      if (value === null) return;
+      if (typeof value == "boolean") {
+        useGameStore.getState().addAction(portRef, !value);
+      }
     },
   };
 }
@@ -150,13 +166,14 @@ function buildEdge(
 export type PartNodeType = Node<PartNodeData, "part">;
 
 export default function GraphEditor() {
-  const parts = useGameStore((s) => getCurrentLevel(s)?.parts ?? []);
   const currentLevelDefinition = useGameStore((s) =>
     getLevelDefinitionById(s.currentLevelDefinitionId),
   );
-  const connections = useGameStore(
-    (s) => getCurrentLevel(s)?.connections ?? [],
-  );
+  const currentLevel = useGameStore((s) => getCurrentLevel(s));
+  const parts = currentLevel?.parts ?? [];
+  const connections = currentLevel?.connections ?? [];
+  const currentTime = currentLevel?.currentTime ?? 0;
+
   const movePart = useGameStore((s) => s.movePart);
   const movePort = useGameStore((s) => s.movePort);
   const deletePart = useGameStore((s) => s.deletePart);
@@ -219,6 +236,10 @@ export default function GraphEditor() {
     [pendingPortRef],
   );
 
+  const simulationResult = currentLevel
+    ? simulate(currentLevel.simulationInput, currentLevel)
+    : undefined;
+
   // Zustand is the single source of truth for positions.
   // Nodes and edges are derived purely from store state on every render —
   // no separate RF state, no sync effects, no position divergence possible.
@@ -235,6 +256,8 @@ export default function GraphEditor() {
           movePort,
           part.id === menu?.partId,
           currentLevelDefinition,
+          currentTime,
+          simulationResult,
         );
         if (!data) return [];
         return [
@@ -254,6 +277,8 @@ export default function GraphEditor() {
       handlePortClick,
       movePort,
       menu,
+      currentTime,
+      simulationResult,
     ],
   );
 

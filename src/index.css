@@ -3,3 +3,9 @@
 .react-flow__minimap {
   border-radius: 6px;
 }
+
+button {
+  border: 1px solid white;
+  border-radius: 6px;
+  padding: 4px;
+}

@@ -314,17 +314,19 @@ function PartNode({ data }: NodeProps<PartNodeType>) {
               >
                 {portDefinition.label}
               </span>
-              {portDefinition.kind === "state" && (
-                <button
-                  type="button"
-                  onPointerDown={(e) => e.stopPropagation()}
-                  onClick={(e) => handleStateToggle(e, port.ref)}
-                  className={`rounded px-1 py-px text-[9px] font-bold leading-none transition ${portValue ? "bg-violet-400/25 text-violet-100 ring-1 ring-violet-300/60" : "bg-slate-700 text-slate-400 ring-1 ring-slate-600"}`}
-                  aria-label={`Set ${portDefinition.label} ${portValue ? "off" : "on"}`}
-                >
-                  {portValue ? "ON" : "OFF"}
-                </button>
-              )}
+              {["state", "flow"].includes(portDefinition.kind) &&
+                portDefinition.direction === "input" && (
+                  // TODO read-only if not connected
+                  <button
+                    type="button"
+                    onPointerDown={(e) => e.stopPropagation()}
+                    onClick={(e) => handleStateToggle(e, port.ref)}
+                    className={`rounded px-1 py-px text-[9px] font-bold leading-none transition ${portValue ? "bg-violet-400/25 text-violet-100 ring-1 ring-violet-300/60" : "bg-slate-700 text-slate-400 ring-1 ring-slate-600"}`}
+                    aria-label={`Set ${portDefinition.label} ${portValue ? "off" : "on"}`}
+                  >
+                    {portValue ? "ON" : "OFF"}
+                  </button>
+                )}
             </div>
             <Handle
               id={getPortPath(port.ref)}
