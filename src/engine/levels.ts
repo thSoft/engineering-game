@@ -1,7 +1,5 @@
-import { Connection } from "./connections";
 import {
   deepEqual,
-  InputPortRef,
   Lightbulb,
   OutputPortRef,
   PartDefinition,
@@ -12,7 +10,9 @@ import {
   Switch,
 } from "./parts";
 import {
+  action,
   getPortValueAt,
+  LevelState,
   simulate,
   SimulationInput,
   SimulationResult,
@@ -36,11 +36,11 @@ export const DeskLamp = defineLevel("DESK_LAMP", {
     input: {
       startTime: 0,
       actions: [
-        plug.act(1, "plugged", true),
-        switchPart.act(2, "toggle", true),
+        action(1, plug.in("plugged"), true),
+        action(2, switchPart.in("toggle"), true),
       ],
     },
-    assertions: [lightbulb.assert(2, "lit", true)],
+    assertions: [assertion(2, lightbulb.out("lit"), true)],
   },
 });
 
@@ -73,29 +73,10 @@ export function isExposed(
   );
 }
 
-export type Action<
-  P extends PartDefinition<any, any, any>,
-  K extends keyof P["inputPorts"],
-> = {
-  time: number;
-  portRef: InputPortRef<P, K>;
-  value: PortValue<P["inputPorts"][K]>;
+export type TestCase = {
+  input: SimulationInput;
+  assertions: Assertion<any, any>[];
 };
-
-export function action<
-  P extends PartDefinition<any, any, any>,
-  K extends keyof P["inputPorts"],
->(
-  time: number,
-  portRef: InputPortRef<P, K>,
-  value: PortValue<P["inputPorts"][K]>,
-): Action<P, K> {
-  return {
-    time,
-    portRef,
-    value,
-  };
-}
 
 export type Assertion<
   P extends PartDefinition<any, any, any>,
@@ -121,11 +102,6 @@ export function assertion<
   };
 }
 
-export type TestCase = {
-  input: SimulationInput;
-  assertions: Assertion<any, any>[];
-};
-
 export type TestCaseResult = {
   testCase: TestCase;
   simulationResult: SimulationResult;
@@ -138,15 +114,6 @@ export type AssertionResult = {
   actualValue: PortValue<any>;
   success: boolean;
   // TODO trace
-};
-
-export type PortInstanceState<
-  P extends PartDefinition<any, any, any> = PartDefinition<any, any, any>,
-  IK extends keyof P["inputPorts"] = keyof P["inputPorts"],
-  OK extends keyof P["outputPorts"] = keyof P["outputPorts"],
-> = {
-  portRef: PortRef<P, IK, OK>;
-  value: PortValue<P["inputPorts"][IK]> | PortValue<P["outputPorts"][OK]>;
 };
 
 export function defineLevel(
@@ -165,12 +132,6 @@ export function getInitialLevelState(
     simulationInput: { startTime: 0, actions: [] },
   };
 }
-
-export type LevelState = {
-  parts: PartInstance[];
-  connections: Connection[];
-  simulationInput: SimulationInput;
-};
 
 export function evaluateTestCase(
   testCase: TestCase,

@@ -1,9 +1,9 @@
 import _ from "lodash";
 import { Connection } from "./connections";
-import { Action, LevelState, PortInstanceState } from "./levels";
 import {
   deepEqual,
   getDefinitionOfPart,
+  InputPortRef,
   PartDefinition,
   PartId,
   PartInstance,
@@ -17,6 +17,30 @@ export type SimulationInput = {
   actions: Action<any, any>[];
 };
 
+export type Action<
+  P extends PartDefinition<any, any, any>,
+  K extends keyof P["inputPorts"],
+> = {
+  time: number;
+  portRef: InputPortRef<P, K>;
+  value: PortValue<P["inputPorts"][K]>;
+};
+
+export function action<
+  P extends PartDefinition<any, any, any>,
+  K extends keyof P["inputPorts"],
+>(
+  time: number,
+  portRef: InputPortRef<P, K>,
+  value: PortValue<P["inputPorts"][K]>,
+): Action<P, K> {
+  return {
+    time,
+    portRef,
+    value,
+  };
+}
+
 export type SimulationResult = {
   input: SimulationInput;
   actionResults: SimulationActionResult[];
@@ -27,7 +51,16 @@ export type SimulationActionResult = {
   states: PortInstanceState[];
 };
 
-export function computePropagatedPortStates(
+export type PortInstanceState<
+  P extends PartDefinition<any, any, any> = PartDefinition<any, any, any>,
+  IK extends keyof P["inputPorts"] = keyof P["inputPorts"],
+  OK extends keyof P["outputPorts"] = keyof P["outputPorts"],
+> = {
+  portRef: PortRef<P, IK, OK>;
+  value: PortValue<P["inputPorts"][IK]> | PortValue<P["outputPorts"][OK]>;
+};
+
+function computePropagatedPortStates(
   firstPartId: PartId,
   connections: Connection[],
   parts: PartInstance[],
@@ -179,6 +212,12 @@ function getConnectionsWithSource(
     deepEqual(connection.source, sourcePortRef),
   );
 }
+
+export type LevelState = {
+  parts: PartInstance[];
+  connections: Connection[];
+  simulationInput: SimulationInput;
+};
 
 export function simulate(
   input: SimulationInput,

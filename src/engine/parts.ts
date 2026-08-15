@@ -1,5 +1,4 @@
 import z from "zod";
-import { action, assertion } from "./levels";
 
 // Part definitions
 
@@ -224,16 +223,6 @@ export function createPartInstance<
 
     in: inputPortRef,
     out: outputPortRef,
-    act: (
-      time: number,
-      portKey: keyof I,
-      value: PortValue<I[typeof portKey]>,
-    ) => action(time, inputPortRef(portKey), value),
-    assert: (
-      time: number,
-      portKey: keyof O,
-      value: PortValue<O[typeof portKey]>,
-    ) => assertion(time, outputPortRef(portKey), value),
   };
 }
 

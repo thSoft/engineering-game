@@ -8,7 +8,6 @@ import {
   getLevelDefinitionById,
   LevelDefinition,
   LevelDefinitionId,
-  LevelState,
 } from "../engine/levels";
 import {
   createPartInstance,
@@ -23,6 +22,7 @@ import {
   PortRef,
   refPort,
 } from "../engine/parts";
+import { LevelState } from "../engine/simulation";
 
 export const useGameStore = create<GameState>()(
   persist(
