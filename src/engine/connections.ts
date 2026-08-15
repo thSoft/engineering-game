@@ -28,16 +28,12 @@ export function getConnectionsWithTarget(
   targetPortRef: PortRef<any, any>,
   connections: Connection[],
 ) {
-  return connections.filter((connection) =>
-    deepEqual(connection.target, targetPortRef),
-  );
+  return connections.filter((connection) => deepEqual(connection.target, targetPortRef));
 }
 
 export function getConnectionsWithSource(
   sourcePortRef: PortRef<any, any>,
   connections: Connection[],
 ) {
-  return connections.filter((connection) =>
-    deepEqual(connection.source, sourcePortRef),
-  );
+  return connections.filter((connection) => deepEqual(connection.source, sourcePortRef));
 }

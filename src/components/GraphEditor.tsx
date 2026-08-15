@@ -16,11 +16,7 @@ import {
   getConnectionsWithTarget,
   toConnectionId,
 } from "../engine/connections";
-import {
-  getLevelDefinitionById,
-  isExposed,
-  LevelDefinition,
-} from "../engine/levels";
+import { getLevelDefinitionById, isExposed, LevelDefinition } from "../engine/levels";
 import {
   deepEqual,
   getDefinitionOfPart,
@@ -36,15 +32,9 @@ import {
   refPort,
   toPartId,
 } from "../engine/parts";
-import {
-  getPortValueAt,
-  simulate,
-  SimulationResult,
-} from "../engine/simulation";
+import { getPortValueAt, simulate, SimulationResult } from "../engine/simulation";
 import { getCurrentLevel, useGameStore } from "../store/gameStore";
-import ConnectionContextMenu, {
-  type ConnectionContextMenuState,
-} from "./ConnectionContextMenu";
+import ConnectionContextMenu, { type ConnectionContextMenuState } from "./ConnectionContextMenu";
 import { connectableColor, flowOffColor } from "./designTokens";
 import PartContextMenu, { type ContextMenuState } from "./PartContextMenu";
 import PartNode, {
@@ -68,10 +58,8 @@ function getPortVisual(
   if (!selectedPortDefinition) return "idle";
   const candidatePortDefinition = getDefinitionOfPort(candidatePort, parts);
   if (!candidatePortDefinition) return "idle";
-  if (candidatePortDefinition.direction === selectedPortDefinition.direction)
-    return "blocked";
-  if (candidatePortDefinition.kind !== selectedPortDefinition.kind)
-    return "blocked";
+  if (candidatePortDefinition.direction === selectedPortDefinition.direction) return "blocked";
+  if (candidatePortDefinition.kind !== selectedPortDefinition.kind) return "blocked";
   const targetAlreadyConnected = connections.some((connection) =>
     deepEqual(connection.target, candidatePort),
   );
@@ -98,9 +86,7 @@ function buildNodeData(
   const partPorts = part.portInstances;
   const createPortInfo = (port: PortInstance): PortInfo => {
     const portRef = refPort(part.id, port.key);
-    const value = simulationResult
-      ? getPortValueAt(portRef, currentTime, simulationResult)
-      : null;
+    const value = simulationResult ? getPortValueAt(portRef, currentTime, simulationResult) : null;
     return {
       ref: portRef,
       instance: port,
@@ -139,11 +125,7 @@ function buildNodeData(
 
 export const selectedColor = "#ffffff";
 
-function buildEdge(
-  connection: Connection,
-  selected: boolean,
-  parts: PartInstance[],
-): Edge {
+function buildEdge(connection: Connection, selected: boolean, parts: PartInstance[]): Edge {
   const source = connection.source;
   const target = connection.target;
   const flowOn = /* TODO source?.state.on ??*/ false;
@@ -184,11 +166,8 @@ export default function GraphEditor() {
   const addPart = useGameStore((s) => s.addPart);
 
   const [menu, setMenu] = useState<ContextMenuState | null>(null);
-  const [connectionMenu, setConnectionMenu] =
-    useState<ConnectionContextMenuState | null>(null);
-  const [pendingPortRef, setPendingPortRef] = useState<PortRef | undefined>(
-    undefined,
-  );
+  const [connectionMenu, setConnectionMenu] = useState<ConnectionContextMenuState | null>(null);
+  const [pendingPortRef, setPendingPortRef] = useState<PortRef | undefined>(undefined);
 
   const openMenu = useCallback((partId: PartId, x: number, y: number) => {
     setMenu({ partId, x, y });
@@ -196,14 +175,11 @@ export default function GraphEditor() {
     setPendingPortRef(undefined);
   }, []);
 
-  const openConnectionMenu = useCallback(
-    (connectionId: ConnectionId, x: number, y: number) => {
-      setConnectionMenu({ connectionId, x, y });
-      setMenu(null);
-      setPendingPortRef(undefined);
-    },
-    [],
-  );
+  const openConnectionMenu = useCallback((connectionId: ConnectionId, x: number, y: number) => {
+    setConnectionMenu({ connectionId, x, y });
+    setMenu(null);
+    setPendingPortRef(undefined);
+  }, []);
 
   const handlePortClick = useCallback(
     (portRef: PortRef) => {
@@ -228,10 +204,8 @@ export default function GraphEditor() {
 
       if (portDefinition.kind !== pendingPortDefinition.kind) return;
 
-      const sourceRef =
-        pendingPortDefinition.direction === "output" ? pendingPortRef : portRef;
-      const targetRef =
-        pendingPortDefinition.direction === "output" ? portRef : pendingPortRef;
+      const sourceRef = pendingPortDefinition.direction === "output" ? pendingPortRef : portRef;
+      const targetRef = pendingPortDefinition.direction === "output" ? portRef : pendingPortRef;
       addConnection(sourceRef, targetRef);
       setPendingPortRef(undefined);
     },
@@ -287,11 +261,7 @@ export default function GraphEditor() {
   const edges: Edge[] = useMemo(
     () =>
       connections.map((connection) =>
-        buildEdge(
-          connection,
-          connection.id === connectionMenu?.connectionId,
-          parts,
-        ),
+        buildEdge(connection, connection.id === connectionMenu?.connectionId, parts),
       ),
     [connections, parts, connectionMenu],
   );
@@ -317,8 +287,7 @@ export default function GraphEditor() {
   const onEdgesChange = useCallback(
     (changes: EdgeChange[]) => {
       for (const change of changes) {
-        if (change.type === "remove")
-          deleteConnection(toConnectionId(change.id));
+        if (change.type === "remove") deleteConnection(toConnectionId(change.id));
       }
       // Same pattern: edges derive from store, no RF edge state to patch.
     },
@@ -340,9 +309,7 @@ export default function GraphEditor() {
       ) as PartDefinitionId;
       if (
         !partDefinitionId ||
-        !partDefinitions.some(
-          (definition) => definition.id === partDefinitionId,
-        )
+        !partDefinitions.some((definition) => definition.id === partDefinitionId)
       )
         return;
       const flowPosition = screenToFlowPosition({ x: e.clientX, y: e.clientY });
@@ -389,11 +356,7 @@ export default function GraphEditor() {
         onEdgesChange={onEdgesChange}
         onPaneClick={onPaneClick}
         onEdgeClick={(event, edge) =>
-          openConnectionMenu(
-            toConnectionId(edge.id),
-            event.clientX,
-            event.clientY,
-          )
+          openConnectionMenu(toConnectionId(edge.id), event.clientX, event.clientY)
         }
         nodesConnectable={false}
         deleteKeyCode="Delete"

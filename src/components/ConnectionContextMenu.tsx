@@ -15,11 +15,7 @@ interface Props {
   onClose: () => void;
 }
 
-export default function ConnectionContextMenu({
-  menu,
-  onDelete,
-  onClose,
-}: Props) {
+export default function ConnectionContextMenu({ menu, onDelete, onClose }: Props) {
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -39,12 +35,8 @@ export default function ConnectionContextMenu({
 
   const menuWidth = 180;
   const menuHeight = 42;
-  const left = Math.min(
-    menu.x - menuWidth / 2,
-    window.innerWidth - menuWidth - 8,
-  );
-  const top =
-    menu.y - menuHeight - 8 < 8 ? menu.y + 8 : menu.y - menuHeight - 8;
+  const left = Math.min(menu.x - menuWidth / 2, window.innerWidth - menuWidth - 8);
+  const top = menu.y - menuHeight - 8 < 8 ? menu.y + 8 : menu.y - menuHeight - 8;
 
   return createPortal(
     <div

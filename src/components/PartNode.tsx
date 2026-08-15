@@ -1,25 +1,8 @@
-import {
-  Handle,
-  Position,
-  useUpdateNodeInternals,
-  type NodeProps,
-} from "@xyflow/react";
+import { Handle, Position, useUpdateNodeInternals, type NodeProps } from "@xyflow/react";
 import { Box, Eye } from "lucide-react";
 import { memo, useEffect, useRef } from "react";
-import type {
-  ParameterValues,
-  PartDefinitionId,
-  PartId,
-  PortInstance,
-} from "../engine/parts";
-import {
-  deepEqual,
-  getPortPath,
-  PortKind,
-  PortPosition,
-  PortRef,
-  PortSide,
-} from "../engine/parts";
+import type { ParameterValues, PartDefinitionId, PartId, PortInstance } from "../engine/parts";
+import { deepEqual, getPortPath, PortKind, PortPosition, PortRef, PortSide } from "../engine/parts";
 import { PartNodeType, selectedColor } from "./GraphEditor";
 import { getColorStyle, PART_DEFINITION_VISUALS } from "./PartPalette";
 import {
@@ -59,8 +42,7 @@ export type PartNodeData = {
 const HANDLE_CLASSES: Record<PortVisualState, string> = {
   idle: "",
   selected: "!ring-2 !ring-white/40 !ring-offset-1 !ring-offset-slate-900",
-  connectable:
-    "ring-2 !ring-emerald-300/60 !ring-offset-1 !ring-offset-slate-900 animate-pulse",
+  connectable: "ring-2 !ring-emerald-300/60 !ring-offset-1 !ring-offset-slate-900 animate-pulse",
   blocked: "!opacity-30",
 };
 
@@ -127,23 +109,17 @@ function getLabelStyle(side: PortSide): React.CSSProperties {
   return {};
 }
 
-function constrainToBorder(
-  clientX: number,
-  clientY: number,
-  rect: DOMRect,
-): PortPosition {
+function constrainToBorder(clientX: number, clientY: number, rect: DOMRect): PortPosition {
   const x = Math.min(Math.max(clientX - rect.left, 0), rect.width);
   const y = Math.min(Math.max(clientY - rect.top, 0), rect.height);
   const nearest = Math.min(x, rect.width - x, y, rect.height - y);
 
-  if (nearest === y)
-    return { side: "top", offset: rect.width ? x / rect.width : 0.5 };
+  if (nearest === y) return { side: "top", offset: rect.width ? x / rect.width : 0.5 };
   if (nearest === rect.width - x)
     return { side: "right", offset: rect.height ? y / rect.height : 0.5 };
   if (nearest === rect.height - y)
     return { side: "bottom", offset: rect.width ? x / rect.width : 0.5 };
-  if (nearest === x)
-    return { side: "left", offset: rect.height ? y / rect.height : 0.5 };
+  if (nearest === x) return { side: "left", offset: rect.height ? y / rect.height : 0.5 };
   return { side: "top", offset: 0 };
 }
 
@@ -193,11 +169,7 @@ function PartNode({ data }: NodeProps<PartNodeType>) {
     if (!drag) return;
     draggedPort.current = null;
 
-    if (
-      !drag.moved &&
-      deepEqual(drag.portRef, portRef) &&
-      visual !== "blocked"
-    ) {
+    if (!drag.moved && deepEqual(drag.portRef, portRef) && visual !== "blocked") {
       onPortClick?.(portRef);
     }
   };
@@ -303,13 +275,9 @@ function PartNode({ data }: NodeProps<PartNodeType>) {
               <span
                 role="button"
                 tabIndex={0}
-                onPointerDown={(e) =>
-                  handlePortPointerDown(e, port.instance.key)
-                }
+                onPointerDown={(e) => handlePortPointerDown(e, port.instance.key)}
                 onPointerMove={handlePortPointerMove}
-                onPointerUp={(e) =>
-                  handlePortPointerUp(e, port.ref, port.visual)
-                }
+                onPointerUp={(e) => handlePortPointerUp(e, port.ref, port.visual)}
                 title={`${portDefinition.kind} port${portDefinition.kind === "flow" ? ` (${Boolean(port.value)})` : ""}`} // TODO
                 className="cursor-grab active:cursor-grabbing"
               >

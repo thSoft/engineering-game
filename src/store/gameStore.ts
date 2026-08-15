@@ -30,32 +30,25 @@ export const useGameStore = create<GameState>()(
   persist(
     (set) => {
       function setCurrentLevel(
-        computeNewLevelState: (
-          oldLevelState: LevelState,
-        ) => Partial<LevelState>,
+        computeNewLevelState: (oldLevelState: LevelState) => Partial<LevelState>,
       ): void {
         set((state) => {
           if (state.currentLevelDefinitionId in state.levelStates) {
             return {
               levelStates: Object.fromEntries(
-                Object.entries(state.levelStates).map(
-                  ([levelDefinitionId, levelState]) => {
-                    if (
-                      state.currentLevelDefinitionId === levelDefinitionId &&
-                      levelState
-                    ) {
-                      return [
-                        levelDefinitionId,
-                        {
-                          ...levelState,
-                          ...computeNewLevelState(levelState),
-                        },
-                      ];
-                    } else {
-                      return [levelDefinitionId, levelState];
-                    }
-                  },
-                ),
+                Object.entries(state.levelStates).map(([levelDefinitionId, levelState]) => {
+                  if (state.currentLevelDefinitionId === levelDefinitionId && levelState) {
+                    return [
+                      levelDefinitionId,
+                      {
+                        ...levelState,
+                        ...computeNewLevelState(levelState),
+                      },
+                    ];
+                  } else {
+                    return [levelDefinitionId, levelState];
+                  }
+                }),
               ),
             };
           } else {
@@ -87,12 +80,7 @@ export const useGameStore = create<GameState>()(
           const definition = getPartDefinitionById(definitionId);
           if (!definition) return;
 
-          const newPart = createPartInstance(
-            partId,
-            position,
-            definitionId,
-            definition,
-          );
+          const newPart = createPartInstance(partId, position, definitionId, definition);
           setCurrentLevel((state) => ({
             parts: [...state.parts, newPart],
           }));
@@ -100,28 +88,21 @@ export const useGameStore = create<GameState>()(
         deletePart: (partId) => {
           setCurrentLevel((state) => {
             const removedPortRefs = (
-              state.parts.find((part) => part.id === partId)?.portInstances ??
-              []
+              state.parts.find((part) => part.id === partId)?.portInstances ?? []
             ).map((port) => refPort(partId, port.key));
             return {
               parts: state.parts.filter((part) => part.id !== partId),
               connections: state.connections.filter(
                 (connection) =>
-                  !removedPortRefs.some((ref) =>
-                    deepEqual(ref, connection.source),
-                  ) &&
-                  !removedPortRefs.some((ref) =>
-                    deepEqual(ref, connection.target),
-                  ),
+                  !removedPortRefs.some((ref) => deepEqual(ref, connection.source)) &&
+                  !removedPortRefs.some((ref) => deepEqual(ref, connection.target)),
               ),
             };
           });
         },
         movePart: (partId, position) => {
           setCurrentLevel((state) => ({
-            parts: state.parts.map((part) =>
-              part.id === partId ? { ...part, position } : part,
-            ),
+            parts: state.parts.map((part) => (part.id === partId ? { ...part, position } : part)),
           }));
         },
         movePort: (portRef, position) => {
@@ -129,9 +110,7 @@ export const useGameStore = create<GameState>()(
             parts: state.parts.map((part) => ({
               ...part,
               portInstances: Object.values(part.portInstances).map((port) =>
-                deepEqual(refPort(part.id, port.key), portRef)
-                  ? { ...port, position }
-                  : port,
+                deepEqual(refPort(part.id, port.key), portRef) ? { ...port, position } : port,
               ),
             })),
           }));
@@ -167,8 +146,7 @@ export const useGameStore = create<GameState>()(
             }
             const exists = state.connections.some(
               (connection) =>
-                deepEqual(connection.source, source) &&
-                deepEqual(connection.target, target),
+                deepEqual(connection.source, source) && deepEqual(connection.target, target),
             );
             if (exists) return state;
 
@@ -248,10 +226,7 @@ export const useGameStore = create<GameState>()(
 
 function deleteAction(state: LevelState, portRef: any): Action<any, any>[] {
   return state.simulationInput.actions.filter(
-    (action) =>
-      !(
-        action.time === state.currentTime && deepEqual(action.portRef, portRef)
-      ),
+    (action) => !(action.time === state.currentTime && deepEqual(action.portRef, portRef)),
   );
 }
 

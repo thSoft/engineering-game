@@ -113,10 +113,7 @@ export type PartDefinition<
   parameters: P;
   inputPorts: I;
   outputPorts: O;
-  compute: (
-    inputPortValues: PortValues<I>,
-    parameters: ParameterValues<P>,
-  ) => PortValues<O>;
+  compute: (inputPortValues: PortValues<I>, parameters: ParameterValues<P>) => PortValues<O>;
 };
 
 export type PartPosition = {
@@ -148,12 +145,7 @@ export function definePart<
       ...definition.outputPorts,
     },
     instance: (id: string, position: PartPosition) => {
-      return createPartInstance<P, I, O>(
-        id,
-        position,
-        partDefinitionId,
-        definition,
-      );
+      return createPartInstance<P, I, O>(id, position, partDefinitionId, definition);
     },
   };
 }
@@ -179,15 +171,11 @@ export function createPartInstance<
   definition: Omit<PartDefinition<P, I, O>, "id">,
 ) {
   const partId = toPartId(id);
-  const inputPortRef = (
-    portKey: keyof I,
-  ): InputPortRef<PartDefinition<P, I, O>, keyof I> => ({
+  const inputPortRef = (portKey: keyof I): InputPortRef<PartDefinition<P, I, O>, keyof I> => ({
     partId: partId,
     portKey,
   });
-  const outputPortRef = (
-    portKey: keyof O,
-  ): OutputPortRef<PartDefinition<P, I, O>, keyof O> => ({
+  const outputPortRef = (portKey: keyof O): OutputPortRef<PartDefinition<P, I, O>, keyof O> => ({
     partId: partId,
     portKey,
   });
@@ -213,12 +201,8 @@ export function createPartInstance<
       ]),
     ),
     portInstances: [
-      ...Object.entries(definition.inputPorts).map((entry) =>
-        createPortInstance(entry, "input"),
-      ),
-      ...Object.entries(definition.outputPorts).map((entry) =>
-        createPortInstance(entry, "output"),
-      ),
+      ...Object.entries(definition.inputPorts).map((entry) => createPortInstance(entry, "input")),
+      ...Object.entries(definition.outputPorts).map((entry) => createPortInstance(entry, "output")),
     ],
 
     in: inputPortRef,
@@ -248,9 +232,7 @@ export type ParameterDefinition<T> = {
 };
 type ParameterValue<P> = P extends ParameterDefinition<infer T> ? T : never;
 
-export type ParameterValues<
-  T extends Record<string, ParameterDefinition<any>>,
-> = {
+export type ParameterValues<T extends Record<string, ParameterDefinition<any>>> = {
   [K in keyof T]: ParameterValue<T[K]>;
 };
 

@@ -1,9 +1,5 @@
 import _ from "lodash";
-import {
-  Connection,
-  getConnectionsWithSource,
-  getConnectionsWithTarget,
-} from "./connections";
+import { Connection, getConnectionsWithSource, getConnectionsWithTarget } from "./connections";
 import {
   deepEqual,
   getDefinitionOfPart,
@@ -21,19 +17,13 @@ export type SimulationInput = {
   actions: Action<any, any>[];
 };
 
-export type Action<
-  P extends PartDefinition<any, any, any>,
-  K extends keyof P["inputPorts"],
-> = {
+export type Action<P extends PartDefinition<any, any, any>, K extends keyof P["inputPorts"]> = {
   time: number;
   portRef: InputPortRef<P, K>;
   value: PortValue<P["inputPorts"][K]>;
 };
 
-export function action<
-  P extends PartDefinition<any, any, any>,
-  K extends keyof P["inputPorts"],
->(
+export function action<P extends PartDefinition<any, any, any>, K extends keyof P["inputPorts"]>(
   time: number,
   portRef: InputPortRef<P, K>,
   value: PortValue<P["inputPorts"][K]>,
@@ -87,10 +77,7 @@ function computePropagatedPortStates(
     // Compute input port states from connections
     for (const inputPortKey of Object.keys(partDefinition.inputPorts)) {
       const currentPortRef = refPort(currentPart.id, inputPortKey);
-      const incomingConnections = getConnectionsWithTarget(
-        currentPortRef,
-        connections,
-      );
+      const incomingConnections = getConnectionsWithTarget(currentPortRef, connections);
       if (incomingConnections.length > 0) {
         const sourcePortRef = incomingConnections[0].source;
         portStates = setPortValue(
@@ -102,20 +89,12 @@ function computePropagatedPortStates(
     }
 
     // Compute output ports from computed input port states using the part's output computation logic
-    portStates = computeOutputStateForPart(
-      currentPart,
-      partDefinition,
-      portStates,
-      parts,
-    );
+    portStates = computeOutputStateForPart(currentPart, partDefinition, portStates, parts);
 
     // Enqueue connected parts for further propagation
     for (const outputPortKey of Object.keys(partDefinition.outputPorts)) {
       const outputPortRef = refPort(currentPart.id, outputPortKey);
-      const outgoingConnections = getConnectionsWithSource(
-        outputPortRef,
-        connections,
-      );
+      const outgoingConnections = getConnectionsWithSource(outputPortRef, connections);
       for (const connection of outgoingConnections) {
         const nextPartId = connection.target.partId;
         if (!visitedParts.has(nextPartId)) {
@@ -148,12 +127,10 @@ function computeOutputStateForPart(
     inputPortStatesRecord,
     partInstance.parameterValues,
   );
-  const outputPortStates = Object.entries(outputPortStatesRecord).map(
-    ([portKey, value]) => ({
-      portRef: refPort(partInstance.id, portKey),
-      value,
-    }),
-  );
+  const outputPortStates = Object.entries(outputPortStatesRecord).map(([portKey, value]) => ({
+    portRef: refPort(partInstance.id, portKey),
+    value,
+  }));
   return applyStates(outputPortStates, portStates);
 }
 
@@ -162,8 +139,7 @@ function applyStates(
   existingStates: PortInstanceState[],
 ): PortInstanceState[] {
   return newStates.reduce(
-    (updatedPortStates, { portRef, value }) =>
-      setPortValue(portRef, value, updatedPortStates),
+    (updatedPortStates, { portRef, value }) => setPortValue(portRef, value, updatedPortStates),
     existingStates,
   );
 }
@@ -173,9 +149,7 @@ function getPortValue(
   portStates: PortInstanceState[],
   parts: PartInstance[],
 ) {
-  const portState = portStates.find((state) =>
-    deepEqual(state.portRef, portRef),
-  );
+  const portState = portStates.find((state) => deepEqual(state.portRef, portRef));
   if (portState) {
     return portState.value;
   } else {
@@ -206,28 +180,18 @@ export type LevelState = {
   currentTime: number;
 };
 
-export function simulate(
-  input: SimulationInput,
-  levelState: LevelState,
-): SimulationResult {
-  const initialStates: PortInstanceState[] = levelState.parts.flatMap(
-    (part) => {
-      const definition = getDefinitionOfPart(part.id, levelState.parts);
-      if (!definition) return [];
-      return Object.keys(definition.inputPorts).map((portKey) => ({
-        portRef: refPort(part.id, portKey),
-        value: definition.inputPorts[portKey].defaultValue,
-      }));
-    },
-  );
+export function simulate(input: SimulationInput, levelState: LevelState): SimulationResult {
+  const initialStates: PortInstanceState[] = levelState.parts.flatMap((part) => {
+    const definition = getDefinitionOfPart(part.id, levelState.parts);
+    if (!definition) return [];
+    return Object.keys(definition.inputPorts).map((portKey) => ({
+      portRef: refPort(part.id, portKey),
+      value: definition.inputPorts[portKey].defaultValue,
+    }));
+  });
   const propagatedInitialStates = levelState.parts.reduce(
     (states, part) =>
-      computePropagatedPortStates(
-        part.id,
-        levelState.connections,
-        levelState.parts,
-        states,
-      ),
+      computePropagatedPortStates(part.id, levelState.connections, levelState.parts, states),
     initialStates,
   );
   const actionResults: SimulationActionResult[] = _.sortBy(
@@ -237,11 +201,7 @@ export function simulate(
     (previousResults, action, index) => {
       const previousResult = previousResults[index];
       const statesBeforeAction = previousResult.states;
-      const updatedStates = setPortValue(
-        action.portRef,
-        action.value,
-        statesBeforeAction,
-      );
+      const updatedStates = setPortValue(action.portRef, action.value, statesBeforeAction);
       const statesAfterAction = computePropagatedPortStates(
         action.portRef.partId,
         levelState.connections,

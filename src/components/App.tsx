@@ -8,17 +8,11 @@ import PartPalette from "./PartPalette";
 
 function App() {
   const [paletteOpen, setPaletteOpen] = useState(false);
-  const currentLevelDefinitionId = useGameStore(
-    (s) => s.currentLevelDefinitionId,
-  );
-  const levelState = useGameStore(
-    (s) => s.levelStates[currentLevelDefinitionId],
-  );
+  const currentLevelDefinitionId = useGameStore((s) => s.currentLevelDefinitionId);
+  const levelState = useGameStore((s) => s.levelStates[currentLevelDefinitionId]);
   const setCurrentTime = useGameStore((s) => s.setCurrentTime);
 
-  const currentLevelDefinition = getLevelDefinitionById(
-    currentLevelDefinitionId,
-  );
+  const currentLevelDefinition = getLevelDefinitionById(currentLevelDefinitionId);
   return (
     <div className="h-screen w-screen flex flex-col bg-slate-900 text-slate-100 overflow-hidden">
       {/* ── Header ── */}
@@ -40,10 +34,7 @@ function App() {
             {levelState && (
               <button
                 onClick={() => {
-                  const result = evaluateTestCase(
-                    currentLevelDefinition.testCase,
-                    levelState,
-                  );
+                  const result = evaluateTestCase(currentLevelDefinition.testCase, levelState);
                   alert(result.success ? "PASS" : "FAIL");
                 }}
                 style={{ display: "flex", alignItems: "center" }}
@@ -71,9 +62,7 @@ function App() {
           {/* Collapse toggle */}
           <button
             onClick={() => setPaletteOpen((v) => !v)}
-            aria-label={
-              paletteOpen ? "Collapse parts panel" : "Expand parts panel"
-            }
+            aria-label={paletteOpen ? "Collapse parts panel" : "Expand parts panel"}
             className="flex items-center justify-center h-10 w-full shrink-0 border-b border-slate-700/60 text-slate-500 hover:text-slate-300 hover:bg-slate-700/40 transition"
             title="Parts"
           >
@@ -93,12 +82,8 @@ function App() {
         {levelState && (
           <>
             Current time: {levelState?.currentTime} seconds
-            <button onClick={() => setCurrentTime(levelState.currentTime - 1)}>
-              -
-            </button>
-            <button onClick={() => setCurrentTime(levelState.currentTime + 1)}>
-              +
-            </button>
+            <button onClick={() => setCurrentTime(levelState.currentTime - 1)}>-</button>
+            <button onClick={() => setCurrentTime(levelState.currentTime + 1)}>+</button>
           </>
         )}
       </footer>

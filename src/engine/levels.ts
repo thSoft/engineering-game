@@ -27,18 +27,11 @@ export const lightbulb = Lightbulb.instance("lightbulb-0", { x: 0, y: 300 });
 export const DeskLamp = defineLevel("DESK_LAMP", {
   label: "Desk Lamp",
   fixedParts: [plug, switchPart, lightbulb],
-  exposedPorts: [
-    plug.in("plugged"),
-    switchPart.in("toggle"),
-    lightbulb.out("lit"),
-  ],
+  exposedPorts: [plug.in("plugged"), switchPart.in("toggle"), lightbulb.out("lit")],
   testCase: {
     input: {
       startTime: 0,
-      actions: [
-        action(1, plug.in("plugged"), true),
-        action(2, switchPart.in("toggle"), true),
-      ],
+      actions: [action(1, plug.in("plugged"), true), action(2, switchPart.in("toggle"), true)],
     },
     assertions: [assertion(2, lightbulb.out("lit"), true)],
   },
@@ -64,13 +57,8 @@ export function getLevelDefinitionById(
   return levelDefinitions.find((def) => def.id === levelDefinitionId);
 }
 
-export function isExposed(
-  portRef: PortRef<any, any, any>,
-  levelDefinition: LevelDefinition,
-) {
-  return levelDefinition.exposedPorts.some((exposedPort) =>
-    deepEqual(portRef, exposedPort),
-  );
+export function isExposed(portRef: PortRef<any, any, any>, levelDefinition: LevelDefinition) {
+  return levelDefinition.exposedPorts.some((exposedPort) => deepEqual(portRef, exposedPort));
 }
 
 export type TestCase = {
@@ -78,10 +66,7 @@ export type TestCase = {
   assertions: Assertion<any, any>[];
 };
 
-export type Assertion<
-  P extends PartDefinition<any, any, any>,
-  K extends keyof P["outputPorts"],
-> = {
+export type Assertion<P extends PartDefinition<any, any, any>, K extends keyof P["outputPorts"]> = {
   time: number;
   portRef: OutputPortRef<P, K>;
   value: PortValue<P["outputPorts"][K]>;
@@ -116,16 +101,11 @@ export type AssertionResult = {
   // TODO trace
 };
 
-export function defineLevel(
-  id: string,
-  definition: Omit<LevelDefinition, "id">,
-) {
+export function defineLevel(id: string, definition: Omit<LevelDefinition, "id">) {
   return { id: id as LevelDefinitionId, ...definition };
 }
 
-export function getInitialLevelState(
-  levelDefinition: LevelDefinition,
-): LevelState {
+export function getInitialLevelState(levelDefinition: LevelDefinition): LevelState {
   return {
     parts: levelDefinition.fixedParts,
     connections: [],
@@ -134,17 +114,10 @@ export function getInitialLevelState(
   };
 }
 
-export function evaluateTestCase(
-  testCase: TestCase,
-  levelState: LevelState,
-): TestCaseResult {
+export function evaluateTestCase(testCase: TestCase, levelState: LevelState): TestCaseResult {
   const simulationResult = simulate(testCase.input, levelState);
   const assertionResults = testCase.assertions.map((assertion) => {
-    const actualValue = getPortValueAt(
-      assertion.portRef,
-      assertion.time,
-      simulationResult,
-    );
+    const actualValue = getPortValueAt(assertion.portRef, assertion.time, simulationResult);
     return {
       assertion,
       actualValue,

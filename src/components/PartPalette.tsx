@@ -5,13 +5,7 @@ import {
   ToggleRight,
   type LucideIcon,
 } from "lucide-react";
-import {
-  Lightbulb,
-  PartDefinitionId,
-  partDefinitions,
-  Plug,
-  Switch,
-} from "../engine/parts";
+import { Lightbulb, PartDefinitionId, partDefinitions, Plug, Switch } from "../engine/parts";
 import { useGameStore } from "../store/gameStore";
 
 type PartDefinitionVisual = {
@@ -20,10 +14,7 @@ type PartDefinitionVisual = {
   description: string;
 };
 
-export const PART_DEFINITION_VISUALS: Record<
-  PartDefinitionId,
-  PartDefinitionVisual
-> = {
+export const PART_DEFINITION_VISUALS: Record<PartDefinitionId, PartDefinitionVisual> = {
   [Plug.id]: {
     icon: PlugIcon,
     color: "#00d492",
@@ -73,9 +64,7 @@ export default function PartPalette({ onAdd }: Props) {
   return (
     <div className="flex flex-col flex-1 overflow-hidden">
       <div className="px-3 pt-3 pb-2 border-b border-slate-700/60">
-        <p className="text-[11px] font-semibold uppercase tracking-widest text-slate-500">
-          Parts
-        </p>
+        <p className="text-[11px] font-semibold uppercase tracking-widest text-slate-500">Parts</p>
       </div>
 
       <div className="p-2 space-y-1.5 flex-1 overflow-y-auto">
@@ -97,14 +86,10 @@ export default function PartPalette({ onAdd }: Props) {
             >
               <div className="flex items-center gap-2">
                 <Icon size={14} />
-                <span className="text-xs font-semibold text-slate-200">
-                  {label}
-                </span>
+                <span className="text-xs font-semibold text-slate-200">{label}</span>
               </div>
               {description && (
-                <span className="text-[10px] text-slate-500 leading-tight pl-5">
-                  {description}
-                </span>
+                <span className="text-[10px] text-slate-500 leading-tight pl-5">{description}</span>
               )}
             </div>
           );

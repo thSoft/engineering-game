@@ -33,7 +33,7 @@ function testLevel(
   const levelState = getInitialLevelState(levelDefinition);
   levelState.connections = connections;
   const result = evaluateTestCase(levelDefinition.testCase, levelState);
-  expect(
-    result.assertionResults.every((assertionResult) => assertionResult.success),
-  ).toBe(expectedSuccess);
+  expect(result.assertionResults.every((assertionResult) => assertionResult.success)).toBe(
+    expectedSuccess,
+  );
 }
