@@ -1,11 +1,7 @@
 @import "tailwindcss";
 
+@import '@keplar-404/react-timeline-editor/dist/react-timeline-editor.css';
+
 .react-flow__minimap {
   border-radius: 6px;
-}
-
-button {
-  border: 1px solid white;
-  border-radius: 6px;
-  padding: 4px;
 }

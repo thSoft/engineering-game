@@ -183,7 +183,7 @@ export const useGameStore = create<GameState>()(
               ...state.simulationInput,
               actions: _.sortBy(
                 [
-                  ...deleteAction(state, portRef),
+                  ...deleteAction(state, portRef, state.currentTime),
                   {
                     time: state.currentTime,
                     portRef,
@@ -195,12 +195,12 @@ export const useGameStore = create<GameState>()(
             },
           }));
         },
-        deleteAction(portRef) {
+        deleteAction(portRef, time) {
           setCurrentLevel((state) => ({
             ...state,
             simulationInput: {
               ...state.simulationInput,
-              actions: deleteAction(state, portRef),
+              actions: deleteAction(state, portRef, time),
             },
           }));
         },
@@ -224,9 +224,9 @@ export const useGameStore = create<GameState>()(
   ),
 );
 
-function deleteAction(state: LevelState, portRef: any): Action<any, any>[] {
+function deleteAction(state: LevelState, portRef: PortRef, time: number): Action<any, any>[] {
   return state.simulationInput.actions.filter(
-    (action) => !(action.time === state.currentTime && deepEqual(action.portRef, portRef)),
+    (action) => !(action.time === time && deepEqual(action.portRef, portRef)),
   );
 }
 
@@ -249,5 +249,5 @@ export type GameState = {
   loadLevel: (definitionId: LevelDefinitionId) => void;
   setCurrentTime: (currentTime: number) => void;
   addAction: (portRef: InputPortRef<any, any>, value: any) => void;
-  deleteAction: (portRef: InputPortRef<any, any>) => void;
+  deleteAction: (portRef: InputPortRef<any, any>, time: number) => void;
 };

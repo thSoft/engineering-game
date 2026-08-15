@@ -11,9 +11,12 @@
     "test": "vitest"
   },
   "dependencies": {
+    "@keplar-404/react-timeline-editor": "^1.0.11",
+    "@keplar-404/timeline-engine": "^1.0.11",
     "@tailwindcss/vite": "^4.3.3",
     "@types/lodash": "^4.17.25",
     "@xyflow/react": "^12.11.2",
+    "antd": "^6.6.0",
     "lodash": "^4.18.1",
     "lucide-react": "^1.27.0",
     "nanoid": "^6.0.0",
