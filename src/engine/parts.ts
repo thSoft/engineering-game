@@ -154,6 +154,7 @@ export type PartId = string & { __brand: "PartId" };
 
 export type PartInstance = {
   id: PartId;
+  label: string;
   position: PartPosition;
   definitionId: PartDefinitionId;
   parameterValues: ParameterValues<any>;
@@ -193,6 +194,7 @@ export function createPartInstance<
   return {
     id: partId,
     position,
+    label: definition.label,
     definitionId: partDefinitionId,
     parameterValues: Object.fromEntries(
       Object.entries(definition.parameters).map(([paramKey, paramDef]) => [

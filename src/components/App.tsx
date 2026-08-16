@@ -13,6 +13,7 @@ function App() {
   const currentLevelDefinitionId = useGameStore((s) => s.currentLevelDefinitionId);
   const levelState = useGameStore((s) => s.levelStates[currentLevelDefinitionId]);
   const setCurrentTime = useGameStore((s) => s.setCurrentTime);
+  const parts = levelState?.parts ?? [];
 
   const currentLevelDefinition = getLevelDefinitionById(currentLevelDefinitionId);
   return (
@@ -82,7 +83,11 @@ function App() {
         </main>
         <footer>
           {levelState && (
-            <SimulationTimeline levelState={levelState} setCurrentTime={setCurrentTime} />
+            <SimulationTimeline
+              levelState={levelState}
+              setCurrentTime={setCurrentTime}
+              parts={parts}
+            />
           )}
         </footer>
       </div>
