@@ -178,7 +178,13 @@ export type LevelState = {
   connections: Connection[];
   simulationInput: SimulationInput;
   currentTime: number;
+  timelineMode: TimelineMode;
 };
+
+export enum TimelineMode {
+  SANDBOX,
+  TEST,
+}
 
 export function simulate(input: SimulationInput, levelState: LevelState): SimulationResult {
   const initialStates: PortInstanceState[] = levelState.parts.flatMap((part) => {

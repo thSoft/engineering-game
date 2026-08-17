@@ -82,8 +82,9 @@ function App() {
           </div>
         </main>
         <footer>
-          {levelState && (
+          {levelState && currentLevelDefinition && (
             <SimulationTimeline
+              levelDefinition={currentLevelDefinition}
               levelState={levelState}
               setCurrentTime={setCurrentTime}
               parts={parts}

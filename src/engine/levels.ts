@@ -16,6 +16,7 @@ import {
   simulate,
   SimulationInput,
   SimulationResult,
+  TimelineMode,
 } from "./simulation";
 
 // Level definitions
@@ -111,6 +112,7 @@ export function getInitialLevelState(levelDefinition: LevelDefinition): LevelSta
     connections: [],
     simulationInput: { startTime: 0, actions: [] },
     currentTime: 0,
+    timelineMode: TimelineMode.TEST,
   };
 }
 
