@@ -229,9 +229,15 @@ export default function GraphEditor() {
     [pendingPortRef],
   );
 
-  const simulationResult = levelState
-    ? simulate(levelState.simulationInput, levelState)
-    : undefined;
+  const simulationResult =
+    levelState && currentLevelDefinition
+      ? simulate(
+          levelState.timelineMode === TimelineMode.SANDBOX
+            ? levelState.simulationInput
+            : currentLevelDefinition.testCase.input,
+          levelState,
+        )
+      : undefined;
 
   // Zustand is the single source of truth for positions.
   // Nodes and edges are derived purely from store state on every render —
