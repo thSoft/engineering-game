@@ -32,7 +32,13 @@ import {
   refPort,
   toPartId,
 } from "../engine/parts";
-import { getPortValueAt, simulate, SimulationResult } from "../engine/simulation";
+import {
+  getPortValueAt,
+  LevelState,
+  simulate,
+  SimulationResult,
+  TimelineMode,
+} from "../engine/simulation";
 import { getCurrentLevel, useGameStore } from "../store/gameStore";
 import ConnectionContextMenu, { type ConnectionContextMenuState } from "./ConnectionContextMenu";
 import { connectableColor, flowOffColor } from "./designTokens";
@@ -71,16 +77,15 @@ function getPortVisual(
 function buildNodeData(
   part: PartInstance,
   selectedPortRef: PortRef | undefined,
-  parts: PartInstance[],
-  connections: Connection[],
   onContextMenu: (partId: PartId, x: number, y: number) => void,
   onPortClick: (portRef: PortRef) => void,
   onPortMove: (portRef: PortRef, position: PortPosition) => void,
   selected: boolean,
   levelDefinition: LevelDefinition | undefined,
-  currentTime: number,
+  levelState: LevelState,
   simulationResult: SimulationResult | undefined,
 ): PartNodeData | undefined {
+  const { parts, connections, currentTime } = levelState;
   const partDefinition = getDefinitionOfPart(part.id, parts);
   if (!partDefinition) return undefined;
   const partPorts = part.portInstances;
@@ -111,15 +116,18 @@ function buildNodeData(
     onContextMenu,
     onPortClick,
     onPortMove,
-    onStateToggle: (portRef: PortRef) => {
-      const value = simulationResult
-        ? getPortValueAt(portRef, currentTime, simulationResult)
-        : null;
-      if (value === null) return;
-      if (typeof value == "boolean") {
-        useGameStore.getState().addAction(portRef, !value);
-      }
-    },
+    onStateToggle:
+      levelState.timelineMode === TimelineMode.SANDBOX
+        ? (portRef: PortRef) => {
+            const value = simulationResult
+              ? getPortValueAt(portRef, currentTime, simulationResult)
+              : null;
+            if (value === null) return;
+            if (typeof value == "boolean") {
+              useGameStore.getState().addAction(portRef, !value);
+            }
+          }
+        : undefined,
   };
 }
 
@@ -162,10 +170,10 @@ export default function GraphEditor() {
   const currentLevelDefinition = useGameStore((s) =>
     getLevelDefinitionById(s.currentLevelDefinitionId),
   );
-  const currentLevel = useGameStore((s) => getCurrentLevel(s));
-  const parts = currentLevel?.parts ?? [];
-  const connections = currentLevel?.connections ?? [];
-  const currentTime = currentLevel?.currentTime ?? 0;
+  const levelState = useGameStore((s) => getCurrentLevel(s));
+  const parts = levelState?.parts ?? [];
+  const connections = levelState?.connections ?? [];
+  const currentTime = levelState?.currentTime ?? 0;
 
   const movePart = useGameStore((s) => s.movePart);
   const movePort = useGameStore((s) => s.movePort);
@@ -221,51 +229,41 @@ export default function GraphEditor() {
     [pendingPortRef],
   );
 
-  const simulationResult = currentLevel
-    ? simulate(currentLevel.simulationInput, currentLevel)
+  const simulationResult = levelState
+    ? simulate(levelState.simulationInput, levelState)
     : undefined;
 
   // Zustand is the single source of truth for positions.
   // Nodes and edges are derived purely from store state on every render —
   // no separate RF state, no sync effects, no position divergence possible.
-  const nodes: PartNodeType[] = useMemo(
-    () =>
-      parts.flatMap((part) => {
-        const data = buildNodeData(
-          part,
-          pendingPortRef,
-          parts,
-          connections,
-          openMenu,
-          handlePortClick,
-          movePort,
-          part.id === menu?.partId,
-          currentLevelDefinition,
-          currentTime,
-          simulationResult,
-        );
-        if (!data) return [];
-        return [
-          {
-            id: part.id,
-            type: "part",
-            position: part.position,
-            data: data,
-          },
-        ];
-      }),
-    [
-      parts,
-      pendingPortRef,
-      connections,
-      openMenu,
-      handlePortClick,
-      movePort,
-      menu,
-      currentTime,
-      simulationResult,
-    ],
-  );
+  const nodes: PartNodeType[] = levelState
+    ? useMemo(
+        () =>
+          parts.flatMap((part) => {
+            const data = buildNodeData(
+              part,
+              pendingPortRef,
+              openMenu,
+              handlePortClick,
+              movePort,
+              part.id === menu?.partId,
+              currentLevelDefinition,
+              levelState,
+              simulationResult,
+            );
+            if (!data) return [];
+            return [
+              {
+                id: part.id,
+                type: "part",
+                position: part.position,
+                data: data,
+              },
+            ];
+          }),
+        [pendingPortRef, openMenu, handlePortClick, movePort, menu, simulationResult, levelState],
+      )
+    : [];
 
   const edges: Edge[] = useMemo(
     () =>

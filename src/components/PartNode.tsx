@@ -285,7 +285,7 @@ function PartNode({ data }: NodeProps<PartNodeType>) {
                 {portDefinition.label}
               </span>
               {["state", "flow"].includes(portDefinition.kind) &&
-                (portDefinition.direction === "input" && !port.connected ? (
+                (portDefinition.direction === "input" && !port.connected && onStateToggle ? (
                   <button
                     type="button"
                     onPointerDown={(e) => e.stopPropagation()}
