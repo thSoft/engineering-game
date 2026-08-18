@@ -13,6 +13,7 @@ import {
   action,
   getPortValueAt,
   LevelState,
+  LevelStatus,
   simulate,
   SimulationInput,
   SimulationResult,
@@ -113,6 +114,7 @@ export function getInitialLevelState(levelDefinition: LevelDefinition): LevelSta
     simulationInput: { startTime: 0, actions: [] },
     currentTime: 0,
     timelineMode: TimelineMode.TEST,
+    levelStatus: LevelStatus.IN_PROGRESS,
   };
 }
 

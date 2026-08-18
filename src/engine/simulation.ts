@@ -179,11 +179,18 @@ export type LevelState = {
   simulationInput: SimulationInput;
   currentTime: number;
   timelineMode: TimelineMode;
+  levelStatus: LevelStatus;
 };
 
 export enum TimelineMode {
   SANDBOX,
   TEST,
+}
+
+export enum LevelStatus {
+  NOT_STARTED,
+  IN_PROGRESS,
+  COMPLETED,
 }
 
 export function simulate(input: SimulationInput, levelState: LevelState): SimulationResult {

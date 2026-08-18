@@ -1,10 +1,12 @@
 import { ReactFlowProvider } from "@xyflow/react";
-import { Button, ConfigProvider, theme } from "antd";
-import { Boxes, Check, Cpu } from "lucide-react";
+import { ConfigProvider, Flex, theme } from "antd";
+import { Boxes, Cpu } from "lucide-react";
 import { useState } from "react";
 import { evaluateTestCase, getLevelDefinitionById } from "../engine/levels";
 import { useGameStore } from "../store/gameStore";
 import GraphEditor from "./GraphEditor";
+import LevelDashboard from "./LevelDashboard";
+import LevelStatusView from "./LevelStatusView";
 import PartPalette from "./PartPalette";
 import { SimulationTimeline } from "./SimulationTimeline";
 
@@ -14,53 +16,36 @@ function App() {
   const levelState = useGameStore((s) => s.levelStates[currentLevelDefinitionId]);
   const setCurrentTime = useGameStore((s) => s.setCurrentTime);
   const parts = levelState?.parts ?? [];
-
   const currentLevelDefinition = getLevelDefinitionById(currentLevelDefinitionId);
+  const testCaseResult =
+    levelState && currentLevelDefinition
+      ? evaluateTestCase(currentLevelDefinition.testCase, levelState)
+      : undefined;
+
   return (
     <ConfigProvider theme={{ algorithm: [theme.darkAlgorithm] }}>
       <div className="h-screen w-screen flex flex-col bg-slate-900 text-slate-100 overflow-hidden">
         {/* ── Header ── */}
-        <header className="flex items-center gap-3 border-b border-slate-700/80 px-4 py-3 bg-slate-800/90 backdrop-blur shrink-0 z-20">
-          <Cpu size={18} className="text-emerald-400 shrink-0" />
-          <h1 className="text-sm font-bold tracking-tight text-slate-100 hidden sm:block">
-            Engineering Game
-          </h1>
-          {currentLevelDefinition && (
-            <>
-              {
-                <>
-                  <span className="text-slate-600 hidden sm:block">/</span>
-                  <span className="text-sm text-slate-400 truncate">
-                    {currentLevelDefinition.label}
-                  </span>
-                </>
-              }
-              {levelState && (
-                <Button
-                  onClick={() => {
-                    const result = evaluateTestCase(currentLevelDefinition.testCase, levelState);
-                    alert(result.success ? "PASS" : "FAIL");
-                  }}
-                >
-                  <Check size={14} />
-                  Verify
-                </Button>
-              )}
-            </>
-          )}
+        <header style={{ padding: 12 }}>
+          <Flex style={{ float: "left" }} gap={8} align="center">
+            <Cpu size={18} className="text-emerald-400 shrink-0" />
+            <h1 className="text-slate-400">Engineering Game</h1>
+          </Flex>
+          <div style={{ float: "right" }}>
+            {levelState && <LevelStatusView levelStatus={levelState.levelStatus} />}
+          </div>
+          <div style={{ margin: "0 auto", width: "400px", textAlign: "center" }}>
+            {currentLevelDefinition && <h2 className="truncate">{currentLevelDefinition.label}</h2>}
+          </div>
         </header>
 
         {/* ── Body ── */}
         <main className="flex-1 flex overflow-hidden relative">
           {/* ── Left panel: Parts palette ── */}
 
-          {/* Desktop sidebar */}
+          {/* Left panel: Part palette */}
           <div
-            className={`
-          sm:flex flex-col shrink-0 border-r border-slate-700 bg-slate-800/50
-          transition-all duration-200 overflow-hidden
-          ${paletteOpen ? "w-48" : "w-10"}
-        `}
+            className={`sm:flex flex-col shrink-0 border-r border-slate-700 bg-slate-800/50 overflow-hidden ${paletteOpen ? "w-48" : "w-10"}`}
           >
             {/* Collapse toggle */}
             <button
@@ -74,13 +59,20 @@ function App() {
             {paletteOpen && <PartPalette onAdd={() => setPaletteOpen(false)} />}
           </div>
 
-          {/* ── Canvas ── */}
+          {/* Graph editor */}
           <div className="flex-1 relative min-w-0">
             <ReactFlowProvider>
               <GraphEditor />
             </ReactFlowProvider>
           </div>
+
+          {/* Right panel: Status view */}
+          <div style={{ width: 240, padding: 0 }}>
+            <LevelDashboard levelState={levelState} testCaseResult={testCaseResult} />
+          </div>
         </main>
+
+        {/* ── Footer ── */}
         <footer>
           {levelState && currentLevelDefinition && (
             <SimulationTimeline

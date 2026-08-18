@@ -24,7 +24,7 @@ import {
   PortRef,
   refPort,
 } from "../engine/parts";
-import { Action, LevelState, TimelineMode } from "../engine/simulation";
+import { Action, LevelState, LevelStatus, TimelineMode } from "../engine/simulation";
 
 export const useGameStore = create<GameState>()(
   persist(
@@ -171,7 +171,7 @@ export const useGameStore = create<GameState>()(
           set({
             currentLevelDefinitionId: definitionId,
           });
-          setCurrentLevel((state) => state);
+          setCurrentLevel((state) => ({ ...state, levelStatus: LevelStatus.IN_PROGRESS }));
         },
         setCurrentTime(currentTime) {
           setCurrentLevel((state) => ({ ...state, currentTime: currentTime }));
@@ -208,6 +208,12 @@ export const useGameStore = create<GameState>()(
           setCurrentLevel((state) => ({
             ...state,
             timelineMode: mode,
+          }));
+        },
+        setLevelStatus(status) {
+          setCurrentLevel((state) => ({
+            ...state,
+            levelStatus: status,
           }));
         },
       };
@@ -257,4 +263,5 @@ export type GameState = {
   addAction: (portRef: InputPortRef<any, any>, value: any) => void;
   deleteAction: (portRef: InputPortRef<any, any>, time: number) => void;
   setTimelineMode: (mode: TimelineMode) => void;
+  setLevelStatus: (status: LevelStatus) => void;
 };

@@ -1,6 +1,5 @@
 import { Timeline, TimelineAction, TimelineState } from "@keplar-404/react-timeline-editor";
 import Dropdown from "antd/es/dropdown/dropdown";
-import { Button, Group } from "antd/es/radio";
 import _ from "lodash";
 import { ReactNode, useEffect, useRef } from "react";
 import {
@@ -28,7 +27,6 @@ export function SimulationTimeline({
   parts,
 }: SimulationTimelineProps) {
   const timelineMode = levelState.timelineMode;
-  const setTimelineMode = useGameStore((s) => s.setTimelineMode);
 
   const timelineRef = useRef<TimelineState>(null);
   useEffect(() => {
@@ -63,12 +61,6 @@ export function SimulationTimeline({
         border: "1px solid #333",
       }}
     >
-      <div>
-        <Group value={timelineMode} onChange={(e) => setTimelineMode(e.target.value)}>
-          <Button value={TimelineMode.TEST}>Test</Button>
-          <Button value={TimelineMode.SANDBOX}>Sandbox</Button>
-        </Group>
-      </div>
       {/* Side Panel for Lane Labels */}
       <div
         ref={trackHeaderRef}
