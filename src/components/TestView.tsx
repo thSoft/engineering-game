@@ -58,22 +58,28 @@ export default function TestView({ levelState, levelDefinition, testCaseResult }
           </Tooltip>
         }
       />
-      <table style={{ borderCollapse: "collapse", width: "100%" }}>
-        {timelineActions.map((action, index) => {
-          if (!(action.data instanceof TimelineActionData)) return null;
-          const { icon, type, value, color } = action.data.value.getDisplayInfo();
-          return (
-            <tr
-              key={index}
-              style={{ borderBottom: `1px solid ${borderColor}`, color: color ?? "inherit" }}
-            >
-              <td>{icon}</td>
-              <td>{type}</td>
-              <td>{getPortRefLabel(action.data.portRef, levelState.parts)}</td>
-              <td>{value}</td>
-            </tr>
-          );
-        })}
+      <table
+        style={{ borderCollapse: "collapse", width: "100%", borderTop: `1px solid ${borderColor}` }}
+      >
+        <tbody>
+          {timelineActions.map((action, index) => {
+            if (!(action.data instanceof TimelineActionData)) return null;
+            const { icon, type, value, color } = action.data.value.getDisplayInfo();
+            const { partLabel, portLabel } = getPortRefLabel(action.data.portRef, levelState.parts);
+            return (
+              <tr
+                key={index}
+                style={{ borderBottom: `1px solid ${borderColor}`, color: color ?? "inherit" }}
+              >
+                <td>{icon}</td>
+                <td>{type}</td>
+                <td>{partLabel}</td>
+                <td>{portLabel}</td>
+                <td>{value}</td>
+              </tr>
+            );
+          })}
+        </tbody>
       </table>
     </Flex>
   );

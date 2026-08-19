@@ -87,22 +87,37 @@ export function SimulationTimeline({
             position: "relative",
           }}
         >
-          <div style={{ marginTop: `calc(${rowHeight}px + ${cursorHeight}px)` }}>
-            {timelineData.map((row) => (
-              <div
-                key={row.id}
-                style={{
-                  height: `${rowHeight}px`, // Must match Timeline's rowHeight prop
-                  lineHeight: `${rowHeight}px`,
-                  borderBottom: "1px solid #ccc",
-                  paddingLeft: "10px",
-                  fontSize: "12px",
-                }}
-              >
-                {row.label}
-              </div>
-            ))}
-          </div>
+          <Flex
+            vertical
+            align="center"
+            style={{ marginTop: `calc(${rowHeight}px + ${cursorHeight}px)` }}
+          >
+            <table
+              style={{
+                borderCollapse: "collapse",
+                width: "calc(100% - 16px)", // Account for padding
+                borderTop: `1px solid ${borderColor}`,
+              }}
+            >
+              <tbody>
+                {timelineData.map((row) => (
+                  <tr
+                    key={row.id}
+                    style={{
+                      height: `${rowHeight}px`, // Must match Timeline's rowHeight prop
+                      lineHeight: `${rowHeight}px`,
+                      borderBottom: `1px solid ${borderColor}`,
+                      paddingLeft: "10px",
+                      fontSize: "12px",
+                    }}
+                  >
+                    <td>{row.partLabel}</td>
+                    <td>{row.portLabel}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </Flex>
         </div>
         {/* Main Timeline */}
         <div style={{ flex: 1, overflow: "hidden" }}>
@@ -145,11 +160,18 @@ function getTimelineData(
   const timelineActionsGroupedByPortRef = _.groupBy(timelineActions, (action) =>
     action.data ? JSON.stringify(action.data.portRef) : "",
   );
-  return Object.entries(timelineActionsGroupedByPortRef).map(([portRef, actions]) => ({
-    id: portRef,
-    label: actions.length > 0 ? getPortRefLabel(actions[0].data.portRef, parts) : "",
-    actions: actions,
-  }));
+  return Object.entries(timelineActionsGroupedByPortRef).map(([portRef, actions]) => {
+    const { partLabel, portLabel } =
+      actions.length > 0
+        ? getPortRefLabel(actions[0].data.portRef, parts)
+        : { partLabel: "", portLabel: "" };
+    return {
+      id: portRef,
+      partLabel,
+      portLabel,
+      actions: actions,
+    };
+  });
 }
 
 function TimelineActionView(action: TimelineAction): ReactNode {
