@@ -396,6 +396,7 @@ export default function GraphEditor() {
             setPendingPortRef(undefined);
           }}
           onClose={() => setMenu(null)}
+          levelDefinition={currentLevelDefinition}
         />
       )}
       {connectionMenu && (
