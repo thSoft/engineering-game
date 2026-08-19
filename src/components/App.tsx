@@ -7,11 +7,11 @@ import { LevelPhase } from "../engine/simulation";
 import { useGameStore } from "../store/gameStore";
 import GoalView from "./GoalView";
 import GraphEditor from "./GraphEditor";
-import LevelDashboard from "./LevelDashboard";
 import LevelStatusView from "./LevelStatusView";
 import PartPalette from "./PartPalette";
 import { SimulationTimeline } from "./SimulationTimeline";
 import SuccessView from "./SuccessView";
+import TestView from "./TestView";
 import { borderColor } from "./designTokens";
 
 function App() {
@@ -90,15 +90,22 @@ function App() {
           </div>
 
           {/* Right panel: Status view */}
-          <div
-            style={{
-              width: 240,
-              padding: 0,
-              borderLeft: `1px solid ${borderColor}`,
-            }}
-          >
-            <LevelDashboard levelState={levelState} testCaseResult={testCaseResult} />
-          </div>
+          {levelState && levelDefinition && testCaseResult && (
+            <div
+              style={{
+                width: 300,
+                paddingLeft: 12,
+                paddingRight: 12,
+                borderLeft: `1px solid ${borderColor}`,
+              }}
+            >
+              <TestView
+                levelState={levelState}
+                levelDefinition={levelDefinition}
+                testCaseResult={testCaseResult}
+              />
+            </div>
+          )}
         </main>
 
         {/* ── Footer ── */}
