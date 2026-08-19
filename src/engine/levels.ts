@@ -12,6 +12,7 @@ import {
 import {
   action,
   getPortValueAt,
+  LevelPhase,
   LevelState,
   LevelStatus,
   simulate,
@@ -26,17 +27,27 @@ export const plug = Plug.instance("plug-0", { x: 0, y: 0 });
 export const switchPart = Switch.instance("switch-0", { x: 0, y: 150 });
 export const lightbulb = Lightbulb.instance("lightbulb-0", { x: 0, y: 300 });
 
-export const DeskLamp = defineLevel("DESK_LAMP", {
+export const DeskLamp = defineLevel("deskLamp", {
   label: "Desk Lamp",
   fixedParts: [plug, switchPart, lightbulb],
   exposedPorts: [plug.in("plugged"), switchPart.in("toggle"), lightbulb.out("lit")],
   testCase: {
     input: {
       startTime: 0,
-      actions: [action(1, plug.in("plugged"), true), action(2, switchPart.in("toggle"), true)],
+      actions: [
+        action(1, plug.in("plugged"), true),
+        action(2, switchPart.in("toggle"), true),
+        action(3, switchPart.in("toggle"), false),
+      ],
     },
-    assertions: [assertion(2, lightbulb.out("lit"), true)],
+    assertions: [
+      assertion(2, lightbulb.out("lit"), true),
+      assertion(3, lightbulb.out("lit"), false),
+    ],
   },
+  userName: "Alice",
+  userNeedQuote: "I can't read when it's dark.",
+  successQuote: "Nothing is better than reading my favorite book before bed.",
 });
 
 export const levelDefinitions = [DeskLamp];
@@ -51,6 +62,9 @@ export type LevelDefinition = {
   fixedParts: PartInstance[];
   exposedPorts: PortRef<any, any, any>[];
   testCase: TestCase;
+  userName: string;
+  userNeedQuote: string;
+  successQuote: string;
 };
 
 export function getLevelDefinitionById(
@@ -115,6 +129,7 @@ export function getInitialLevelState(levelDefinition: LevelDefinition): LevelSta
     currentTime: 0,
     timelineMode: TimelineMode.TEST,
     levelStatus: LevelStatus.IN_PROGRESS,
+    phase: LevelPhase.GOAL,
   };
 }
 

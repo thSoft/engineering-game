@@ -220,9 +220,13 @@ export function getDefinitionOfPart(
   partId: PartId,
   parts: PartInstance[],
 ): PartDefinitionWithHelpers<any, any, any> | undefined {
-  const partInstance = parts.find((part) => part.id === partId);
+  const partInstance = getPart(parts, partId);
   if (!partInstance) return undefined;
   return getPartDefinitionById(partInstance.definitionId);
+}
+
+export function getPart(parts: PartInstance[], partId: string) {
+  return parts.find((part) => part.id === partId);
 }
 
 // Parameters

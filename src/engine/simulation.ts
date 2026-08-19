@@ -3,6 +3,7 @@ import { Connection, getConnectionsWithSource, getConnectionsWithTarget } from "
 import {
   deepEqual,
   getDefinitionOfPart,
+  getPart,
   InputPortRef,
   PartDefinition,
   PartId,
@@ -106,10 +107,6 @@ function computePropagatedPortStates(
   return portStates;
 }
 
-function getPart(parts: PartInstance[], partId: string) {
-  return parts.find((part) => part.id === partId);
-}
-
 function computeOutputStateForPart(
   partInstance: PartInstance,
   partDefinition: PartDefinition<any, any, any>,
@@ -180,6 +177,7 @@ export type LevelState = {
   currentTime: number;
   timelineMode: TimelineMode;
   levelStatus: LevelStatus;
+  phase: LevelPhase;
 };
 
 export enum TimelineMode {
@@ -191,6 +189,12 @@ export enum LevelStatus {
   NOT_STARTED,
   IN_PROGRESS,
   COMPLETED,
+}
+
+export enum LevelPhase {
+  GOAL,
+  BUILD,
+  SUCCESS,
 }
 
 export function simulate(input: SimulationInput, levelState: LevelState): SimulationResult {

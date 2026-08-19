@@ -7,6 +7,7 @@ import {
 } from "lucide-react";
 import { Lightbulb, PartDefinitionId, partDefinitions, Plug, Switch } from "../engine/parts";
 import { useGameStore } from "../store/gameStore";
+import { borderColor } from "./designTokens";
 
 type PartDefinitionVisual = {
   icon: LucideIcon;
@@ -63,7 +64,7 @@ export default function PartPalette({ onAdd }: Props) {
 
   return (
     <div className="flex flex-col flex-1 overflow-hidden">
-      <div className="px-3 pt-3 pb-2 border-b border-slate-700/60">
+      <div className="px-3 pt-3 pb-2 border-b" style={{ borderColor: borderColor }}>
         <p className="text-[11px] font-semibold uppercase tracking-widest text-slate-500">Parts</p>
       </div>
 

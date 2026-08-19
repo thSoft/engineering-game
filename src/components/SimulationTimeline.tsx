@@ -11,6 +11,7 @@ import {
 import { deepEqual, PartInstance, PortRef } from "../engine/parts";
 import { LevelState, TimelineMode } from "../engine/simulation";
 import { useGameStore } from "../store/gameStore";
+import { borderColor } from "./designTokens";
 import { displayPortValue, getPortRefLabel } from "./utils";
 
 interface SimulationTimelineProps {
@@ -58,7 +59,7 @@ export function SimulationTimeline({
         display: "flex",
         width: "100%",
         height: "200px",
-        border: "1px solid #333",
+        borderTop: `1px solid ${borderColor}`,
       }}
     >
       {/* Side Panel for Lane Labels */}

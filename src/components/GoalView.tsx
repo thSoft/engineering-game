@@ -1,0 +1,55 @@
+import { Button, Card } from "antd";
+import CardMeta from "antd/es/card/CardMeta";
+import Modal from "antd/es/modal/Modal";
+import { LevelDefinition } from "../engine/levels";
+import { LevelPhase, LevelState } from "../engine/simulation";
+import { useGameStore } from "../store/gameStore";
+
+interface Props {
+  levelDefinition: LevelDefinition;
+  levelState: LevelState;
+}
+
+function GoalView({ levelDefinition, levelState }: Props) {
+  const setLevelPhase = useGameStore((state) => state.setLevelPhase);
+  const handleClose = () => {
+    setLevelPhase(LevelPhase.BUILD);
+  };
+  return (
+    <Modal
+      title={levelDefinition.label}
+      open={levelState.phase === LevelPhase.GOAL}
+      onCancel={handleClose}
+      footer={
+        <>
+          <Button type="primary" onClick={handleClose}>
+            Build
+          </Button>
+          <Button onClick={handleClose}>Back to projects</Button>
+        </>
+      }
+      mask={{ blur: true }}
+    >
+      <Card
+        title={
+          <span>
+            <strong>{levelDefinition.userName}</strong> needs a{" "}
+            <strong>{levelDefinition.label}.</strong>
+          </span>
+        }
+      >
+        <CardMeta
+          avatar={
+            <img
+              src={`levels/${levelDefinition.id}/goal.svg`}
+              alt={`${levelDefinition.userName} unsatisfied`}
+            />
+          }
+          description={<em>"{levelDefinition.userNeedQuote}"</em>}
+        />
+      </Card>
+    </Modal>
+  );
+}
+
+export default GoalView;

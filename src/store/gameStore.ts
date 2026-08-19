@@ -3,6 +3,7 @@ import { nanoid } from "nanoid";
 import { create } from "zustand";
 import { persist, type StorageValue } from "zustand/middleware";
 import { Connection, ConnectionId } from "../engine/connections";
+
 import {
   DeskLamp,
   getInitialLevelState,
@@ -14,6 +15,7 @@ import {
   createPartInstance,
   deepEqual,
   getDefinitionOfPort,
+  getPart,
   getPartDefinitionById,
   InputPortRef,
   PartDefinitionId,
@@ -24,7 +26,7 @@ import {
   PortRef,
   refPort,
 } from "../engine/parts";
-import { Action, LevelState, LevelStatus, TimelineMode } from "../engine/simulation";
+import { Action, LevelPhase, LevelState, LevelStatus, TimelineMode } from "../engine/simulation";
 
 export const useGameStore = create<GameState>()(
   persist(
@@ -87,9 +89,9 @@ export const useGameStore = create<GameState>()(
         },
         deletePart: (partId) => {
           setCurrentLevel((state) => {
-            const removedPortRefs = (
-              state.parts.find((part) => part.id === partId)?.portInstances ?? []
-            ).map((port) => refPort(partId, port.key));
+            const removedPortRefs = (getPart(state.parts, partId)?.portInstances ?? []).map(
+              (port) => refPort(partId, port.key),
+            );
             return {
               parts: state.parts.filter((part) => part.id !== partId),
               connections: state.connections.filter(
@@ -216,6 +218,12 @@ export const useGameStore = create<GameState>()(
             levelStatus: status,
           }));
         },
+        setLevelPhase(phase) {
+          setCurrentLevel((state) => ({
+            ...state,
+            phase: phase,
+          }));
+        },
       };
     },
     {
@@ -264,4 +272,5 @@ export type GameState = {
   deleteAction: (portRef: InputPortRef<any, any>, time: number) => void;
   setTimelineMode: (mode: TimelineMode) => void;
   setLevelStatus: (status: LevelStatus) => void;
+  setLevelPhase: (phase: LevelPhase) => void;
 };

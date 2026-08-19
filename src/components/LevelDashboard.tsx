@@ -1,7 +1,7 @@
 import { Button, Flex, Result, Segmented, Tooltip } from "antd";
 import { PackageCheck } from "lucide-react";
 import { TestCaseResult } from "../engine/levels";
-import { LevelState, LevelStatus, TimelineMode } from "../engine/simulation";
+import { LevelPhase, LevelState, LevelStatus, TimelineMode } from "../engine/simulation";
 import { useGameStore } from "../store/gameStore";
 
 interface Props {
@@ -20,6 +20,8 @@ export default function LevelDashboard({ levelState, testCaseResult }: Props) {
   const levelStatus = levelState?.levelStatus ?? LevelStatus.IN_PROGRESS;
   const setLevelStatus = useGameStore((s) => s.setLevelStatus);
 
+  const setLevelPhase = useGameStore((s) => s.setLevelPhase);
+
   return (
     <Flex vertical align="center" gap={8}>
       <Result
@@ -29,9 +31,9 @@ export default function LevelDashboard({ levelState, testCaseResult }: Props) {
           <Tooltip
             title={
               levelStatus === LevelStatus.COMPLETED
-                ? "Project is already in production"
+                ? "Project is in production"
                 : success
-                  ? "Send to production"
+                  ? null
                   : "Cannot send to production until tests pass"
             }
           >
@@ -39,7 +41,10 @@ export default function LevelDashboard({ levelState, testCaseResult }: Props) {
               type="primary"
               disabled={!success || levelStatus === LevelStatus.COMPLETED}
               icon={<PackageCheck size={16} />}
-              onClick={() => setLevelStatus(LevelStatus.COMPLETED)}
+              onClick={() => {
+                setLevelPhase(LevelPhase.SUCCESS);
+                setLevelStatus(LevelStatus.COMPLETED);
+              }}
             >
               Send to production
             </Button>
