@@ -45,7 +45,7 @@ export const DeskLamp = defineLevel("deskLamp", {
       assertion(3, lightbulb.out("lit"), false),
     ],
   },
-  userName: "Alice",
+  userName: "Ada",
   userNeedQuote: "I can't read when it's dark.",
   successQuote: "Nothing is better than reading my favorite book before bed.",
 });

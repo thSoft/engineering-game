@@ -22,10 +22,10 @@ function NewLevels({}: Props) {
       open
       title={
         newLevelCount > 1
-          ? `You got ${newLevelCount} new submissions!`
+          ? `You got ${newLevelCount} new commissions!`
           : newLevelCount == 1
-            ? "You got a new submission!"
-            : "You have no new submissions"
+            ? "You got a new commission!"
+            : "You have no new commissions"
       }
       onCancel={handleClose}
       footer={
