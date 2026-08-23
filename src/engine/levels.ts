@@ -68,7 +68,7 @@ export type LevelDefinition = {
 };
 
 export function getLevelDefinitionById(
-  levelDefinitionId: LevelDefinitionId,
+  levelDefinitionId: LevelDefinitionId | undefined,
 ): LevelDefinition | undefined {
   return levelDefinitions.find((def) => def.id === levelDefinitionId);
 }
@@ -123,12 +123,13 @@ export function defineLevel(id: string, definition: Omit<LevelDefinition, "id">)
 
 export function getInitialLevelState(levelDefinition: LevelDefinition): LevelState {
   return {
+    definitionId: levelDefinition.id,
     parts: levelDefinition.fixedParts,
     connections: [],
     simulationInput: { startTime: 0, actions: [] },
     currentTime: 0,
     timelineMode: TimelineMode.TEST,
-    levelStatus: LevelStatus.IN_PROGRESS,
+    levelStatus: LevelStatus.NOT_STARTED,
     phase: LevelPhase.GOAL,
   };
 }

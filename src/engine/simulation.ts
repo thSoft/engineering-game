@@ -1,5 +1,6 @@
 import _ from "lodash";
 import { Connection, getConnectionsWithSource, getConnectionsWithTarget } from "./connections";
+import { LevelDefinitionId } from "./levels";
 import {
   deepEqual,
   getDefinitionOfPart,
@@ -171,6 +172,7 @@ function setPortValue(
 }
 
 export type LevelState = {
+  definitionId: LevelDefinitionId;
   parts: PartInstance[];
   connections: Connection[];
   simulationInput: SimulationInput;

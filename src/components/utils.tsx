@@ -126,3 +126,9 @@ export function getTimelineActions(
   }
   return _.sortBy(timelineActions, (action) => action.start);
 }
+
+export function getLevelIcon(levelDefinition: LevelDefinition): ReactNode {
+  return (
+    <img src={`levels/${levelDefinition.id}/icon.svg`} alt={levelDefinition.label} width={24} />
+  );
+}

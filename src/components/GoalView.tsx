@@ -4,6 +4,7 @@ import Modal from "antd/es/modal/Modal";
 import { LevelDefinition } from "../engine/levels";
 import { LevelPhase, LevelState } from "../engine/simulation";
 import { useGameStore } from "../store/gameStore";
+import { modalWidth } from "./designTokens";
 
 interface Props {
   levelDefinition: LevelDefinition;
@@ -25,10 +26,13 @@ function GoalView({ levelDefinition, levelState }: Props) {
           <Button type="primary" onClick={handleClose}>
             Build
           </Button>
-          <Button onClick={handleClose}>Back to projects</Button>
+          <Button onClick={() => useGameStore.getState().loadLevel(undefined)}>
+            Back to projects
+          </Button>
         </>
       }
       mask={{ blur: true }}
+      width={modalWidth}
     >
       <Card
         title={
@@ -43,6 +47,7 @@ function GoalView({ levelDefinition, levelState }: Props) {
             <img
               src={`levels/${levelDefinition.id}/goal.svg`}
               alt={`${levelDefinition.userName} unsatisfied`}
+              width={192}
             />
           }
           description={<em>"{levelDefinition.userNeedQuote}"</em>}

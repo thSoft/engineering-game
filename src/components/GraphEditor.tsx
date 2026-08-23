@@ -9,14 +9,19 @@ import {
   type NodeChange,
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
-import { useCallback, useMemo, useState } from "react";
+import { useState } from "react";
 import {
   Connection,
   ConnectionId,
   getConnectionsWithTarget,
   toConnectionId,
 } from "../engine/connections";
-import { getLevelDefinitionById, isExposed, LevelDefinition } from "../engine/levels";
+import {
+  getLevelDefinitionById,
+  isExposed,
+  LevelDefinition,
+  LevelDefinitionId,
+} from "../engine/levels";
 import {
   deepEqual,
   getDefinitionOfPart,
@@ -39,7 +44,7 @@ import {
   SimulationResult,
   TimelineMode,
 } from "../engine/simulation";
-import { getCurrentLevel, useGameStore } from "../store/gameStore";
+import { getLevelStateByDefinitionId, useGameStore } from "../store/gameStore";
 import ConnectionContextMenu, { type ConnectionContextMenuState } from "./ConnectionContextMenu";
 import { connectableColor, flowOffColor } from "./designTokens";
 import PartContextMenu, { type ContextMenuState } from "./PartContextMenu";
@@ -166,11 +171,13 @@ function buildEdge(
 
 export type PartNodeType = Node<PartNodeData, "part">;
 
-export default function GraphEditor() {
-  const currentLevelDefinition = useGameStore((s) =>
-    getLevelDefinitionById(s.currentLevelDefinitionId),
-  );
-  const levelState = useGameStore((s) => getCurrentLevel(s));
+interface Props {
+  levelDefinitionId: LevelDefinitionId;
+}
+
+export default function GraphEditor({ levelDefinitionId }: Props) {
+  const currentLevelDefinition = getLevelDefinitionById(levelDefinitionId);
+  const levelState = useGameStore((s) => getLevelStateByDefinitionId(s, levelDefinitionId));
   const parts = levelState?.parts ?? [];
   const connections = levelState?.connections ?? [];
   const currentTime = levelState?.currentTime ?? 0;
@@ -186,48 +193,45 @@ export default function GraphEditor() {
   const [connectionMenu, setConnectionMenu] = useState<ConnectionContextMenuState | null>(null);
   const [pendingPortRef, setPendingPortRef] = useState<PortRef | undefined>(undefined);
 
-  const openMenu = useCallback((partId: PartId, x: number, y: number) => {
+  const openMenu = (partId: PartId, x: number, y: number) => {
     setMenu({ partId, x, y });
     setConnectionMenu(null);
     setPendingPortRef(undefined);
-  }, []);
+  };
 
-  const openConnectionMenu = useCallback((connectionId: ConnectionId, x: number, y: number) => {
+  const openConnectionMenu = (connectionId: ConnectionId, x: number, y: number) => {
     setConnectionMenu({ connectionId, x, y });
     setMenu(null);
     setPendingPortRef(undefined);
-  }, []);
+  };
 
-  const handlePortClick = useCallback(
-    (portRef: PortRef) => {
-      const portDefinition = getDefinitionOfPort(portRef, parts);
-      if (!portDefinition) return;
+  const handlePortClick = (portRef: PortRef) => {
+    const portDefinition = getDefinitionOfPort(portRef, parts);
+    if (!portDefinition) return;
 
-      if (!pendingPortRef) {
-        setPendingPortRef(portRef);
-        return;
-      }
-      if (deepEqual(pendingPortRef, portRef)) {
-        setPendingPortRef(undefined);
-        return;
-      }
-      const pendingPortDefinition = getDefinitionOfPort(pendingPortRef, parts);
-      if (!pendingPortDefinition) return;
-
-      if (portDefinition.direction === pendingPortDefinition.direction) {
-        setPendingPortRef(portRef);
-        return;
-      }
-
-      if (portDefinition.kind !== pendingPortDefinition.kind) return;
-
-      const sourceRef = pendingPortDefinition.direction === "output" ? pendingPortRef : portRef;
-      const targetRef = pendingPortDefinition.direction === "output" ? portRef : pendingPortRef;
-      addConnection(sourceRef, targetRef);
+    if (!pendingPortRef) {
+      setPendingPortRef(portRef);
+      return;
+    }
+    if (deepEqual(pendingPortRef, portRef)) {
       setPendingPortRef(undefined);
-    },
-    [pendingPortRef],
-  );
+      return;
+    }
+    const pendingPortDefinition = getDefinitionOfPort(pendingPortRef, parts);
+    if (!pendingPortDefinition) return;
+
+    if (portDefinition.direction === pendingPortDefinition.direction) {
+      setPendingPortRef(portRef);
+      return;
+    }
+
+    if (portDefinition.kind !== pendingPortDefinition.kind) return;
+
+    const sourceRef = pendingPortDefinition.direction === "output" ? pendingPortRef : portRef;
+    const targetRef = pendingPortDefinition.direction === "output" ? portRef : pendingPortRef;
+    addConnection(sourceRef, targetRef);
+    setPendingPortRef(undefined);
+  };
 
   const simulationResult =
     levelState && currentLevelDefinition
@@ -243,108 +247,89 @@ export default function GraphEditor() {
   // Nodes and edges are derived purely from store state on every render —
   // no separate RF state, no sync effects, no position divergence possible.
   const nodes: PartNodeType[] = levelState
-    ? useMemo(
-        () =>
-          parts.flatMap((part) => {
-            const data = buildNodeData(
-              part,
-              pendingPortRef,
-              openMenu,
-              handlePortClick,
-              movePort,
-              part.id === menu?.partId,
-              currentLevelDefinition,
-              levelState,
-              simulationResult,
-            );
-            if (!data) return [];
-            return [
-              {
-                id: part.id,
-                type: "part",
-                position: part.position,
-                data: data,
-              },
-            ];
-          }),
-        [pendingPortRef, openMenu, handlePortClick, movePort, menu, simulationResult, levelState],
-      )
+    ? parts.flatMap((part) => {
+        const data = buildNodeData(
+          part,
+          pendingPortRef,
+          openMenu,
+          handlePortClick,
+          movePort,
+          part.id === menu?.partId,
+          currentLevelDefinition,
+          levelState,
+          simulationResult,
+        );
+        if (!data) return [];
+        return [
+          {
+            id: part.id,
+            type: "part",
+            position: part.position,
+            data: data,
+          },
+        ];
+      })
     : [];
 
-  const edges: Edge[] = useMemo(
-    () =>
-      connections.map((connection) =>
-        buildEdge(
-          connection,
-          connection.id === connectionMenu?.connectionId,
-          parts,
-          currentTime,
-          simulationResult,
-        ),
-      ),
-    [connections, parts, connectionMenu, currentTime, simulationResult],
+  const edges: Edge[] = connections.map((connection) =>
+    buildEdge(
+      connection,
+      connection.id === connectionMenu?.connectionId,
+      parts,
+      currentTime,
+      simulationResult,
+    ),
   );
 
-  const onNodesChange = useCallback(
-    (changes: NodeChange<PartNodeType>[]) => {
-      for (const change of changes) {
-        if (change.type === "position" && change.position) {
-          // Write every drag tick — Zustand is authoritative for positions
-          movePart(toPartId(change.id), change.position);
-        }
-        if (change.type === "remove") {
-          deletePart(toPartId(change.id));
-          setPendingPortRef(undefined);
-        }
+  const onNodesChange = (changes: NodeChange<PartNodeType>[]) => {
+    for (const change of changes) {
+      if (change.type === "position" && change.position) {
+        // Write every drag tick — Zustand is authoritative for positions
+        movePart(toPartId(change.id), change.position);
       }
-      // applyNodeChanges is not called — RF reads positions from the store,
-      // so there is no internal RF node state to patch.
-    },
-    [movePart, deletePart],
-  );
-
-  const onEdgesChange = useCallback(
-    (changes: EdgeChange[]) => {
-      for (const change of changes) {
-        if (change.type === "remove") deleteConnection(toConnectionId(change.id));
+      if (change.type === "remove") {
+        deletePart(toPartId(change.id));
+        setPendingPortRef(undefined);
       }
-      // Same pattern: edges derive from store, no RF edge state to patch.
-    },
-    [deleteConnection],
-  );
+    }
+    // applyNodeChanges is not called — RF reads positions from the store,
+    // so there is no internal RF node state to patch.
+  };
 
-  const onDragOver = useCallback((e: React.DragEvent) => {
+  const onEdgesChange = (changes: EdgeChange[]) => {
+    for (const change of changes) {
+      if (change.type === "remove") deleteConnection(toConnectionId(change.id));
+    }
+    // Same pattern: edges derive from store, no RF edge state to patch.
+  };
+
+  const onDragOver = (e: React.DragEvent) => {
     e.preventDefault();
     e.dataTransfer.dropEffect = "copy";
-  }, []);
+  };
 
   const { screenToFlowPosition } = useReactFlow();
 
-  const onDrop = useCallback(
-    (e: React.DragEvent<HTMLDivElement>) => {
-      e.preventDefault();
-      const partDefinitionId = e.dataTransfer.getData(
-        "application/x-part-type",
-      ) as PartDefinitionId;
-      if (
-        !partDefinitionId ||
-        !partDefinitions.some((definition) => definition.id === partDefinitionId)
-      )
-        return;
-      const flowPosition = screenToFlowPosition({ x: e.clientX, y: e.clientY });
-      addPart(partDefinitionId, {
-        x: flowPosition.x,
-        y: flowPosition.y,
-      });
-    },
-    [addPart, screenToFlowPosition],
-  );
+  const onDrop = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    const partDefinitionId = e.dataTransfer.getData("application/x-part-type") as PartDefinitionId;
+    if (
+      !partDefinitionId ||
+      !partDefinitions.some((definition) => definition.id === partDefinitionId)
+    )
+      return;
+    const flowPosition = screenToFlowPosition({ x: e.clientX, y: e.clientY });
+    addPart(partDefinitionId, {
+      x: flowPosition.x,
+      y: flowPosition.y,
+    });
+  };
 
-  const onPaneClick = useCallback(() => {
+  const onPaneClick = () => {
     setMenu(null);
     setConnectionMenu(null);
     setPendingPortRef(undefined);
-  }, []);
+  };
 
   return (
     <div className="h-full w-full" onDragOver={onDragOver} onDrop={onDrop}>

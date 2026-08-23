@@ -4,6 +4,7 @@ import Modal from "antd/es/modal/Modal";
 import { LevelDefinition } from "../engine/levels";
 import { LevelPhase, LevelState } from "../engine/simulation";
 import { useGameStore } from "../store/gameStore";
+import { modalWidth } from "./designTokens";
 
 interface Props {
   levelDefinition: LevelDefinition;
@@ -12,20 +13,21 @@ interface Props {
 
 function SuccessView({ levelDefinition, levelState }: Props) {
   const setLevelPhase = useGameStore((state) => state.setLevelPhase);
-  const handleClose = () => {
-    setLevelPhase(LevelPhase.BUILD);
+  const backToProjects = () => {
+    useGameStore.getState().loadLevel(undefined);
   };
   return (
     <Modal
       title={`${levelDefinition.label} is ready!`}
       open={levelState.phase === LevelPhase.SUCCESS}
-      onCancel={handleClose}
+      onCancel={() => setLevelPhase(LevelPhase.BUILD)}
       footer={
-        <Button type="primary" onClick={handleClose}>
+        <Button type="primary" onClick={backToProjects}>
           Back to projects
         </Button>
       }
       mask={{ blur: true }}
+      width={modalWidth}
     >
       <Card
         title={
@@ -40,6 +42,7 @@ function SuccessView({ levelDefinition, levelState }: Props) {
             <img
               src={`levels/${levelDefinition.id}/success.svg`}
               alt={`${levelDefinition.userName} satisfied`}
+              width={192}
             />
           }
           description={<em>"{levelDefinition.successQuote}"</em>}

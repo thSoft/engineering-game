@@ -28,6 +28,24 @@ import {
 } from "../engine/parts";
 import { Action, LevelPhase, LevelState, LevelStatus, TimelineMode } from "../engine/simulation";
 
+export function makeLevelAvailable(levelDefinitionId: LevelDefinitionId) {
+  useGameStore.setState((state) => {
+    const newLevel = getInitialLevelState(getLevelDefinitionById(levelDefinitionId)!);
+    return {
+      levelStates: {
+        ...state.levelStates,
+        [levelDefinitionId]: newLevel,
+      },
+    };
+  });
+}
+
+export const setShowNewLevels = (showNewLevels: boolean) => {
+  useGameStore.setState((_) => ({
+    showNewLevels,
+  }));
+};
+
 export const useGameStore = create<GameState>()(
   persist(
     (set) => {
@@ -35,47 +53,34 @@ export const useGameStore = create<GameState>()(
         computeNewLevelState: (oldLevelState: LevelState) => Partial<LevelState>,
       ): void {
         set((state) => {
-          if (state.currentLevelDefinitionId in state.levelStates) {
-            return {
-              levelStates: Object.fromEntries(
-                Object.entries(state.levelStates).map(([levelDefinitionId, levelState]) => {
-                  if (state.currentLevelDefinitionId === levelDefinitionId && levelState) {
-                    return [
-                      levelDefinitionId,
-                      {
-                        ...levelState,
-                        ...computeNewLevelState(levelState),
-                      },
-                    ];
-                  } else {
-                    return [levelDefinitionId, levelState];
-                  }
-                }),
-              ),
-            };
-          } else {
-            const newLevel = getInitialLevelState(
-              getLevelDefinitionById(state.currentLevelDefinitionId)!,
-            );
-            return {
-              levelStates: {
-                ...state.levelStates,
-                [state.currentLevelDefinitionId]: {
-                  ...newLevel,
-                  ...computeNewLevelState(newLevel),
-                },
-              },
-            };
+          if (!state.currentLevelDefinitionId) return {};
+          const existingLevelState = getLevelStateByDefinitionId(
+            state,
+            state.currentLevelDefinitionId,
+          );
+          if (!existingLevelState) {
+            makeLevelAvailable(state.currentLevelDefinitionId);
           }
+          return {
+            levelStates: state.levelStates.map((levelState) => {
+              if (levelState.definitionId === state.currentLevelDefinitionId) {
+                return {
+                  ...levelState,
+                  ...computeNewLevelState(levelState),
+                };
+              } else {
+                return levelState;
+              }
+            }),
+          };
         });
       }
 
       const firstLevel: LevelDefinition = DeskLamp;
       return {
-        levelStates: {
-          [firstLevel.id]: getInitialLevelState(firstLevel),
-        },
-        currentLevelDefinitionId: firstLevel.id,
+        levelStates: [getInitialLevelState(firstLevel)],
+        currentLevelDefinitionId: undefined,
+        showNewLevels: true,
 
         addPart: (definitionId, position) => {
           const partId = nanoid();
@@ -173,7 +178,12 @@ export const useGameStore = create<GameState>()(
           set({
             currentLevelDefinitionId: definitionId,
           });
-          setCurrentLevel((state) => ({ ...state, levelStatus: LevelStatus.IN_PROGRESS }));
+          if (definitionId) {
+            const levelState = getLevelStateByDefinitionId(useGameStore.getState(), definitionId);
+            if (levelState && levelState.levelStatus === LevelStatus.NOT_STARTED) {
+              setCurrentLevel((state) => ({ ...state, levelStatus: LevelStatus.IN_PROGRESS }));
+            }
+          }
         },
         setCurrentTime(currentTime) {
           setCurrentLevel((state) => ({ ...state, currentTime: currentTime }));
@@ -250,15 +260,19 @@ function deleteAction(state: LevelState, portRef: PortRef, time: number): Action
   );
 }
 
-export function getCurrentLevel(state: GameState): LevelState | undefined {
-  return state.levelStates[state.currentLevelDefinitionId];
+export function getLevelStateByDefinitionId(
+  state: GameState,
+  definitionId: LevelDefinitionId,
+): LevelState | undefined {
+  return state.levelStates.find((levelState) => levelState.definitionId === definitionId);
 }
 
 // Game state
 
 export type GameState = {
-  levelStates: Partial<Record<LevelDefinitionId, LevelState>>;
-  currentLevelDefinitionId: LevelDefinitionId;
+  levelStates: LevelState[];
+  currentLevelDefinitionId: LevelDefinitionId | undefined;
+  showNewLevels: boolean;
 
   addPart: (definitionId: PartDefinitionId, position: PartPosition) => void;
   deletePart: (partId: PartId) => void;
@@ -266,7 +280,7 @@ export type GameState = {
   movePort: (portRef: PortRef, position: PortPosition) => void;
   addConnection: (source: PortRef, target: PortRef) => void;
   deleteConnection: (connectionId: ConnectionId) => void;
-  loadLevel: (definitionId: LevelDefinitionId) => void;
+  loadLevel: (definitionId?: LevelDefinitionId) => void;
   setCurrentTime: (currentTime: number) => void;
   addAction: (portRef: InputPortRef<any, any>, value: any) => void;
   deleteAction: (portRef: InputPortRef<any, any>, time: number) => void;
