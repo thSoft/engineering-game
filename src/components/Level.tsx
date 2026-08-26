@@ -1,7 +1,6 @@
 import { ReactFlowProvider } from "@xyflow/react";
 import { Button, Flex } from "antd";
-import { Boxes, ChevronLeft, Info } from "lucide-react";
-import { useState } from "react";
+import { ChevronLeft, Info } from "lucide-react";
 import { evaluateTestCase, getLevelDefinitionById, LevelDefinitionId } from "../engine/levels";
 import { LevelPhase } from "../engine/simulation";
 import { getLevelStateByDefinitionId, useGameStore } from "../store/gameStore";
@@ -12,14 +11,13 @@ import PartPalette from "./PartPalette";
 import { SimulationTimeline } from "./SimulationTimeline";
 import SuccessView from "./SuccessView";
 import TestView from "./TestView";
-import { borderColor, headerStyle } from "./designTokens";
+import { headerStyle } from "./designTokens";
 
 interface Props {
   levelDefinitionId: LevelDefinitionId;
 }
 
 function Level({ levelDefinitionId }: Props) {
-  const [paletteOpen, setPaletteOpen] = useState(false);
   const setCurrentTime = useGameStore((s) => s.setCurrentTime);
   const setLevelPhase = useGameStore((s) => s.setLevelPhase);
   const loadLevel = useGameStore((s) => s.loadLevel);
@@ -64,47 +62,21 @@ function Level({ levelDefinitionId }: Props) {
 
       {/* ── Body ── */}
       <main className="flex-1 flex overflow-hidden relative">
-        {/* ── Left panel: Parts palette ── */}
-
         {/* Left panel: Part palette */}
-        <div
-          className={`sm:flex flex-col shrink-0 border-r border-slate-700 overflow-hidden ${paletteOpen ? "w-48" : "w-10"}`}
-        >
-          {/* Collapse toggle */}
-          <button
-            onClick={() => setPaletteOpen((v) => !v)}
-            aria-label={paletteOpen ? "Collapse parts panel" : "Expand parts panel"}
-            className="flex items-center justify-center h-10 w-full shrink-0 border-b border-slate-700/60 text-slate-500 hover:text-slate-300 hover:bg-slate-700/40 transition"
-            title="Parts"
-          >
-            <Boxes size={16} />
-          </button>
-          {paletteOpen && <PartPalette onAdd={() => setPaletteOpen(false)} />}
-        </div>
+        <PartPalette availableParts={levelDefinition?.availableParts} />
 
         {/* Graph editor */}
-        <div className="flex-1 relative min-w-0">
-          <ReactFlowProvider>
-            <GraphEditor levelDefinitionId={levelDefinitionId} />
-          </ReactFlowProvider>
-        </div>
+        <ReactFlowProvider>
+          <GraphEditor levelDefinitionId={levelDefinitionId} />
+        </ReactFlowProvider>
 
         {/* Right panel: Status view */}
         {levelState && levelDefinition && testCaseResult && (
-          <div
-            style={{
-              width: 300,
-              paddingLeft: 12,
-              paddingRight: 12,
-              borderLeft: `1px solid ${borderColor}`,
-            }}
-          >
-            <TestView
-              levelState={levelState}
-              levelDefinition={levelDefinition}
-              testCaseResult={testCaseResult}
-            />
-          </div>
+          <TestView
+            levelState={levelState}
+            levelDefinition={levelDefinition}
+            testCaseResult={testCaseResult}
+          />
         )}
       </main>
 

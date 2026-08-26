@@ -29,6 +29,7 @@ export const lightbulb = Lightbulb.instance("lightbulb-0", { x: 0, y: 300 });
 
 export const DeskLamp = defineLevel("deskLamp", {
   label: "Desk Lamp",
+  availableParts: [],
   fixedParts: [plug, switchPart, lightbulb],
   exposedPorts: [plug.in("plugged"), switchPart.in("toggle"), lightbulb.out("lit")],
   testCase: {
@@ -59,6 +60,7 @@ export type LevelDefinitionId = string & { __brand: "LevelDefinitionId" };
 export type LevelDefinition = {
   id: LevelDefinitionId;
   label: string;
+  availableParts: PartDefinition<any, any, any>[];
   fixedParts: PartInstance[];
   exposedPorts: PortRef<any, any, any>[];
   testCase: TestCase;
