@@ -1,8 +1,9 @@
+import { ReactNode } from "react";
 import z from "zod";
 
 // Part definitions
 
-export const Plug = definePart("PLUG", {
+export const Plug = definePart("plug", {
   label: "Plug",
   parameters: {},
   inputPorts: {
@@ -23,12 +24,19 @@ export const Plug = definePart("PLUG", {
       defaultPosition: { side: "bottom", offset: 0.5 },
     },
   },
+  render: (inputs) => {
+    return inputs.plugged ? (
+      <img src="/parts/plug/plugged.svg" alt="Plugged" />
+    ) : (
+      <img src="/parts/plug/unplugged.svg" alt="Unplugged" />
+    );
+  },
   compute: (inputs) => ({
     powerOut: inputs.plugged,
   }),
 });
 
-export const Switch = definePart("SWITCH", {
+export const Switch = definePart("switch", {
   label: "Switch",
   parameters: {},
   inputPorts: {
@@ -56,12 +64,19 @@ export const Switch = definePart("SWITCH", {
       defaultPosition: { side: "bottom", offset: 0.5 },
     },
   },
+  render: (inputs) => {
+    return inputs.toggle ? (
+      <img src="/parts/switch/on.svg" alt="On" />
+    ) : (
+      <img src="/parts/switch/off.svg" alt="Off" />
+    );
+  },
   compute: (inputs) => ({
     powerOut: inputs.powerIn && inputs.toggle,
   }),
 });
 
-export const Lightbulb = definePart("LIGHTBULB", {
+export const Lightbulb = definePart("lightbulb", {
   label: "Lightbulb",
   parameters: {},
   inputPorts: {
@@ -81,6 +96,13 @@ export const Lightbulb = definePart("LIGHTBULB", {
       defaultValue: false,
       defaultPosition: { side: "bottom", offset: 0.5 },
     },
+  },
+  render: (inputs) => {
+    return inputs.powerIn ? (
+      <img src="/parts/lightbulb/lit.svg" alt="Lit" />
+    ) : (
+      <img src="/parts/lightbulb/unlit.svg" alt="Unlit" />
+    );
   },
   compute: (inputs) => ({
     lit: inputs.powerIn,
@@ -113,6 +135,7 @@ export type PartDefinition<
   parameters: P;
   inputPorts: I;
   outputPorts: O;
+  render: (inputPortValues: PortValues<I>, parameters: ParameterValues<P>) => ReactNode;
   compute: (inputPortValues: PortValues<I>, parameters: ParameterValues<P>) => PortValues<O>;
 };
 

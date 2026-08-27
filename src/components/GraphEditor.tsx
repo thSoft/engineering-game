@@ -117,7 +117,7 @@ function buildNodeData(
     outputPorts: partPorts
       .filter((port) => port.definition.direction === "output")
       .map(createPortInfo),
-    parameters: part.parameterValues,
+    parameterValues: part.parameterValues,
     onContextMenu,
     onPortClick,
     onPortMove,
