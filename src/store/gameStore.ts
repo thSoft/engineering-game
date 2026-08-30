@@ -5,6 +5,7 @@ import { persist, type StorageValue } from "zustand/middleware";
 import { Connection, ConnectionId } from "../engine/connections";
 
 import {
+  createSimulationInput,
   DeskLamp,
   getInitialLevelState,
   getLevelDefinitionById,
@@ -26,7 +27,15 @@ import {
   PortRef,
   refPort,
 } from "../engine/parts";
-import { Action, LevelPhase, LevelState, LevelStatus, TimelineMode } from "../engine/simulation";
+import {
+  Action,
+  BehaviorMode,
+  getTime,
+  LevelPhase,
+  LevelState,
+  LevelStatus,
+  simulate,
+} from "../engine/simulation";
 
 export function makeLevelAvailable(levelDefinitionId: LevelDefinitionId) {
   useGameStore.setState((state) => {
@@ -45,6 +54,26 @@ export const setShowNewLevels = (showNewLevels: boolean) => {
     showNewLevels,
   }));
 };
+
+function getNewExperimentData(state: LevelState) {
+  const newHistory =
+    state.behaviorMode === BehaviorMode.EXPERIMENT
+      ? createSimulationInput(Date.now())
+      : state.experimentData.history;
+  const simulationResult =
+    state.behaviorMode === BehaviorMode.EXPERIMENT
+      ? simulate(state.experimentData.history, state, state.experimentData.initialState)
+      : undefined;
+  const newExperimentState = simulationResult
+    ? (_.maxBy(simulationResult.actionResults, getTime)?.states ??
+      state.experimentData.initialState)
+    : state.experimentData.initialState;
+  return {
+    ...state.experimentData,
+    initialState: newExperimentState,
+    history: newHistory,
+  };
+}
 
 export const useGameStore = create<GameState>()(
   persist(
@@ -88,22 +117,32 @@ export const useGameStore = create<GameState>()(
           if (!definition) return;
 
           const newPart = createPartInstance(partId, position, definitionId, definition);
-          setCurrentLevel((state) => ({
-            parts: [...state.parts, newPart],
-          }));
+          setCurrentLevel((state) => {
+            const newState = { ...state, parts: [...state.parts, newPart] };
+            return {
+              ...newState,
+              experimentData: getNewExperimentData(newState),
+            };
+          });
         },
         deletePart: (partId) => {
           setCurrentLevel((state) => {
             const removedPortRefs = (getPart(state.parts, partId)?.portInstances ?? []).map(
               (port) => refPort(partId, port.key),
             );
-            return {
+
+            const newState = {
+              ...state,
               parts: state.parts.filter((part) => part.id !== partId),
               connections: state.connections.filter(
                 (connection) =>
                   !removedPortRefs.some((ref) => deepEqual(ref, connection.source)) &&
                   !removedPortRefs.some((ref) => deepEqual(ref, connection.target)),
               ),
+            };
+            return {
+              ...newState,
+              experimentData: getNewExperimentData(newState),
             };
           });
         },
@@ -163,7 +202,8 @@ export const useGameStore = create<GameState>()(
               target,
             };
             const updatedConnections = [...state.connections, newConnection];
-            return { connections: updatedConnections };
+            const newState = { ...state, connections: updatedConnections };
+            return { ...newState, experimentData: getNewExperimentData(newState) };
           });
         },
         deleteConnection: (connectionId) => {
@@ -171,7 +211,8 @@ export const useGameStore = create<GameState>()(
             const updatedConnections = state.connections.filter(
               (connection) => connection.id !== connectionId,
             );
-            return { connections: updatedConnections };
+            const newState = { ...state, connections: updatedConnections };
+            return { ...newState, experimentData: getNewExperimentData(newState) };
           });
         },
         loadLevel: (definitionId) => {
@@ -189,23 +230,40 @@ export const useGameStore = create<GameState>()(
           setCurrentLevel((state) => ({ ...state, currentTime: currentTime }));
         },
         addAction(portRef, value) {
-          setCurrentLevel((state) => ({
-            ...state,
-            simulationInput: {
-              ...state.simulationInput,
-              actions: _.sortBy(
-                [
-                  ...deleteAction(state, portRef, state.currentTime),
-                  {
-                    time: state.currentTime,
-                    portRef,
-                    value,
-                  },
-                ],
-                (action) => action.time,
-              ),
-            },
-          }));
+          setCurrentLevel((state) => {
+            const time =
+              state.behaviorMode === BehaviorMode.EXPERIMENT ? Date.now() : state.currentTime;
+            const action: Action<any, any> = {
+              time,
+              portRef,
+              value,
+            };
+            const newSimulationInput =
+              state.behaviorMode === BehaviorMode.SANDBOX
+                ? {
+                    ...state.simulationInput,
+                    actions: _.sortBy(
+                      [...deleteAction(state, portRef, time), action],
+                      (action) => action.time,
+                    ),
+                  }
+                : state.simulationInput;
+            const newHistory =
+              state.behaviorMode === BehaviorMode.EXPERIMENT
+                ? {
+                    ...state.experimentData.history,
+                    actions: [...state.experimentData.history.actions, action],
+                  }
+                : state.experimentData.history;
+            return {
+              ...state,
+              simulationInput: newSimulationInput,
+              experimentData: {
+                ...state.experimentData,
+                history: newHistory,
+              },
+            };
+          });
         },
         deleteAction(portRef, time) {
           setCurrentLevel((state) => ({
@@ -216,10 +274,10 @@ export const useGameStore = create<GameState>()(
             },
           }));
         },
-        setTimelineMode(mode) {
+        setBehaviorMode(mode) {
           setCurrentLevel((state) => ({
             ...state,
-            timelineMode: mode,
+            behaviorMode: mode,
           }));
         },
         setLevelStatus(status) {
@@ -284,7 +342,7 @@ export type GameState = {
   setCurrentTime: (currentTime: number) => void;
   addAction: (portRef: InputPortRef<any, any>, value: any) => void;
   deleteAction: (portRef: InputPortRef<any, any>, time: number) => void;
-  setTimelineMode: (mode: TimelineMode) => void;
+  setBehaviorMode: (mode: BehaviorMode) => void;
   setLevelStatus: (status: LevelStatus) => void;
   setLevelPhase: (phase: LevelPhase) => void;
 };

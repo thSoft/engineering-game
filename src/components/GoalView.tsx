@@ -3,8 +3,8 @@ import CardMeta from "antd/es/card/CardMeta";
 import Modal from "antd/es/modal/Modal";
 import { LevelDefinition } from "../engine/levels";
 import { LevelPhase, LevelState } from "../engine/simulation";
-import { useGameStore } from "../store/gameStore";
 import { modalWidth } from "./designTokens";
+import { useGameStore } from "../store/gameStore.ts";
 
 interface Props {
   levelDefinition: LevelDefinition;

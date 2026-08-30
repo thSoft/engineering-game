@@ -1,6 +1,6 @@
 import _ from "lodash";
 import { Connection, getConnectionsWithSource, getConnectionsWithTarget } from "./connections";
-import { LevelDefinitionId } from "./levels";
+import { LevelDefinition, LevelDefinitionId } from "./levels";
 import {
   deepEqual,
   getDefinitionOfPart,
@@ -64,7 +64,7 @@ function computePropagatedPortStates(
 ): PortInstanceState[] {
   const visitedParts = new Set<PartId>();
   const queue: PartId[] = [firstPartId];
-  var portStates = structuredClone(initialPortStates);
+  let portStates = structuredClone(initialPortStates);
 
   while (queue.length > 0) {
     const currentPartId = queue.shift();
@@ -175,16 +175,23 @@ export type LevelState = {
   definitionId: LevelDefinitionId;
   parts: PartInstance[];
   connections: Connection[];
+  experimentData: ExperimentData;
   simulationInput: SimulationInput;
   currentTime: number;
-  timelineMode: TimelineMode;
+  behaviorMode: BehaviorMode;
   levelStatus: LevelStatus;
   phase: LevelPhase;
 };
 
-export enum TimelineMode {
-  SANDBOX,
+export type ExperimentData = {
+  history: SimulationInput;
+  initialState: PortInstanceState[];
+};
+
+export enum BehaviorMode {
+  EXPERIMENT,
   TEST,
+  SANDBOX,
 }
 
 export enum LevelStatus {
@@ -199,14 +206,27 @@ export enum LevelPhase {
   SUCCESS,
 }
 
-export function simulate(input: SimulationInput, levelState: LevelState): SimulationResult {
+export function simulate(
+  input: SimulationInput,
+  levelState: LevelState,
+  overrideInitialState?: PortInstanceState[],
+): SimulationResult {
   const initialStates: PortInstanceState[] = levelState.parts.flatMap((part) => {
     const definition = getDefinitionOfPart(part.id, levelState.parts);
     if (!definition) return [];
-    return Object.keys(definition.inputPorts).map((portKey) => ({
-      portRef: refPort(part.id, portKey),
-      value: definition.inputPorts[portKey].defaultValue,
-    }));
+    return Object.keys(definition.inputPorts).map((portKey) => {
+      const portRef = refPort(part.id, portKey);
+      const overridenValue = overrideInitialState
+        ? overrideInitialState.find((portInstanceState) =>
+            deepEqual(portInstanceState.portRef, portRef),
+          )
+        : undefined;
+      const value = overridenValue?.value ?? definition.inputPorts[portKey].defaultValue;
+      return {
+        portRef: refPort(part.id, portKey),
+        value,
+      };
+    });
   });
   const propagatedInitialStates = levelState.parts.reduce(
     (states, part) =>
@@ -265,6 +285,21 @@ export function getPortValueAt(
   return latestMatchingResult?.states.find(stateMatches)?.value;
 }
 
-function getTime(result: SimulationActionResult) {
+export function getTime(result: SimulationActionResult) {
   return result.action?.time ?? -Infinity;
+}
+
+export function getSimulationInput(
+  behaviorMode: BehaviorMode,
+  levelState: LevelState,
+  levelDefinition: LevelDefinition,
+): SimulationInput {
+  switch (behaviorMode) {
+    case BehaviorMode.SANDBOX:
+      return levelState.simulationInput;
+    case BehaviorMode.TEST:
+      return levelDefinition.testCase.input;
+    case BehaviorMode.EXPERIMENT:
+      return levelState.experimentData.history;
+  }
 }

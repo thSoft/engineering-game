@@ -1,7 +1,7 @@
 import { Button, Flex, Result, Tooltip } from "antd";
 import { PackageCheck } from "lucide-react";
 import { LevelDefinition, TestCaseResult } from "../engine/levels";
-import { LevelPhase, LevelState, LevelStatus, TimelineMode } from "../engine/simulation";
+import { LevelPhase, LevelState, LevelStatus, BehaviorMode } from "../engine/simulation";
 import { useGameStore } from "../store/gameStore";
 import { borderColor } from "./designTokens";
 import { getPortRefLabel, getTimelineActions, TimelineActionData } from "./utils";
@@ -23,7 +23,7 @@ export default function TestView({ levelState, levelDefinition, testCaseResult }
   const setLevelPhase = useGameStore((s) => s.setLevelPhase);
 
   const timelineActions = getTimelineActions(
-    TimelineMode.TEST,
+    BehaviorMode.TEST,
     levelState,
     levelDefinition,
     testCaseResult,

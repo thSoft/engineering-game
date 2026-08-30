@@ -2,7 +2,7 @@ import { ReactFlowProvider } from "@xyflow/react";
 import { evaluateTestCase, getLevelDefinitionById, LevelDefinitionId } from "../engine/levels";
 import { getLevelStateByDefinitionId, useGameStore } from "../store/gameStore";
 import GoalView from "./GoalView";
-import GraphEditor from "./GraphEditor";
+import Workbench from "./Workbench.tsx";
 import { LevelHeader } from "./LevelHeader.tsx";
 import PartPalette from "./PartPalette";
 import { SimulationTimeline } from "./SimulationTimeline";
@@ -43,7 +43,7 @@ function Level({ levelDefinitionId }: Props) {
 
         {/* Graph editor */}
         <ReactFlowProvider>
-          <GraphEditor levelDefinitionId={levelDefinitionId} />
+          <Workbench levelState={levelState} levelDefinition={levelDefinition} />
         </ReactFlowProvider>
 
         {/* Right panel: Status view */}

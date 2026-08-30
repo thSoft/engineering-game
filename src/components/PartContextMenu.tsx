@@ -14,7 +14,7 @@ interface Props {
   menu: ContextMenuState;
   onDelete: (partId: PartId) => void;
   onClose: () => void;
-  levelDefinition: LevelDefinition | undefined;
+  levelDefinition: LevelDefinition;
 }
 
 export default function PartContextMenu({ menu, onDelete, onClose, levelDefinition }: Props) {

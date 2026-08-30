@@ -1,12 +1,12 @@
 import {
   Controls,
-  NodeTypes,
-  ReactFlow,
-  useReactFlow,
   type Edge,
   type EdgeChange,
   type Node,
   type NodeChange,
+  NodeTypes,
+  ReactFlow,
+  useReactFlow,
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 import { useState } from "react";
@@ -16,12 +16,7 @@ import {
   getConnectionsWithTarget,
   toConnectionId,
 } from "../engine/connections";
-import {
-  getLevelDefinitionById,
-  isExposed,
-  LevelDefinition,
-  LevelDefinitionId,
-} from "../engine/levels";
+import { isExposed, LevelDefinition } from "../engine/levels";
 import {
   deepEqual,
   getDefinitionOfPart,
@@ -38,20 +33,21 @@ import {
   toPartId,
 } from "../engine/parts";
 import {
+  BehaviorMode,
   getPortValueAt,
+  getSimulationInput,
   LevelState,
   simulate,
   SimulationResult,
-  TimelineMode,
 } from "../engine/simulation";
-import { getLevelStateByDefinitionId, useGameStore } from "../store/gameStore";
+import { useGameStore } from "../store/gameStore";
 import ConnectionContextMenu, { type ConnectionContextMenuState } from "./ConnectionContextMenu";
 import { connectableColor, flowOffColor } from "./designTokens";
 import PartContextMenu, { type ContextMenuState } from "./PartContextMenu";
 import PartNode, {
   getPortColor,
-  PortInfo,
   type PartNodeData,
+  PortInfo,
   type PortVisualState,
 } from "./PartNode";
 
@@ -86,11 +82,13 @@ function buildNodeData(
   onPortClick: (portRef: PortRef) => void,
   onPortMove: (portRef: PortRef, position: PortPosition) => void,
   selected: boolean,
-  levelDefinition: LevelDefinition | undefined,
+  levelDefinition: LevelDefinition,
   levelState: LevelState,
   simulationResult: SimulationResult | undefined,
 ): PartNodeData | undefined {
-  const { parts, connections, currentTime } = levelState;
+  const { parts, connections } = levelState;
+  const currentTime =
+    levelState.behaviorMode === BehaviorMode.EXPERIMENT ? Date.now() : levelState.currentTime;
   const partDefinition = getDefinitionOfPart(part.id, parts);
   if (!partDefinition) return undefined;
   const partPorts = part.portInstances;
@@ -102,7 +100,7 @@ function buildNodeData(
       instance: port,
       value,
       visual: getPortVisual(portRef, selectedPortRef, parts, connections),
-      exposed: levelDefinition ? isExposed(portRef, levelDefinition) : false,
+      exposed: isExposed(portRef, levelDefinition),
       connected: getConnectionsWithTarget(portRef, connections).length > 0,
     };
   };
@@ -121,18 +119,17 @@ function buildNodeData(
     onContextMenu,
     onPortClick,
     onPortMove,
-    onStateToggle:
-      levelState.timelineMode === TimelineMode.SANDBOX
-        ? (portRef: PortRef) => {
-            const value = simulationResult
-              ? getPortValueAt(portRef, currentTime, simulationResult)
-              : null;
-            if (value === null) return;
-            if (typeof value == "boolean") {
-              useGameStore.getState().addAction(portRef, !value);
-            }
+    onStateToggle: [BehaviorMode.SANDBOX, BehaviorMode.EXPERIMENT].includes(levelState.behaviorMode)
+      ? (portRef: PortRef) => {
+          const value = simulationResult
+            ? getPortValueAt(portRef, currentTime, simulationResult)
+            : null;
+          if (value === null) return;
+          if (typeof value == "boolean") {
+            useGameStore.getState().addAction(portRef, !value);
           }
-        : undefined,
+        }
+      : undefined,
   };
 }
 
@@ -172,12 +169,11 @@ function buildEdge(
 export type PartNodeType = Node<PartNodeData, "part">;
 
 interface Props {
-  levelDefinitionId: LevelDefinitionId;
+  levelState: LevelState;
+  levelDefinition: LevelDefinition;
 }
 
-export default function GraphEditor({ levelDefinitionId }: Props) {
-  const currentLevelDefinition = getLevelDefinitionById(levelDefinitionId);
-  const levelState = useGameStore((s) => getLevelStateByDefinitionId(s, levelDefinitionId));
+export default function Workbench({ levelState, levelDefinition }: Props) {
   const parts = levelState?.parts ?? [];
   const connections = levelState?.connections ?? [];
   const currentTime = levelState?.currentTime ?? 0;
@@ -233,15 +229,12 @@ export default function GraphEditor({ levelDefinitionId }: Props) {
     setPendingPortRef(undefined);
   };
 
-  const simulationResult =
-    levelState && currentLevelDefinition
-      ? simulate(
-          levelState.timelineMode === TimelineMode.SANDBOX
-            ? levelState.simulationInput
-            : currentLevelDefinition.testCase.input,
-          levelState,
-        )
+  const simulationInput = getSimulationInput(levelState.behaviorMode, levelState, levelDefinition);
+  const overrideInitialState =
+    levelState.behaviorMode == BehaviorMode.EXPERIMENT
+      ? levelState.experimentData.initialState
       : undefined;
+  const simulationResult = simulate(simulationInput, levelState, overrideInitialState);
 
   // Zustand is the single source of truth for positions.
   // Nodes and edges are derived purely from store state on every render —
@@ -255,7 +248,7 @@ export default function GraphEditor({ levelDefinitionId }: Props) {
           handlePortClick,
           movePort,
           part.id === menu?.partId,
-          currentLevelDefinition,
+          levelDefinition,
           levelState,
           simulationResult,
         );
@@ -381,7 +374,7 @@ export default function GraphEditor({ levelDefinitionId }: Props) {
             setPendingPortRef(undefined);
           }}
           onClose={() => setMenu(null)}
-          levelDefinition={currentLevelDefinition}
+          levelDefinition={levelDefinition}
         />
       )}
       {connectionMenu && (

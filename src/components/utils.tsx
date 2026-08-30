@@ -10,7 +10,7 @@ import {
   PartInstance,
   PortRef,
 } from "../engine/parts";
-import { LevelState, TimelineMode } from "../engine/simulation";
+import { LevelState, BehaviorMode, getSimulationInput } from "../engine/simulation";
 
 export function displayPortValue(portValue: any): ReactNode {
   return portValue ? "ON" : "OFF";
@@ -81,17 +81,14 @@ export class AssertionValue extends TimelineValue {
 }
 
 export function getTimelineActions(
-  timelineMode: TimelineMode,
+  behaviorMode: BehaviorMode,
   levelState: LevelState,
   levelDefinition: LevelDefinition,
   testCaseResult: TestCaseResult | undefined,
 ) {
-  const simulationActions =
-    timelineMode === TimelineMode.SANDBOX
-      ? levelState.simulationInput.actions
-      : levelDefinition.testCase.input.actions;
+  const simulationActions = getSimulationInput(behaviorMode, levelState, levelDefinition).actions;
   const simulationAssertions =
-    timelineMode === TimelineMode.SANDBOX ? [] : levelDefinition.testCase.assertions;
+    behaviorMode === BehaviorMode.TEST ? levelDefinition.testCase.assertions : [];
   const timelineActions: TimelineAction[] = [
     ...simulationActions.map((action, index) =>
       timelineAction(index, action.time, action.portRef, new ActionValue(action.value)),
@@ -121,7 +118,7 @@ export function getTimelineActions(
       effectId: "",
       movable: false,
       flexible: false,
-      data: new TimelineActionData(portRef, value, timelineMode === TimelineMode.TEST),
+      data: new TimelineActionData(portRef, value, behaviorMode === BehaviorMode.TEST),
     };
   }
   return _.sortBy(timelineActions, (action) => action.start);

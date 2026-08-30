@@ -11,7 +11,7 @@ import {
   PortRef,
   PortSide,
 } from "../engine/parts";
-import { PartNodeType, selectedColor } from "./GraphEditor";
+import { PartNodeType, selectedColor } from "./Workbench.tsx";
 import { getColorStyle, PART_DEFINITION_VISUALS } from "./PartPalette";
 import {
   connectableColor,

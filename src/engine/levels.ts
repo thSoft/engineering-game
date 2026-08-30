@@ -18,7 +18,7 @@ import {
   simulate,
   SimulationInput,
   SimulationResult,
-  TimelineMode,
+  BehaviorMode,
 } from "./simulation";
 
 // Level definitions
@@ -123,14 +123,22 @@ export function defineLevel(id: string, definition: Omit<LevelDefinition, "id">)
   return { id: id as LevelDefinitionId, ...definition };
 }
 
+export function createSimulationInput(startTime: number = 0) {
+  return { startTime, actions: [] };
+}
+
 export function getInitialLevelState(levelDefinition: LevelDefinition): LevelState {
   return {
     definitionId: levelDefinition.id,
     parts: levelDefinition.fixedParts,
     connections: [],
-    simulationInput: { startTime: 0, actions: [] },
+    experimentData: {
+      history: createSimulationInput(),
+      initialState: [],
+    },
+    simulationInput: createSimulationInput(),
     currentTime: 0,
-    timelineMode: TimelineMode.TEST,
+    behaviorMode: BehaviorMode.EXPERIMENT,
     levelStatus: LevelStatus.NOT_STARTED,
     phase: LevelPhase.GOAL,
   };

@@ -6,7 +6,7 @@ import _ from "lodash";
 import { ReactNode, useEffect, useRef } from "react";
 import { evaluateTestCase, LevelDefinition, TestCaseResult } from "../engine/levels";
 import { PartInstance } from "../engine/parts";
-import { LevelState, TimelineMode } from "../engine/simulation";
+import { BehaviorMode, LevelState } from "../engine/simulation";
 import { useGameStore } from "../store/gameStore";
 import { borderColor } from "./designTokens";
 import { getPortRefLabel, getTimelineActions, TimelineActionData } from "./utils";
@@ -24,8 +24,8 @@ export function SimulationTimeline({
   setCurrentTime,
   parts,
 }: SimulationTimelineProps) {
-  const timelineMode = levelState.timelineMode;
-  const setTimelineMode = useGameStore((s) => s.setTimelineMode);
+  const behaviorMode = levelState.behaviorMode;
+  const setBehaviorMode = useGameStore((s) => s.setBehaviorMode);
 
   const timelineRef = useRef<TimelineState>(null);
   useEffect(() => {
@@ -43,16 +43,10 @@ export function SimulationTimeline({
   };
 
   const testCaseResult =
-    timelineMode === TimelineMode.TEST
+    behaviorMode === BehaviorMode.TEST
       ? evaluateTestCase(levelDefinition.testCase, levelState)
       : undefined;
-  const timelineData = getTimelineData(
-    levelState.timelineMode,
-    levelDefinition,
-    levelState,
-    parts,
-    testCaseResult,
-  );
+  const timelineData = getTimelineData(levelDefinition, levelState, parts, testCaseResult);
 
   const rowHeight = 32;
   const cursorHeight = 10;
@@ -63,11 +57,12 @@ export function SimulationTimeline({
         <span className="text-sm">Simulation:</span>
         <Select
           style={{ width: "8em" }}
-          value={timelineMode}
-          onChange={(value) => setTimelineMode(value)}
+          value={behaviorMode}
+          onChange={(value) => setBehaviorMode(value)}
           options={[
-            { label: "Test", value: TimelineMode.TEST },
-            { label: "Sandbox", value: TimelineMode.SANDBOX },
+            { label: "Experiment", value: BehaviorMode.EXPERIMENT },
+            { label: "Test", value: BehaviorMode.TEST },
+            { label: "Sandbox", value: BehaviorMode.SANDBOX },
           ]}
         />
       </Flex>
@@ -145,14 +140,13 @@ export function SimulationTimeline({
 }
 
 function getTimelineData(
-  timelineMode: TimelineMode,
   levelDefinition: LevelDefinition,
   levelState: LevelState,
   parts: PartInstance[],
   testCaseResult: TestCaseResult | undefined,
 ) {
   const timelineActions: TimelineAction[] = getTimelineActions(
-    timelineMode,
+    levelState.behaviorMode,
     levelState,
     levelDefinition,
     testCaseResult,
