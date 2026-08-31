@@ -9,7 +9,7 @@ export const Plug = definePart("plug", {
   inputPorts: {
     plugged: {
       label: "plugged",
-      kind: "flow",
+      kind: "state",
       schema: z.boolean(),
       defaultValue: false,
       defaultPosition: { side: "top", offset: 0.5 },

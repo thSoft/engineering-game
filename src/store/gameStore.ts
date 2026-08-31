@@ -35,6 +35,7 @@ import {
   LevelState,
   LevelStatus,
   simulate,
+  SimulationResult,
 } from "../engine/simulation";
 
 export function makeLevelAvailable(levelDefinitionId: LevelDefinitionId) {
@@ -55,6 +56,20 @@ export const setShowNewLevels = (showNewLevels: boolean) => {
   }));
 };
 
+function getNewExperimentState(simulationResult: SimulationResult | undefined, state: LevelState) {
+  if (!simulationResult) {
+    return state.experimentData.initialState;
+  }
+  const values = _.maxBy(simulationResult.actionResults, getTime)?.states;
+  if (values == null) {
+    return state.experimentData.initialState;
+  }
+  return values.filter((value) => {
+    const portDefinition = getDefinitionOfPort(value.portRef, state.parts);
+    return portDefinition?.kind === "state";
+  });
+}
+
 function getNewExperimentData(state: LevelState) {
   const newHistory =
     state.behaviorMode === BehaviorMode.EXPERIMENT
@@ -64,10 +79,7 @@ function getNewExperimentData(state: LevelState) {
     state.behaviorMode === BehaviorMode.EXPERIMENT
       ? simulate(state.experimentData.history, state, state.experimentData.initialState)
       : undefined;
-  const newExperimentState = simulationResult
-    ? (_.maxBy(simulationResult.actionResults, getTime)?.states ??
-      state.experimentData.initialState)
-    : state.experimentData.initialState;
+  const newExperimentState = getNewExperimentState(simulationResult, state);
   return {
     ...state.experimentData,
     initialState: newExperimentState,
