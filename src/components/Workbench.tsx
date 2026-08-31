@@ -85,10 +85,9 @@ function buildNodeData(
   levelDefinition: LevelDefinition,
   levelState: LevelState,
   simulationResult: SimulationResult | undefined,
+  currentTime: number,
 ): PartNodeData | undefined {
   const { parts, connections } = levelState;
-  const currentTime =
-    levelState.behaviorMode === BehaviorMode.EXPERIMENT ? Date.now() : levelState.currentTime;
   const partDefinition = getDefinitionOfPart(part.id, parts);
   if (!partDefinition) return undefined;
   const partPorts = part.portInstances;
@@ -140,13 +139,11 @@ function buildEdge(
   selected: boolean,
   parts: PartInstance[],
   currentTime: number,
-  simulationResult: SimulationResult | undefined,
+  simulationResult: SimulationResult,
 ): Edge {
   const source = connection.source;
   const target = connection.target;
-  const sourceValue = simulationResult
-    ? getPortValueAt(source, currentTime, simulationResult)
-    : null;
+  const sourceValue = getPortValueAt(source, currentTime, simulationResult);
   const flowOn = sourceValue === true;
   const sourceDefinition = getDefinitionOfPort(source, parts);
   const color = selected
@@ -176,7 +173,6 @@ interface Props {
 export default function Workbench({ levelState, levelDefinition }: Props) {
   const parts = levelState?.parts ?? [];
   const connections = levelState?.connections ?? [];
-  const currentTime = levelState?.currentTime ?? 0;
 
   const movePart = useGameStore((s) => s.movePart);
   const movePort = useGameStore((s) => s.movePort);
@@ -235,6 +231,8 @@ export default function Workbench({ levelState, levelDefinition }: Props) {
       ? levelState.experimentData.initialState
       : undefined;
   const simulationResult = simulate(simulationInput, levelState, overrideInitialState);
+  const currentTime =
+    levelState.behaviorMode === BehaviorMode.EXPERIMENT ? Date.now() : levelState.currentTime;
 
   // Zustand is the single source of truth for positions.
   // Nodes and edges are derived purely from store state on every render —
@@ -251,6 +249,7 @@ export default function Workbench({ levelState, levelDefinition }: Props) {
           levelDefinition,
           levelState,
           simulationResult,
+          currentTime,
         );
         if (!data) return [];
         return [
