@@ -358,3 +358,7 @@ export type GameState = {
   setLevelStatus: (status: LevelStatus) => void;
   setLevelPhase: (phase: LevelPhase) => void;
 };
+
+export function setPortValue(portRef: PortRef, value: any) {
+  useGameStore.getState().addAction(portRef, value);
+}

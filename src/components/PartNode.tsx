@@ -21,6 +21,7 @@ import {
   stateColor,
 } from "./designTokens";
 import { displayPortValue } from "./utils";
+import { setPortValue } from "../store/gameStore.ts";
 
 export type PortVisualState = "idle" | "selected" | "connectable" | "blocked";
 
@@ -232,8 +233,14 @@ function PartNode({ data }: NodeProps<PartNodeType>) {
 
   const Icon = visual?.icon ?? Box;
 
-  const inputPortValues = Object.fromEntries(
-    inputPorts.map((portInfo) => [portInfo.instance.key, portInfo.value]),
+  const inputPortDescriptors = Object.fromEntries(
+    inputPorts.map((portInfo) => [
+      portInfo.instance.key,
+      {
+        value: portInfo.value,
+        setValue: (value: any) => setPortValue(portInfo.ref, value),
+      },
+    ]),
   );
   const parameterValues = data.parameterValues ?? {};
 
@@ -248,7 +255,7 @@ function PartNode({ data }: NodeProps<PartNodeType>) {
       }}
     >
       {definition ? (
-        definition.render(inputPortValues, parameterValues)
+        definition.render(inputPortDescriptors, parameterValues)
       ) : (
         <div className="flex items-center gap-2 mb-1">
           <Icon size={16} />

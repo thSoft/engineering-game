@@ -40,7 +40,7 @@ import {
   simulate,
   SimulationResult,
 } from "../engine/simulation";
-import { useGameStore } from "../store/gameStore";
+import { setPortValue, useGameStore } from "../store/gameStore";
 import ConnectionContextMenu, { type ConnectionContextMenuState } from "./ConnectionContextMenu";
 import { connectableColor, flowOffColor } from "./designTokens";
 import PartContextMenu, { type ContextMenuState } from "./PartContextMenu";
@@ -125,7 +125,7 @@ function buildNodeData(
             : null;
           if (value === null) return;
           if (typeof value == "boolean") {
-            useGameStore.getState().addAction(portRef, !value);
+            setPortValue(portRef, !value);
           }
         }
       : undefined,

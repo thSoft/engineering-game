@@ -1,5 +1,6 @@
 import { ReactNode } from "react";
 import z from "zod";
+import { PlugView } from "../components/parts/plug/PlugView.tsx";
 
 // Part definitions
 
@@ -24,15 +25,11 @@ export const Plug = definePart("plug", {
       defaultPosition: { side: "bottom", offset: 0.5 },
     },
   },
-  render: (inputs) => {
-    return inputs.plugged ? (
-      <img src="/parts/plug/plugged.svg" alt="Plugged" />
-    ) : (
-      <img src="/parts/plug/unplugged.svg" alt="Unplugged" />
-    );
+  render: ({ plugged }, _) => {
+    return <PlugView plugged={plugged} />;
   },
-  compute: (inputs) => ({
-    powerOut: inputs.plugged,
+  compute: ({ plugged }) => ({
+    powerOut: plugged,
   }),
 });
 
@@ -64,15 +61,15 @@ export const Switch = definePart("switch", {
       defaultPosition: { side: "bottom", offset: 0.5 },
     },
   },
-  render: (inputs) => {
-    return inputs.toggle ? (
+  render: ({ toggle }) => {
+    return toggle.value ? (
       <img src="/parts/switch/on.svg" alt="On" />
     ) : (
       <img src="/parts/switch/off.svg" alt="Off" />
     );
   },
-  compute: (inputs) => ({
-    powerOut: inputs.powerIn && inputs.toggle,
+  compute: ({ powerIn, toggle }) => ({
+    powerOut: powerIn && toggle,
   }),
 });
 
@@ -97,15 +94,15 @@ export const Lightbulb = definePart("lightbulb", {
       defaultPosition: { side: "bottom", offset: 0.5 },
     },
   },
-  render: (inputs) => {
-    return inputs.powerIn ? (
+  render: ({ powerIn }) => {
+    return powerIn.value ? (
       <img src="/parts/lightbulb/lit.svg" alt="Lit" />
     ) : (
       <img src="/parts/lightbulb/unlit.svg" alt="Unlit" />
     );
   },
-  compute: (inputs) => ({
-    lit: inputs.powerIn,
+  compute: ({ powerIn }) => ({
+    lit: powerIn,
   }),
 });
 
@@ -135,7 +132,7 @@ export type PartDefinition<
   parameters: P;
   inputPorts: I;
   outputPorts: O;
-  render: (inputPortValues: PortValues<I>, parameters: ParameterValues<P>) => ReactNode;
+  render: (inputPortDescriptors: PortDescriptors<I>, parameters: ParameterValues<P>) => ReactNode;
   compute: (inputPortValues: PortValues<I>, parameters: ParameterValues<P>) => PortValues<O>;
 };
 
@@ -293,6 +290,15 @@ type PortValues<T extends Record<string, PortDefinition<any>>> = {
   [K in keyof T]: PortValue<T[K]>;
 };
 
+export type PortDescriptor<V> = {
+  value: V;
+  setValue: (value: V) => void;
+};
+
+export type PortDescriptors<T extends Record<string, PortDefinition<any>>> = {
+  [K in keyof T]: PortDescriptor<PortValue<T[K]>>;
+};
+
 export type PortInstance = {
   key: string;
   definition: PortDefinitionWithHelpers<any>;
@@ -301,7 +307,7 @@ export type PortInstance = {
 
 export type InputPortRef<
   P extends PartDefinition<any, any, any>,
-  K extends keyof P["inputPorts"],
+  K extends keyof P["inputPorts"] = keyof P["inputPorts"],
 > = {
   partId: PartId;
   portKey: K;

@@ -1,0 +1,22 @@
+/* Socket */
+.socket-91a4ffa918eb {
+    position: relative;
+    width: 100%;
+    background: #B1B2B5FF;
+    border: 1px solid #000000FF;
+    border-start-start-radius: 2px;
+    border-start-end-radius: 2px;
+    border-end-start-radius: 2px;
+    border-end-end-radius: 2px;
+    display: flex;
+    align-items: center;
+    align-content: stretch;
+    justify-content: start;
+    column-gap: 2px;
+    padding-inline-start: 4px;
+    padding-inline-end: 4px;
+    padding-block-start: 4px;
+    padding-block-end: 4px;
+    flex-direction: row;
+    flex-wrap: nowrap;
+}
