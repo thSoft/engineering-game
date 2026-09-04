@@ -1,6 +1,16 @@
 import { ReactNode } from "react";
 import z from "zod";
 import { PlugView } from "../components/parts/plug/PlugView.tsx";
+import { HandleType } from "@xyflow/react";
+import { SwitchView } from "../components/parts/switch/SwitchView.tsx";
+import type { PortVisualState } from "../components/PartNode";
+import {
+  Lightbulb as LightbulbIcon,
+  LucideIcon,
+  Plug as PlugIcon,
+  ToggleRight,
+} from "lucide-react";
+import { LightbulbView } from "../components/parts/lightbulb/LightbulbView.tsx";
 
 // Part definitions
 
@@ -13,7 +23,6 @@ export const Plug = definePart("plug", {
       kind: "state",
       schema: z.boolean(),
       defaultValue: false,
-      defaultPosition: { side: "top", offset: 0.5 },
     },
   },
   outputPorts: {
@@ -22,11 +31,13 @@ export const Plug = definePart("plug", {
       kind: "flow",
       schema: z.boolean(),
       defaultValue: false,
-      defaultPosition: { side: "bottom", offset: 0.5 },
     },
   },
-  render: ({ plugged }, _) => {
-    return <PlugView plugged={plugged} />;
+  icon: PlugIcon,
+  color: "#00d492",
+  description: "Emits power if plugged in",
+  render: ({ plugged }, _, { powerOut }) => {
+    return <PlugView plugged={plugged} powerOut={powerOut} />;
   },
   compute: ({ plugged }) => ({
     powerOut: plugged,
@@ -42,14 +53,12 @@ export const Switch = definePart("switch", {
       kind: "flow",
       schema: z.boolean(),
       defaultValue: false,
-      defaultPosition: { side: "top", offset: 0.5 },
     },
     toggle: {
       label: "toggle",
       kind: "state",
       schema: z.boolean(),
       defaultValue: false,
-      defaultPosition: { side: "left", offset: 0.5 },
     },
   },
   outputPorts: {
@@ -58,15 +67,13 @@ export const Switch = definePart("switch", {
       kind: "flow",
       schema: z.boolean(),
       defaultValue: false,
-      defaultPosition: { side: "bottom", offset: 0.5 },
     },
   },
-  render: ({ toggle }) => {
-    return toggle.value ? (
-      <img src="/parts/switch/on.svg" alt="On" />
-    ) : (
-      <img src="/parts/switch/off.svg" alt="Off" />
-    );
+  icon: ToggleRight,
+  color: "#00bcff",
+  description: "Toggles power flow",
+  render: ({ powerIn, toggle }, _, { powerOut }) => {
+    return <SwitchView powerIn={powerIn} powerOut={powerOut} toggle={toggle} />;
   },
   compute: ({ powerIn, toggle }) => ({
     powerOut: powerIn && toggle,
@@ -82,7 +89,6 @@ export const Lightbulb = definePart("lightbulb", {
       kind: "flow",
       schema: z.boolean(),
       defaultValue: false,
-      defaultPosition: { side: "top", offset: 0.5 },
     },
   },
   outputPorts: {
@@ -91,15 +97,13 @@ export const Lightbulb = definePart("lightbulb", {
       kind: "flow",
       schema: z.boolean(),
       defaultValue: false,
-      defaultPosition: { side: "bottom", offset: 0.5 },
     },
   },
-  render: ({ powerIn }) => {
-    return powerIn.value ? (
-      <img src="/parts/lightbulb/lit.svg" alt="Lit" />
-    ) : (
-      <img src="/parts/lightbulb/unlit.svg" alt="Unlit" />
-    );
+  icon: LightbulbIcon,
+  color: "#fdc700",
+  description: "Lights up on power",
+  render: ({ powerIn }, _, { lit }) => {
+    return <LightbulbView powerIn={powerIn} lit={lit} />;
   },
   compute: ({ powerIn }) => ({
     lit: powerIn,
@@ -132,7 +136,14 @@ export type PartDefinition<
   parameters: P;
   inputPorts: I;
   outputPorts: O;
-  render: (inputPortDescriptors: PortDescriptors<I>, parameters: ParameterValues<P>) => ReactNode;
+  icon: LucideIcon;
+  color: string;
+  description: string;
+  render: (
+    inputPortDescriptors: PortDescriptors<I>,
+    parameters: ParameterValues<P>,
+    outputPortDescriptors: PortDescriptors<O>,
+  ) => ReactNode;
   compute: (inputPortValues: PortValues<I>, parameters: ParameterValues<P>) => PortValues<O>;
 };
 
@@ -209,7 +220,6 @@ export function createPartInstance<
       ...portDefinition,
       direction: direction,
     },
-    position: portDefinition.defaultPosition,
   });
   return {
     id: partId,
@@ -281,7 +291,6 @@ export type PortDefinition<T> = {
   kind: PortKind;
   schema: z.ZodType<T>;
   defaultValue: T;
-  defaultPosition: PortPosition;
 };
 
 export type PortValue<P> = P extends PortDefinition<infer T> ? T : never;
@@ -293,6 +302,11 @@ type PortValues<T extends Record<string, PortDefinition<any>>> = {
 export type PortDescriptor<V> = {
   value: V;
   setValue: (value: V) => void;
+  ref: PortRef;
+  type: HandleType;
+  definition: PortDefinition<V>;
+  visualState: PortVisualState;
+  startOrFinishConnection: () => void;
 };
 
 export type PortDescriptors<T extends Record<string, PortDefinition<any>>> = {
@@ -302,7 +316,6 @@ export type PortDescriptors<T extends Record<string, PortDefinition<any>>> = {
 export type PortInstance = {
   key: string;
   definition: PortDefinitionWithHelpers<any>;
-  position: PortPosition;
 };
 
 export type InputPortRef<

@@ -8,9 +8,13 @@ import {
   getDefinitionOfPort,
   getPart,
   PartInstance,
+  PortKind,
   PortRef,
 } from "../engine/parts";
-import { LevelState, BehaviorMode, getSimulationInput } from "../engine/simulation";
+import { BehaviorMode, getSimulationInput, LevelState } from "../engine/simulation";
+import { selectedColor } from "./Workbench.tsx";
+import { connectableColor, eventColor, flowOffColor, stateColor } from "./designTokens.tsx";
+import type { PortVisualState } from "./PartNode";
 
 export function displayPortValue(portValue: any): ReactNode {
   return portValue ? "ON" : "OFF";
@@ -128,4 +132,22 @@ export function getLevelIcon(levelDefinition: LevelDefinition): ReactNode {
   return (
     <img src={`levels/${levelDefinition.id}/icon.svg`} alt={levelDefinition.label} width={24} />
   );
+}
+
+export function getPortColor(portKind: PortKind, visual: PortVisualState): string {
+  if (visual === "selected") return selectedColor;
+  if (visual === "blocked") return "#334155";
+  if (visual === "connectable") return connectableColor;
+  if (portKind === "state") return stateColor;
+  if (portKind === "event") return eventColor;
+  return flowOffColor;
+}
+
+export function getColorStyle(color?: string) {
+  const realColor = color ?? "#f1f5f9";
+  return {
+    borderColor: `${realColor}99`,
+    backgroundColor: `${color}19`,
+    color: color,
+  };
 }

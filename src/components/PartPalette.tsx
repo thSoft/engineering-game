@@ -1,48 +1,9 @@
-import {
-  Boxes,
-  Lightbulb as LightbulbIcon,
-  Plug as PlugIcon,
-  Plus,
-  ToggleRight,
-  type LucideIcon,
-} from "lucide-react";
+import { Boxes } from "lucide-react";
 import { useState } from "react";
-import { Lightbulb, PartDefinition, PartDefinitionId, Plug, Switch } from "../engine/parts";
+import { PartDefinition, PartDefinitionId } from "../engine/parts";
 import { useGameStore } from "../store/gameStore";
 import { borderColor } from "./designTokens";
-
-type PartDefinitionVisual = {
-  icon: LucideIcon;
-  color: string;
-  description: string;
-};
-
-export const PART_DEFINITION_VISUALS: Record<PartDefinitionId, PartDefinitionVisual> = {
-  [Plug.id]: {
-    icon: PlugIcon,
-    color: "#00d492",
-    description: "Emits power if plugged in",
-  },
-  [Switch.id]: {
-    icon: ToggleRight,
-    color: "#00bcff",
-    description: "Toggles power flow",
-  },
-  [Lightbulb.id]: {
-    icon: LightbulbIcon,
-    color: "#fdc700",
-    description: "Lights up on power",
-  },
-};
-
-export function getColorStyle(color?: string) {
-  const realColor = color ?? "#f1f5f9";
-  return {
-    borderColor: `${realColor}99`,
-    backgroundColor: `${color}19`,
-    color: color,
-  };
-}
+import { getColorStyle } from "./utils.tsx";
 
 interface Props {
   onAdd?: () => void;
@@ -90,11 +51,9 @@ export default function PartPalette({ onAdd, availableParts = [] }: Props) {
             </div>
 
             <div className="p-2 space-y-1.5 flex-1 overflow-y-auto">
-              {availableParts.map(({ id, label }) => {
-                const visual = PART_DEFINITION_VISUALS[id];
-                const Icon = visual?.icon ?? Plus;
-                const colorStyle = getColorStyle(visual?.color);
-                const description = visual?.description ?? "";
+              {availableParts.map(({ id, label, icon, color, description }) => {
+                const Icon = icon;
+                const colorStyle = getColorStyle(color);
 
                 return (
                   <div

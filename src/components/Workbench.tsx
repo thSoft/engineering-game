@@ -24,7 +24,6 @@ import {
   getPortPath,
   PartDefinitionId,
   partDefinitions,
-  PartId,
   PartInstance,
   PortInstance,
   PortPosition,
@@ -42,14 +41,10 @@ import {
 } from "../engine/simulation";
 import { setPortValue, useGameStore } from "../store/gameStore";
 import ConnectionContextMenu, { type ConnectionContextMenuState } from "./ConnectionContextMenu";
-import { connectableColor, flowOffColor } from "./designTokens";
+import { connectableColor, flowOffColor, flowOnColor } from "./designTokens";
 import PartContextMenu, { type ContextMenuState } from "./PartContextMenu";
-import PartNode, {
-  getPortColor,
-  type PartNodeData,
-  PortInfo,
-  type PortVisualState,
-} from "./PartNode";
+import PartNode, { type PartNodeData, PortInfo, type PortVisualState } from "./PartNode";
+import { getPortColor } from "./utils.tsx";
 
 const nodeTypes: NodeTypes = { part: PartNode };
 
@@ -78,7 +73,6 @@ function getPortVisual(
 function buildNodeData(
   part: PartInstance,
   selectedPortRef: PortRef | undefined,
-  onContextMenu: (partId: PartId, x: number, y: number) => void,
   onPortClick: (portRef: PortRef) => void,
   onPortMove: (portRef: PortRef, position: PortPosition) => void,
   selected: boolean,
@@ -115,7 +109,6 @@ function buildNodeData(
       .filter((port) => port.definition.direction === "output")
       .map(createPortInfo),
     parameterValues: part.parameterValues,
-    onContextMenu,
     onPortClick,
     onPortMove,
     onStateToggle: [BehaviorMode.SANDBOX, BehaviorMode.EXPERIMENT].includes(levelState.behaviorMode)
@@ -148,9 +141,11 @@ function buildEdge(
   const sourceDefinition = getDefinitionOfPort(source, parts);
   const color = selected
     ? selectedColor
-    : source
-      ? getPortColor(sourceDefinition?.kind ?? "state", flowOn, "idle")
-      : flowOffColor;
+    : flowOn
+      ? flowOnColor
+      : source
+        ? getPortColor(sourceDefinition?.kind ?? "state", "idle")
+        : flowOffColor;
   return {
     id: connection.id,
     source: source.partId,
@@ -184,12 +179,6 @@ export default function Workbench({ levelState, levelDefinition }: Props) {
   const [menu, setMenu] = useState<ContextMenuState | null>(null);
   const [connectionMenu, setConnectionMenu] = useState<ConnectionContextMenuState | null>(null);
   const [pendingPortRef, setPendingPortRef] = useState<PortRef | undefined>(undefined);
-
-  const openMenu = (partId: PartId, x: number, y: number) => {
-    setMenu({ partId, x, y });
-    setConnectionMenu(null);
-    setPendingPortRef(undefined);
-  };
 
   const openConnectionMenu = (connectionId: ConnectionId, x: number, y: number) => {
     setConnectionMenu({ connectionId, x, y });
@@ -242,7 +231,6 @@ export default function Workbench({ levelState, levelDefinition }: Props) {
         const data = buildNodeData(
           part,
           pendingPortRef,
-          openMenu,
           handlePortClick,
           movePort,
           part.id === menu?.partId,
