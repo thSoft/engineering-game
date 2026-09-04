@@ -42,7 +42,6 @@ import {
 import { setPortValue, useGameStore } from "../store/gameStore";
 import ConnectionContextMenu, { type ConnectionContextMenuState } from "./ConnectionContextMenu";
 import { connectableColor, flowOffColor, flowOnColor } from "./designTokens";
-import PartContextMenu, { type ContextMenuState } from "./PartContextMenu";
 import PartNode, { type PartNodeData, PortInfo, type PortVisualState } from "./PartNode";
 import { getPortColor } from "./utils.tsx";
 
@@ -75,7 +74,6 @@ function buildNodeData(
   selectedPortRef: PortRef | undefined,
   onPortClick: (portRef: PortRef) => void,
   onPortMove: (portRef: PortRef, position: PortPosition) => void,
-  selected: boolean,
   levelDefinition: LevelDefinition,
   levelState: LevelState,
   simulationResult: SimulationResult | undefined,
@@ -101,7 +99,7 @@ function buildNodeData(
     label: partDefinition.label,
     partId: part.id,
     definitionId: partDefinition.id,
-    selected,
+    selected: false,
     inputPorts: partPorts
       .filter((port) => port.definition.direction === "input")
       .map(createPortInfo),
@@ -176,13 +174,11 @@ export default function Workbench({ levelState, levelDefinition }: Props) {
   const deleteConnection = useGameStore((s) => s.deleteConnection);
   const addPart = useGameStore((s) => s.addPart);
 
-  const [menu, setMenu] = useState<ContextMenuState | null>(null);
   const [connectionMenu, setConnectionMenu] = useState<ConnectionContextMenuState | null>(null);
   const [pendingPortRef, setPendingPortRef] = useState<PortRef | undefined>(undefined);
 
   const openConnectionMenu = (connectionId: ConnectionId, x: number, y: number) => {
     setConnectionMenu({ connectionId, x, y });
-    setMenu(null);
     setPendingPortRef(undefined);
   };
 
@@ -233,7 +229,6 @@ export default function Workbench({ levelState, levelDefinition }: Props) {
           pendingPortRef,
           handlePortClick,
           movePort,
-          part.id === menu?.partId,
           levelDefinition,
           levelState,
           simulationResult,
@@ -306,7 +301,6 @@ export default function Workbench({ levelState, levelDefinition }: Props) {
   };
 
   const onPaneClick = () => {
-    setMenu(null);
     setConnectionMenu(null);
     setPendingPortRef(undefined);
   };
@@ -353,17 +347,6 @@ export default function Workbench({ levelState, levelDefinition }: Props) {
         <Controls />
       </ReactFlow>
 
-      {menu && (
-        <PartContextMenu
-          menu={menu}
-          onDelete={(id) => {
-            deletePart(id);
-            setPendingPortRef(undefined);
-          }}
-          onClose={() => setMenu(null)}
-          levelDefinition={levelDefinition}
-        />
-      )}
       {connectionMenu && (
         <ConnectionContextMenu
           menu={connectionMenu}
