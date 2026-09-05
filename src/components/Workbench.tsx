@@ -1,8 +1,6 @@
 import {
   Controls,
-  type Edge,
   type EdgeChange,
-  type Node,
   type NodeChange,
   NodeTypes,
   ReactFlow,
@@ -40,12 +38,18 @@ import {
   SimulationResult,
 } from "../engine/simulation";
 import { setPortValue, useGameStore } from "../store/gameStore";
-import ConnectionContextMenu, { type ConnectionContextMenuState } from "./ConnectionContextMenu";
-import { connectableColor, flowOffColor, flowOnColor } from "./designTokens";
-import PartNode, { type PartNodeData, PortInfo, type PortVisualState } from "./PartNode";
+import { connectableColor, flowOffColor } from "./designTokens";
+import PartNode, {
+  PART_TYPE,
+  type PartNodeData,
+  PartNodeType,
+  PortInfo,
+  type PortVisualState,
+} from "./PartNode";
 import { getPortColor } from "./utils.tsx";
+import { CONNECTION_TYPE, ConnectionEdge, ConnectionEdgeType } from "./ConnectionEdge.tsx";
 
-const nodeTypes: NodeTypes = { part: PartNode };
+const nodeTypes: NodeTypes = { [PART_TYPE]: PartNode };
 
 function getPortVisual(
   candidatePort: PortRef,
@@ -131,7 +135,7 @@ function buildEdge(
   parts: PartInstance[],
   currentTime: number,
   simulationResult: SimulationResult,
-): Edge {
+): ConnectionEdgeType {
   const source = connection.source;
   const target = connection.target;
   const sourceValue = getPortValueAt(source, currentTime, simulationResult);
@@ -139,24 +143,27 @@ function buildEdge(
   const sourceDefinition = getDefinitionOfPort(source, parts);
   const color = selected
     ? selectedColor
-    : flowOn
-      ? flowOnColor
-      : source
-        ? getPortColor(sourceDefinition?.kind ?? "state", "idle")
-        : flowOffColor;
+    : source
+      ? getPortColor(sourceDefinition?.kind ?? "state", "idle")
+      : flowOffColor;
   return {
     id: connection.id,
+    type: CONNECTION_TYPE,
     source: source.partId,
     target: target.partId,
     sourceHandle: getPortPath(source),
     targetHandle: getPortPath(target),
-    animated: flowOn,
     selected,
-    style: { strokeWidth: selected ? 3 : 2, stroke: color },
+    style: {
+      strokeWidth: selected ? 3 : 2,
+      stroke: color,
+      filter: flowOn ? "drop-shadow(0px 0px 2px rgba(255, 255, 0, 1))" : undefined,
+    },
+    data: {
+      id: connection.id,
+    },
   };
 }
-
-export type PartNodeType = Node<PartNodeData, "part">;
 
 interface Props {
   levelState: LevelState;
@@ -174,13 +181,10 @@ export default function Workbench({ levelState, levelDefinition }: Props) {
   const deleteConnection = useGameStore((s) => s.deleteConnection);
   const addPart = useGameStore((s) => s.addPart);
 
-  const [connectionMenu, setConnectionMenu] = useState<ConnectionContextMenuState | null>(null);
+  const [selectedConnectionId, setSelectedConnectionId] = useState<ConnectionId | undefined>(
+    undefined,
+  );
   const [pendingPortRef, setPendingPortRef] = useState<PortRef | undefined>(undefined);
-
-  const openConnectionMenu = (connectionId: ConnectionId, x: number, y: number) => {
-    setConnectionMenu({ connectionId, x, y });
-    setPendingPortRef(undefined);
-  };
 
   const handlePortClick = (portRef: PortRef) => {
     const portDefinition = getDefinitionOfPort(portRef, parts);
@@ -246,10 +250,10 @@ export default function Workbench({ levelState, levelDefinition }: Props) {
       })
     : [];
 
-  const edges: Edge[] = connections.map((connection) =>
+  const edges: ConnectionEdgeType[] = connections.map((connection) =>
     buildEdge(
       connection,
-      connection.id === connectionMenu?.connectionId,
+      connection.id === selectedConnectionId,
       parts,
       currentTime,
       simulationResult,
@@ -301,9 +305,11 @@ export default function Workbench({ levelState, levelDefinition }: Props) {
   };
 
   const onPaneClick = () => {
-    setConnectionMenu(null);
+    setSelectedConnectionId(undefined);
     setPendingPortRef(undefined);
   };
+
+  const edgeTypes = { [CONNECTION_TYPE]: ConnectionEdge };
 
   return (
     <div className="h-full w-full" onDragOver={onDragOver} onDrop={onDrop}>
@@ -326,16 +332,15 @@ export default function Workbench({ levelState, levelDefinition }: Props) {
         </div>
       )}
 
-      <ReactFlow
+      <ReactFlow<PartNodeType, ConnectionEdgeType>
         nodes={nodes}
         edges={edges}
         nodeTypes={nodeTypes}
+        edgeTypes={edgeTypes}
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}
         onPaneClick={onPaneClick}
-        onEdgeClick={(event, edge) =>
-          openConnectionMenu(toConnectionId(edge.id), event.clientX, event.clientY)
-        }
+        onEdgeClick={(_, edge) => setSelectedConnectionId(edge.data?.id)}
         nodesConnectable={false}
         deleteKeyCode="Delete"
         multiSelectionKeyCode="Shift"
@@ -346,14 +351,6 @@ export default function Workbench({ levelState, levelDefinition }: Props) {
       >
         <Controls />
       </ReactFlow>
-
-      {connectionMenu && (
-        <ConnectionContextMenu
-          menu={connectionMenu}
-          onDelete={deleteConnection}
-          onClose={() => setConnectionMenu(null)}
-        />
-      )}
     </div>
   );
 }

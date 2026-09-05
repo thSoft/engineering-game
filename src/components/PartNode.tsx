@@ -1,9 +1,8 @@
-import { type NodeProps, useUpdateNodeInternals } from "@xyflow/react";
+import { type Node, type NodeProps, useUpdateNodeInternals } from "@xyflow/react";
 import { Box } from "lucide-react";
 import { memo, useEffect, useRef } from "react";
 import type { ParameterValues, PartDefinitionId, PartId, PortInstance } from "../engine/parts";
 import { getPartDefinitionById, PortPosition, PortRef } from "../engine/parts";
-import { PartNodeType } from "./Workbench.tsx";
 import { setPortValue } from "../store/gameStore.ts";
 
 export type PortVisualState = "idle" | "selected" | "connectable" | "blocked";
@@ -30,6 +29,10 @@ export type PartNodeData = {
   onPortMove?: (portRef: PortRef, position: PortPosition) => void;
   onStateToggle?: (portRef: PortRef) => void;
 };
+
+export const PART_TYPE = "part" as const;
+
+export type PartNodeType = Node<PartNodeData, typeof PART_TYPE>;
 
 function PartNode({ data }: NodeProps<PartNodeType>) {
   const { label, definitionId, inputPorts, outputPorts, onPortClick } = data;
