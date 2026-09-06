@@ -5,9 +5,9 @@ import GoalView from "./GoalView";
 import Workbench from "./Workbench.tsx";
 import { LevelHeader } from "./LevelHeader.tsx";
 import PartPalette from "./PartPalette";
-import { SimulationTimeline } from "./SimulationTimeline";
+import { BehaviorView } from "./BehaviorView.tsx";
 import SuccessView from "./SuccessView";
-import TestView from "./TestView";
+import AcceptanceView from "./AcceptanceView.tsx";
 
 interface Props {
   levelDefinitionId: LevelDefinitionId;
@@ -41,14 +41,14 @@ function Level({ levelDefinitionId }: Props) {
         {/* Left panel: Part palette */}
         <PartPalette availableParts={levelDefinition?.availableParts} />
 
-        {/* Graph editor */}
+        {/* Workbench */}
         <ReactFlowProvider>
           <Workbench levelState={levelState} levelDefinition={levelDefinition} />
         </ReactFlowProvider>
 
-        {/* Right panel: Status view */}
+        {/* Right panel: Acceptance view */}
         {levelState && levelDefinition && testCaseResult && (
-          <TestView
+          <AcceptanceView
             levelState={levelState}
             levelDefinition={levelDefinition}
             testCaseResult={testCaseResult}
@@ -59,7 +59,7 @@ function Level({ levelDefinitionId }: Props) {
       {/* ── Footer ── */}
       <footer>
         {levelState && levelDefinition && (
-          <SimulationTimeline
+          <BehaviorView
             levelDefinition={levelDefinition}
             levelState={levelState}
             setCurrentTime={setCurrentTime}

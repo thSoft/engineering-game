@@ -19,7 +19,7 @@ interface SimulationTimelineProps {
   parts: PartInstance[];
 }
 
-export function SimulationTimeline({
+export function BehaviorView({
   levelDefinition,
   levelState,
   setCurrentTime,

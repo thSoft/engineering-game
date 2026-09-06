@@ -1,7 +1,7 @@
 import { Button, Flex, Result, Tooltip } from "antd";
 import { PackageCheck } from "lucide-react";
 import { LevelDefinition, TestCaseResult } from "../engine/levels";
-import { LevelPhase, LevelState, LevelStatus, BehaviorMode } from "../engine/simulation";
+import { BehaviorMode, LevelPhase, LevelState, LevelStatus } from "../engine/simulation";
 import { useGameStore } from "../store/gameStore";
 import { borderColor } from "./designTokens";
 import { getPortRefLabel, getTimelineActions, TimelineActionData } from "./utils";
@@ -12,7 +12,7 @@ interface Props {
   testCaseResult: TestCaseResult;
 }
 
-export default function TestView({ levelState, levelDefinition, testCaseResult }: Props) {
+export default function AcceptanceView({ levelState, levelDefinition, testCaseResult }: Props) {
   const success = testCaseResult.success;
   const status = success ? "success" : "warning";
   const message = success ? "Tests passed" : "Tests failed";
