@@ -216,15 +216,8 @@ export function createPartInstance<
     partId: partId,
     portKey,
   });
-  const createPortInstance = (
-    [portKey, portDefinition]: [string, PortDefinition<any>],
-    direction: PortDirection,
-  ): PortInstance => ({
+  const createPortInstance = (portKey: string): PortInstance => ({
     key: portKey,
-    definition: {
-      ...portDefinition,
-      direction: direction,
-    },
   });
   return {
     id: partId,
@@ -238,8 +231,8 @@ export function createPartInstance<
       ]),
     ),
     portInstances: [
-      ...Object.entries(definition.inputPorts).map((entry) => createPortInstance(entry, "input")),
-      ...Object.entries(definition.outputPorts).map((entry) => createPortInstance(entry, "output")),
+      ...Object.keys(definition.inputPorts).map((key) => createPortInstance(key)),
+      ...Object.keys(definition.outputPorts).map((key) => createPortInstance(key)),
     ],
 
     in: inputPortRef,
@@ -322,7 +315,6 @@ export type PortDescriptors<T extends Record<string, PortDefinition<any>>> = {
 
 export type PortInstance = {
   key: string;
-  definition: PortDefinitionWithHelpers<any>;
 };
 
 export type InputPortRef<

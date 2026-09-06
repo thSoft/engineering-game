@@ -1,14 +1,20 @@
 import { type Node, type NodeProps, useUpdateNodeInternals } from "@xyflow/react";
 import { Box } from "lucide-react";
 import { memo, useEffect, useRef } from "react";
-import type { ParameterValues, PartDefinitionId, PartId, PortInstance } from "../engine/parts";
+import type {
+  ParameterValues,
+  PartDefinitionId,
+  PartId,
+  PortDefinition,
+  PortDescriptors,
+} from "../engine/parts";
 import { getPartDefinitionById, PortPosition, PortRef } from "../engine/parts";
 import { setPortValue } from "../store/gameStore.ts";
 
 export type PortVisualState = "idle" | "selected" | "connectable" | "blocked";
 
 export interface PortInfo {
-  instance: PortInstance;
+  definition: PortDefinition<any>;
   ref: PortRef;
   value: any;
   visual: PortVisualState;
@@ -46,15 +52,15 @@ function PartNode({ data }: NodeProps<PartNodeType>) {
 
   const Icon = definition?.icon ?? Box;
 
-  const inputPortDescriptors = Object.fromEntries(
+  const inputPortDescriptors: PortDescriptors<any> = Object.fromEntries(
     inputPorts.map((portInfo) => [
-      portInfo.instance.key,
+      portInfo.ref.portKey,
       {
         value: portInfo.value,
         setValue: (value: any) => setPortValue(portInfo.ref, value),
         ref: portInfo.ref,
         type: "target" as const,
-        definition: portInfo.instance.definition,
+        definition: portInfo.definition,
         visualState: portInfo.visual,
         startOrFinishConnection: () => {
           return onPortClick?.(portInfo.ref);
@@ -65,13 +71,13 @@ function PartNode({ data }: NodeProps<PartNodeType>) {
   const parameterValues = data.parameterValues ?? {};
   const outputPortDescriptors = Object.fromEntries(
     outputPorts.map((portInfo) => [
-      portInfo.instance.key,
+      portInfo.ref.portKey,
       {
         value: portInfo.value,
         setValue: () => {},
         ref: portInfo.ref,
         type: "source" as const,
-        definition: portInfo.instance.definition,
+        definition: portInfo.definition,
         visualState: portInfo.visual,
         startOrFinishConnection: () => {
           return onPortClick?.(portInfo.ref);

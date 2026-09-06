@@ -23,7 +23,7 @@ import {
   PartDefinitionId,
   partDefinitions,
   PartInstance,
-  PortInstance,
+  PortDefinition,
   PortPosition,
   PortRef,
   refPort,
@@ -86,13 +86,12 @@ function buildNodeData(
   const { parts, connections } = levelState;
   const partDefinition = getDefinitionOfPart(part.id, parts);
   if (!partDefinition) return undefined;
-  const partPorts = part.portInstances;
-  const createPortInfo = (port: PortInstance): PortInfo => {
-    const portRef = refPort(part.id, port.key);
+  const createPortInfo = ([portKey, definition]: [string, PortDefinition<any>]): PortInfo => {
+    const portRef = refPort(part.id, portKey);
     const value = simulationResult ? getPortValueAt(portRef, currentTime, simulationResult) : null;
     return {
       ref: portRef,
-      instance: port,
+      definition,
       value,
       visual: getPortVisual(portRef, selectedPortRef, parts, connections),
       exposed: isExposed(portRef, levelDefinition),
@@ -104,12 +103,12 @@ function buildNodeData(
     partId: part.id,
     definitionId: partDefinition.id,
     selected: false,
-    inputPorts: partPorts
-      .filter((port) => port.definition.direction === "input")
-      .map(createPortInfo),
-    outputPorts: partPorts
-      .filter((port) => port.definition.direction === "output")
-      .map(createPortInfo),
+    inputPorts: Object.entries(
+      partDefinition.inputPorts as Record<string, PortDefinition<any>>,
+    ).map((entry) => createPortInfo(entry)),
+    outputPorts: Object.entries(
+      partDefinition.outputPorts as Record<string, PortDefinition<any>>,
+    ).map((entry) => createPortInfo(entry)),
     parameterValues: part.parameterValues,
     onPortClick,
     onPortMove,
