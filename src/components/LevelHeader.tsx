@@ -21,9 +21,6 @@ export function LevelHeader({ levelDefinition, levelState, loadLevel, setLevelPh
           Back to projects
         </Button>
       </Flex>
-      <Flex style={{ position: "absolute", right: 8 }} align="center">
-        <LevelStatusView levelStatus={levelState.levelStatus} />
-      </Flex>
       <Flex
         gap={8}
         justify="center"
@@ -32,6 +29,9 @@ export function LevelHeader({ levelDefinition, levelState, loadLevel, setLevelPh
       >
         <h2>{levelDefinition.label}</h2>
         <Button onClick={() => setLevelPhase(LevelPhase.GOAL)} icon={<Info />} variant="text" />
+      </Flex>
+      <Flex style={{ position: "absolute", right: 8 }} align="center">
+        <LevelStatusView levelStatus={levelState.levelStatus} />
       </Flex>
     </header>
   );
