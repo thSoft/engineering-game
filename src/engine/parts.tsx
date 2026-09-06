@@ -61,7 +61,7 @@ export const Switch = definePart("switch", {
       schema: z.boolean(),
       defaultValue: false,
       renderAction: (value, partLabel) =>
-        value ? `Turn off ${partLabel}` : `Turn on ${partLabel}`,
+        value ? `Turn on ${partLabel}` : `Turn off ${partLabel}`,
     },
   },
   outputPorts: {
