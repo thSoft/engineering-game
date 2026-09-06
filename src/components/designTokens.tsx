@@ -12,3 +12,4 @@ export const headerStyle = {
   alignItems: "center",
   padding: 8,
 };
+export const iconSize = 16;

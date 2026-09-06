@@ -1,5 +1,5 @@
 import { Timeline, TimelineAction, TimelineState } from "@keplar-404/react-timeline-editor";
-import { Select } from "antd";
+import { Segmented } from "antd";
 import Dropdown from "antd/es/dropdown/dropdown";
 import Flex from "antd/es/flex";
 import _ from "lodash";
@@ -8,8 +8,9 @@ import { evaluateTestCase, LevelDefinition, TestCaseResult } from "../engine/lev
 import { PartInstance } from "../engine/parts";
 import { BehaviorMode, LevelState } from "../engine/simulation";
 import { useGameStore } from "../store/gameStore";
-import { borderColor } from "./designTokens";
+import { borderColor, iconSize } from "./designTokens";
 import { getPortRefLabel, getTimelineActions, TimelineActionData } from "./utils";
+import { FilePlay, FlaskConical, ShieldCheck } from "lucide-react";
 
 interface SimulationTimelineProps {
   levelDefinition: LevelDefinition;
@@ -53,88 +54,115 @@ export function SimulationTimeline({
 
   return (
     <Flex vertical style={{ borderTop: `1px solid ${borderColor}` }}>
-      <Flex align="center" gap={8} style={{ padding: 4 }}>
-        <span className="text-sm">Simulation:</span>
-        <Select
-          style={{ width: "8em" }}
-          value={behaviorMode}
-          onChange={(value) => setBehaviorMode(value)}
-          options={[
-            { label: "Experiment", value: BehaviorMode.EXPERIMENT },
-            { label: "Test", value: BehaviorMode.TEST },
-            { label: "Sandbox", value: BehaviorMode.SANDBOX },
-          ]}
-        />
-      </Flex>
       <div
         style={{
           display: "flex",
           width: "100%",
-          height: "200px",
+          height: behaviorMode !== BehaviorMode.EXPERIMENT ? 200 : 0,
+          transition: "height 0.05s ease-in-out",
         }}
       >
-        {/* Side Panel for Lane Labels */}
-        <div
-          ref={trackHeaderRef}
-          style={{
-            width: "160px",
-            overflowY: "hidden", // Hide scrollbar — handled by sync
-            position: "relative",
-          }}
-        >
-          <Flex
-            vertical
-            align="center"
-            style={{ marginTop: `calc(${rowHeight}px + ${cursorHeight}px)` }}
-          >
-            <table
+        {behaviorMode !== BehaviorMode.EXPERIMENT && (
+          <>
+            {/* Side Panel for Lane Labels */}
+            <div
+              ref={trackHeaderRef}
               style={{
-                borderCollapse: "collapse",
-                width: "calc(100% - 16px)", // Account for padding
-                borderTop: `1px solid ${borderColor}`,
+                width: "160px",
+                overflowY: "hidden", // Hide scrollbar — handled by sync
+                position: "relative",
               }}
             >
-              <tbody>
-                {timelineData.map((row) => (
-                  <tr
-                    key={row.id}
-                    style={{
-                      height: `${rowHeight}px`, // Must match Timeline's rowHeight prop
-                      lineHeight: `${rowHeight}px`,
-                      borderBottom: `1px solid ${borderColor}`,
-                      paddingLeft: "10px",
-                      fontSize: "12px",
-                    }}
-                  >
-                    <td>{row.partLabel}</td>
-                    <td>{row.portLabel}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </Flex>
-        </div>
-        {/* Main Timeline */}
-        <div style={{ flex: 1, overflow: "hidden" }}>
-          <Timeline
-            disableDrag={true}
-            gridSnap={true}
-            style={{ width: "100%" }}
-            editorData={timelineData}
-            getActionRender={TimelineActionView}
-            effects={{}}
-            onCursorDragEnd={(time) => {
-              setCurrentTime(time);
-            }}
-            onClickTimeArea={(time) => {
-              setCurrentTime(time);
-            }}
-            ref={timelineRef}
-            onScroll={handleScroll}
-            rowHeight={rowHeight}
-          />
-        </div>
+              <Flex
+                vertical
+                align="center"
+                style={{ marginTop: `calc(${rowHeight}px + ${cursorHeight}px)` }}
+              >
+                <table
+                  style={{
+                    borderCollapse: "collapse",
+                    width: "calc(100% - 16px)", // Account for padding
+                    borderTop: `1px solid ${borderColor}`,
+                  }}
+                >
+                  <tbody>
+                    {timelineData.map((row) => (
+                      <tr
+                        key={row.id}
+                        style={{
+                          height: `${rowHeight}px`, // Must match Timeline's rowHeight prop
+                          lineHeight: `${rowHeight}px`,
+                          borderBottom: `1px solid ${borderColor}`,
+                          paddingLeft: "10px",
+                          fontSize: "12px",
+                        }}
+                      >
+                        <td>{row.partLabel}</td>
+                        <td>{row.portLabel}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </Flex>
+            </div>
+            {/* Main Timeline */}
+            <div style={{ flex: 1, overflow: "hidden" }}>
+              <Timeline
+                disableDrag={true}
+                gridSnap={true}
+                style={{ width: "100%" }}
+                editorData={timelineData}
+                getActionRender={TimelineActionView}
+                effects={{}}
+                onCursorDragEnd={(time) => {
+                  setCurrentTime(time);
+                }}
+                onClickTimeArea={(time) => {
+                  setCurrentTime(time);
+                }}
+                ref={timelineRef}
+                onScroll={handleScroll}
+                rowHeight={rowHeight}
+              />
+            </div>
+          </>
+        )}
       </div>
+      <Flex align="center" gap={8} style={{ padding: 4 }}>
+        <Segmented
+          value={behaviorMode}
+          onChange={(value) => setBehaviorMode(value)}
+          options={[
+            {
+              label: (
+                <Flex gap={4} align="center">
+                  <FlaskConical size={iconSize} />
+                  Experiment
+                </Flex>
+              ),
+              value: BehaviorMode.EXPERIMENT,
+            },
+            {
+              label: (
+                <Flex gap={4} align="center">
+                  <ShieldCheck size={iconSize} />
+                  Test Case
+                </Flex>
+              ),
+              value: BehaviorMode.TEST,
+            },
+            {
+              label: (
+                <Flex gap={4} align="center">
+                  <FilePlay size={iconSize} />
+                  Custom Scenario
+                </Flex>
+              ),
+              value: BehaviorMode.SANDBOX,
+            },
+          ]}
+        />
+      </Flex>
     </Flex>
   );
 }
