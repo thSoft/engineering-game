@@ -23,6 +23,7 @@ export const Plug = definePart("plug", {
       kind: "state",
       schema: z.boolean(),
       defaultValue: false,
+      renderAction: (value, partLabel) => (value ? `Plug in ${partLabel}` : `Unplug ${partLabel}`),
     },
   },
   outputPorts: {
@@ -59,6 +60,8 @@ export const Switch = definePart("switch", {
       kind: "state",
       schema: z.boolean(),
       defaultValue: false,
+      renderAction: (value, partLabel) =>
+        value ? `Turn off ${partLabel}` : `Turn on ${partLabel}`,
     },
   },
   outputPorts: {
@@ -97,6 +100,8 @@ export const Lightbulb = definePart("lightbulb", {
       kind: "flow",
       schema: z.boolean(),
       defaultValue: false,
+      renderAssertion: (expectedValue, partLabel) =>
+        expectedValue ? `${partLabel} should be lit` : `${partLabel} should not be lit`,
     },
   },
   icon: LightbulbIcon,
@@ -291,6 +296,8 @@ export type PortDefinition<T> = {
   kind: PortKind;
   schema: z.ZodType<T>;
   defaultValue: T;
+  renderAction?: (value: T, partLabel: string) => string;
+  renderAssertion?: (expectedValue: T, partLabel: string) => string;
 };
 
 export type PortValue<P> = P extends PortDefinition<infer T> ? T : never;

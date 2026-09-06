@@ -4,7 +4,7 @@ import { LevelDefinition, TestCaseResult } from "../engine/levels";
 import { BehaviorMode, LevelPhase, LevelState, LevelStatus } from "../engine/simulation";
 import { useGameStore } from "../store/gameStore";
 import { borderColor } from "./designTokens";
-import { getPortRefLabel, getTimelineActions, TimelineActionData } from "./utils";
+import { ActionValue, getPortRefLabel, getTimelineActions, TimelineActionData } from "./utils";
 
 interface Props {
   levelState: LevelState;
@@ -77,6 +77,10 @@ export default function AcceptanceView({ levelState, levelDefinition, testCaseRe
             {timelineActions.map((action, index) => {
               if (!(action.data instanceof TimelineActionData)) return null;
               const { icon, type, value, color } = action.data.value.getDisplayInfo();
+              const renderer =
+                action.data.value instanceof ActionValue
+                  ? action.data.portDefinition?.renderAction
+                  : action.data.portDefinition?.renderAssertion;
               const { partLabel, portLabel } = getPortRefLabel(
                 action.data.portRef,
                 levelState.parts,
@@ -87,10 +91,11 @@ export default function AcceptanceView({ levelState, levelDefinition, testCaseRe
                   style={{ borderBottom: `1px solid ${borderColor}`, color: color ?? "inherit" }}
                 >
                   <td>{icon}</td>
-                  <td>{type}</td>
-                  <td>{partLabel}</td>
-                  <td>{portLabel}</td>
-                  <td>{value}</td>
+                  <td>
+                    {renderer
+                      ? `${renderer(action.data.value.getRawValue(), partLabel)}`
+                      : `${type} ${partLabel}'s ${portLabel} = ${value}`}
+                  </td>
                 </tr>
               );
             })}

@@ -8,6 +8,7 @@ import {
   getDefinitionOfPort,
   getPart,
   PartInstance,
+  PortDefinition,
   PortKind,
   PortRef,
 } from "../engine/parts";
@@ -35,12 +36,14 @@ export function getPortRefLabel(
 export class TimelineActionData {
   constructor(
     readonly portRef: PortRef,
+    readonly portDefinition: PortDefinition<any> | undefined,
     readonly value: TimelineValue,
     readonly readOnly: boolean,
   ) {}
 }
 
 export abstract class TimelineValue {
+  abstract getRawValue(): any;
   abstract getDisplayInfo(): {
     icon: ReactNode;
     type: ReactNode;
@@ -53,6 +56,9 @@ export abstract class TimelineValue {
 export class ActionValue extends TimelineValue {
   constructor(readonly value: any) {
     super();
+  }
+  getRawValue() {
+    return this.value;
   }
   getDisplayInfo() {
     return {
@@ -71,6 +77,9 @@ export class AssertionValue extends TimelineValue {
     readonly result: AssertionResult | undefined,
   ) {
     super();
+  }
+  getRawValue() {
+    return this.expectedValue;
   }
   getDisplayInfo() {
     const icon = this.result?.success ? "✅" : "❌";
@@ -95,7 +104,7 @@ export function getTimelineActions(
     behaviorMode === BehaviorMode.TEST ? levelDefinition.testCase.assertions : [];
   const timelineActions: TimelineAction[] = [
     ...simulationActions.map((action, index) =>
-      timelineAction(index, action.time, action.portRef, new ActionValue(action.value)),
+      timelineAction(index, action.time, action.portRef, new ActionValue(action.value), levelState),
     ),
     ...simulationAssertions.map((assertion, index) => {
       const assertionResult = testCaseResult?.assertionResults.find((result) =>
@@ -106,6 +115,7 @@ export function getTimelineActions(
         assertion.time,
         assertion.portRef,
         new AssertionValue(assertion.value, assertionResult),
+        levelState,
       );
     }),
   ];
@@ -114,6 +124,7 @@ export function getTimelineActions(
     time: number,
     portRef: PortRef,
     value: TimelineValue,
+    levelState: LevelState,
   ): TimelineAction {
     return {
       id: index.toString(),
@@ -122,7 +133,12 @@ export function getTimelineActions(
       effectId: "",
       movable: false,
       flexible: false,
-      data: new TimelineActionData(portRef, value, behaviorMode === BehaviorMode.TEST),
+      data: new TimelineActionData(
+        portRef,
+        getDefinitionOfPort(portRef, levelState.parts),
+        value,
+        behaviorMode === BehaviorMode.TEST,
+      ),
     };
   }
   return _.sortBy(timelineActions, (action) => action.start);
