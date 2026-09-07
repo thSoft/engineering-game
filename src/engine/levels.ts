@@ -24,7 +24,7 @@ import {
 // Level definitions
 
 export const plug = Plug.instance("plug-0", { x: -150, y: 4 });
-export const switchPart = Switch.instance("switch-0", { x: -20, y: 0 });
+export const switchPart = Switch.instance("switch-0", { x: 5.5, y: 4 });
 export const lightbulb = Lightbulb.instance("lightbulb-0", { x: 150, y: -42 });
 
 export const DeskLamp = defineLevel("deskLamp", {
