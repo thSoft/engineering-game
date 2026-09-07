@@ -23,7 +23,6 @@ import {
   PartId,
   PartPosition,
   PortInstance,
-  PortPosition,
   PortRef,
   refPort,
 } from "../engine/parts";
@@ -161,16 +160,6 @@ export const useGameStore = create<GameState>()(
         movePart: (partId, position) => {
           setCurrentLevel((state) => ({
             parts: state.parts.map((part) => (part.id === partId ? { ...part, position } : part)),
-          }));
-        },
-        movePort: (portRef, position) => {
-          setCurrentLevel((state) => ({
-            parts: state.parts.map((part) => ({
-              ...part,
-              portInstances: Object.values(part.portInstances).map((port) =>
-                deepEqual(refPort(part.id, port.key), portRef) ? { ...port, position } : port,
-              ),
-            })),
           }));
         },
         addConnection: (source, target) => {
@@ -347,7 +336,6 @@ export type GameState = {
   addPart: (definitionId: PartDefinitionId, position: PartPosition) => void;
   deletePart: (partId: PartId) => void;
   movePart: (partId: PartId, position: PartPosition) => void;
-  movePort: (portRef: PortRef, position: PortPosition) => void;
   addConnection: (source: PortRef, target: PortRef) => void;
   deleteConnection: (connectionId: ConnectionId) => void;
   loadLevel: (definitionId?: LevelDefinitionId) => void;

@@ -24,7 +24,7 @@ import {
   partDefinitions,
   PartInstance,
   PortDefinition,
-  PortPosition,
+  PortDirection,
   PortRef,
   refPort,
   toPartId,
@@ -43,7 +43,6 @@ import PartNode, {
   PART_TYPE,
   type PartNodeData,
   PartNodeType,
-  PortInfo,
   type PortVisualState,
 } from "./PartNode";
 import { getPortColor } from "./utils.tsx";
@@ -51,7 +50,7 @@ import { CONNECTION_TYPE, ConnectionEdge, ConnectionEdgeType } from "./Connectio
 
 const nodeTypes: NodeTypes = { [PART_TYPE]: PartNode };
 
-function getPortVisual(
+function getPortVisualState(
   candidatePort: PortRef,
   selectedPort: PortRef | undefined,
   parts: PartInstance[],
@@ -77,52 +76,49 @@ function buildNodeData(
   part: PartInstance,
   selectedPortRef: PortRef | undefined,
   onPortClick: (portRef: PortRef) => void,
-  onPortMove: (portRef: PortRef, position: PortPosition) => void,
   levelDefinition: LevelDefinition,
   levelState: LevelState,
   simulationResult: SimulationResult | undefined,
   currentTime: number,
-): PartNodeData | undefined {
+): PartNodeData<any, any, any> | undefined {
   const { parts, connections } = levelState;
   const partDefinition = getDefinitionOfPart(part.id, parts);
   if (!partDefinition) return undefined;
-  const createPortInfo = ([portKey, definition]: [string, PortDefinition<any>]): PortInfo => {
-    const portRef = refPort(part.id, portKey);
-    const value = simulationResult ? getPortValueAt(portRef, currentTime, simulationResult) : null;
-    return {
-      ref: portRef,
-      definition,
-      value,
-      visual: getPortVisual(portRef, selectedPortRef, parts, connections),
-      exposed: isExposed(portRef, levelDefinition),
-      connected: getConnectionsWithTarget(portRef, connections).length > 0,
-    };
-  };
+  function makePortDescriptors(
+    ports: Record<string, PortDefinition<any>>,
+    direction: PortDirection,
+  ) {
+    return Object.fromEntries(
+      Object.entries(ports).map(([portKey, definition]: [string, PortDefinition<any>]) => {
+        const portRef = refPort(part.id, portKey);
+        const value = simulationResult
+          ? getPortValueAt(portRef, currentTime, simulationResult)
+          : null;
+        return [
+          portKey,
+          {
+            ref: portRef,
+            definition: { ...definition, direction },
+            value,
+            visualState: getPortVisualState(portRef, selectedPortRef, parts, connections),
+            exposed: isExposed(portRef, levelDefinition),
+            connected: getConnectionsWithTarget(portRef, connections).length > 0,
+            setValue: (value: any) => setPortValue(portRef, value),
+            startOrFinishConnection: () => {
+              return onPortClick?.(portRef);
+            },
+          },
+        ];
+      }),
+    );
+  }
   return {
-    label: partDefinition.label,
-    partId: part.id,
-    definitionId: partDefinition.id,
-    selected: false,
-    inputPorts: Object.entries(
-      partDefinition.inputPorts as Record<string, PortDefinition<any>>,
-    ).map((entry) => createPortInfo(entry)),
-    outputPorts: Object.entries(
-      partDefinition.outputPorts as Record<string, PortDefinition<any>>,
-    ).map((entry) => createPortInfo(entry)),
+    instance: part,
+    definition: partDefinition,
+    inputPorts: makePortDescriptors(partDefinition.inputPorts, "input"),
+    outputPorts: makePortDescriptors(partDefinition.outputPorts, "output"),
     parameterValues: part.parameterValues,
-    onPortClick,
-    onPortMove,
-    onStateToggle: [BehaviorMode.SANDBOX, BehaviorMode.EXPERIMENT].includes(levelState.behaviorMode)
-      ? (portRef: PortRef) => {
-          const value = simulationResult
-            ? getPortValueAt(portRef, currentTime, simulationResult)
-            : null;
-          if (value === null) return;
-          if (typeof value == "boolean") {
-            setPortValue(portRef, !value);
-          }
-        }
-      : undefined,
+    selected: false,
   };
 }
 
@@ -174,7 +170,6 @@ export default function Workbench({ levelState, levelDefinition }: Props) {
   const connections = levelState?.connections ?? [];
 
   const movePart = useGameStore((s) => s.movePart);
-  const movePort = useGameStore((s) => s.movePort);
   const deletePart = useGameStore((s) => s.deletePart);
   const addConnection = useGameStore((s) => s.addConnection);
   const deleteConnection = useGameStore((s) => s.deleteConnection);
@@ -231,7 +226,6 @@ export default function Workbench({ levelState, levelDefinition }: Props) {
           part,
           pendingPortRef,
           handlePortClick,
-          movePort,
           levelDefinition,
           levelState,
           simulationResult,

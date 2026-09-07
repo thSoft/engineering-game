@@ -1,7 +1,6 @@
 import { ReactNode } from "react";
 import z from "zod";
 import { PlugView } from "../components/parts/plug/PlugView.tsx";
-import { HandleType } from "@xyflow/react";
 import { SwitchView } from "../components/parts/switch/SwitchView.tsx";
 import type { PortVisualState } from "../components/PartNode";
 import {
@@ -272,14 +271,6 @@ export type ParameterValues<T extends Record<string, ParameterDefinition<any>>> 
 
 // Ports
 
-export type PortSide = "top" | "right" | "bottom" | "left";
-
-/** A normalized position along one edge of its owning part node. */
-export interface PortPosition {
-  side: PortSide;
-  offset: number;
-}
-
 export type PortDirection = "input" | "output";
 
 export type PortKind = "state" | "flow" | "event";
@@ -300,12 +291,13 @@ type PortValues<T extends Record<string, PortDefinition<any>>> = {
 };
 
 export type PortDescriptor<V> = {
-  value: V;
-  setValue: (value: V) => void;
   ref: PortRef;
-  type: HandleType;
-  definition: PortDefinition<V>;
+  definition: PortDefinitionWithHelpers<V>;
+  value: V;
   visualState: PortVisualState;
+  exposed: boolean;
+  connected: boolean;
+  setValue: (value: V) => void;
   startOrFinishConnection: () => void;
 };
 

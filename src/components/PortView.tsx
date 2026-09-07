@@ -14,7 +14,7 @@ export function PortView({ children, portDescriptor, position }: Props) {
   return (
     <Handle
       id={getPortPath(portDescriptor.ref)}
-      type={portDescriptor.type}
+      type={portDescriptor.definition.direction === "output" ? "source" : "target"}
       position={position ?? Position.Right}
       onClick={portDescriptor.startOrFinishConnection}
       style={{
