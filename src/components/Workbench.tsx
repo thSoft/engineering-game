@@ -154,7 +154,7 @@ function buildEdge(
     targetHandle: getPortPath(target),
     selected,
     style: {
-      strokeWidth: selected ? 3 : 2,
+      strokeWidth: 4,
       stroke: color,
       filter: flowOn ? "drop-shadow(0px 0px 2px rgba(255, 255, 0, 1))" : undefined,
     },

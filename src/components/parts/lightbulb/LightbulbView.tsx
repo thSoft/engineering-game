@@ -16,7 +16,15 @@ interface Props {
 export function LightbulbView({ powerIn, lit }: Props) {
   return (
     <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
-      <img src={lit.value ? litImg : unlitImg} alt={lit.value ? "Lit" : "Unlit"} />
+      <img
+        src={lit.value ? litImg : unlitImg}
+        alt={lit.value ? "Lit" : "Unlit"}
+        style={
+          lit.value
+            ? { filter: "brightness(1) drop-shadow(0 0 5px rgba(255, 255, 0, 0.8))" }
+            : { filter: "brightness(0.6)" }
+        }
+      />
       <div className={styles.compartment91a4ffa918eb} style={{ flexDirection: "column" }}>
         <img
           src={powerIn.value ? onImg : offImg}
