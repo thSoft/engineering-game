@@ -38,7 +38,7 @@ import {
   SimulationResult,
 } from "../engine/simulation";
 import { setPortValue, useGameStore } from "../store/gameStore";
-import { connectableColor, flowOffColor } from "./designTokens";
+import { connectableColor, flowOffColor, selectedColor } from "./designTokens";
 import PartNode, {
   PART_TYPE,
   type PartNodeData,
@@ -121,8 +121,6 @@ function buildNodeData(
     selected: false,
   };
 }
-
-export const selectedColor = "#ffffff";
 
 function buildEdge(
   connection: Connection,

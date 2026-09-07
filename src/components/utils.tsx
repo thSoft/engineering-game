@@ -13,8 +13,13 @@ import {
   PortRef,
 } from "../engine/parts";
 import { BehaviorMode, getSimulationInput, LevelState } from "../engine/simulation";
-import { selectedColor } from "./Workbench.tsx";
-import { connectableColor, eventColor, flowOffColor, stateColor } from "./designTokens.tsx";
+import {
+  connectableColor,
+  eventColor,
+  flowOffColor,
+  selectedColor,
+  stateColor,
+} from "./designTokens.tsx";
 import type { PortVisualState } from "./PartNode";
 
 export function displayPortValue(portValue: any): ReactNode {
