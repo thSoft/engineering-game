@@ -14,7 +14,7 @@ import {
   getConnectionsWithTarget,
   toConnectionId,
 } from "../engine/connections";
-import { isExposed, LevelDefinition } from "../engine/levels";
+import { getCurrentTime, isExposed, LevelDefinition } from "../engine/levels";
 import {
   deepEqual,
   getDefinitionOfPart,
@@ -212,8 +212,7 @@ export default function Workbench({ levelState, levelDefinition }: Props) {
       ? levelState.experimentData.initialState
       : undefined;
   const simulationResult = simulate(simulationInput, levelState, overrideInitialState);
-  const currentTime =
-    levelState.behaviorMode === BehaviorMode.EXPERIMENT ? Date.now() : levelState.currentTime;
+  const currentTime = getCurrentTime(levelState);
 
   // Zustand is the single source of truth for positions.
   // Nodes and edges are derived purely from store state on every render —

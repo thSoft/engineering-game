@@ -106,7 +106,7 @@ export function getTimelineActions(
 ) {
   const simulationActions = getSimulationInput(behaviorMode, levelState, levelDefinition).actions;
   const simulationAssertions =
-    behaviorMode === BehaviorMode.TEST ? levelDefinition.testCase.assertions : [];
+    behaviorMode === BehaviorMode.TEST_CASE ? levelDefinition.testCase.assertions : [];
   const timelineActions: TimelineAction[] = [
     ...simulationActions.map((action, index) =>
       timelineAction(index, action.time, action.portRef, new ActionValue(action.value), levelState),
@@ -142,7 +142,7 @@ export function getTimelineActions(
         portRef,
         getDefinitionOfPort(portRef, levelState.parts),
         value,
-        behaviorMode === BehaviorMode.TEST,
+        behaviorMode === BehaviorMode.TEST_CASE,
       ),
     };
   }

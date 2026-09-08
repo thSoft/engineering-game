@@ -23,7 +23,7 @@ export default function AcceptanceView({ levelState, levelDefinition, testCaseRe
   const setLevelPhase = useGameStore((s) => s.setLevelPhase);
 
   const timelineActions = getTimelineActions(
-    BehaviorMode.TEST,
+    BehaviorMode.TEST_CASE,
     levelState,
     levelDefinition,
     testCaseResult,

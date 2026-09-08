@@ -7,6 +7,7 @@ import { Connection, ConnectionId } from "../engine/connections";
 import {
   createSimulationInput,
   DeskLamp,
+  getCurrentTime,
   getInitialLevelState,
   getLevelDefinitionById,
   LevelDefinition,
@@ -37,7 +38,7 @@ import {
   SimulationResult,
 } from "../engine/simulation";
 
-export function makeLevelAvailable(levelDefinitionId: LevelDefinitionId) {
+function makeLevelAvailable(levelDefinitionId: LevelDefinitionId) {
   useGameStore.setState((state) => {
     const newLevel = getInitialLevelState(getLevelDefinitionById(levelDefinitionId)!);
     return {
@@ -50,9 +51,9 @@ export function makeLevelAvailable(levelDefinitionId: LevelDefinitionId) {
 }
 
 export const setShowNewLevels = (showNewLevels: boolean) => {
-  useGameStore.setState((_) => ({
+  useGameStore.setState({
     showNewLevels,
-  }));
+  });
 };
 
 function getNewExperimentState(simulationResult: SimulationResult | undefined, state: LevelState) {
@@ -90,9 +91,10 @@ export const useGameStore = create<GameState>()(
   persist(
     (set) => {
       function setCurrentLevel(
-        computeNewLevelState: (oldLevelState: LevelState) => Partial<LevelState>,
+        computeNewLevelState:
+          Partial<LevelState> | ((oldLevelState: LevelState) => Partial<LevelState>),
       ): void {
-        set((state) => {
+        set((state): Partial<GameState> => {
           if (!state.currentLevelDefinitionId) return {};
           const existingLevelState = getLevelStateByDefinitionId(
             state,
@@ -103,10 +105,14 @@ export const useGameStore = create<GameState>()(
           }
           return {
             levelStates: state.levelStates.map((levelState) => {
+              const newLevelState =
+                typeof computeNewLevelState === "function"
+                  ? computeNewLevelState(levelState)
+                  : computeNewLevelState;
               if (levelState.definitionId === state.currentLevelDefinitionId) {
                 return {
                   ...levelState,
-                  ...computeNewLevelState(levelState),
+                  ...newLevelState,
                 };
               } else {
                 return levelState;
@@ -132,6 +138,7 @@ export const useGameStore = create<GameState>()(
             const newState = { ...state, parts: [...state.parts, newPart] };
             return {
               ...newState,
+              foo: 0,
               experimentData: getNewExperimentData(newState),
             };
           });
@@ -223,32 +230,42 @@ export const useGameStore = create<GameState>()(
           if (definitionId) {
             const levelState = getLevelStateByDefinitionId(useGameStore.getState(), definitionId);
             if (levelState && levelState.levelStatus === LevelStatus.NOT_STARTED) {
-              setCurrentLevel((state) => ({ ...state, levelStatus: LevelStatus.IN_PROGRESS }));
+              setCurrentLevel({ levelStatus: LevelStatus.IN_PROGRESS });
             }
           }
         },
         setCurrentTime(currentTime) {
-          setCurrentLevel((state) => ({ ...state, currentTime: currentTime }));
+          setCurrentLevel((state) => {
+            switch (state.behaviorMode) {
+              case BehaviorMode.TEST_CASE:
+                return { testCaseData: { ...state.testCaseData, currentTime } };
+              case BehaviorMode.CUSTOM_SCENARIO:
+                return {
+                  customScenarioData: { ...state.customScenarioData, currentTime },
+                };
+              default:
+                return state;
+            }
+          });
         },
         addAction(portRef, value) {
           setCurrentLevel((state) => {
-            const time =
-              state.behaviorMode === BehaviorMode.EXPERIMENT ? Date.now() : state.currentTime;
+            const time = getCurrentTime(state);
             const action: Action<any, any> = {
               time,
               portRef,
               value,
             };
             const newSimulationInput =
-              state.behaviorMode === BehaviorMode.SANDBOX
+              state.behaviorMode === BehaviorMode.CUSTOM_SCENARIO
                 ? {
-                    ...state.simulationInput,
+                    ...state.customScenarioData.scenario,
                     actions: _.sortBy(
                       [...deleteAction(state, portRef, time), action],
                       (action) => action.time,
                     ),
                   }
-                : state.simulationInput;
+                : state.customScenarioData.scenario;
             const newHistory =
               state.behaviorMode === BehaviorMode.EXPERIMENT
                 ? {
@@ -257,41 +274,39 @@ export const useGameStore = create<GameState>()(
                   }
                 : state.experimentData.history;
             return {
-              ...state,
-              simulationInput: newSimulationInput,
+              customScenarioData: { ...state.customScenarioData, scenario: newSimulationInput },
               experimentData: {
                 ...state.experimentData,
                 history: newHistory,
               },
-            };
+            } satisfies Partial<LevelState>;
           });
         },
         deleteAction(portRef, time) {
           setCurrentLevel((state) => ({
-            ...state,
-            simulationInput: {
-              ...state.simulationInput,
-              actions: deleteAction(state, portRef, time),
+            customScenarioData: {
+              ...state.customScenarioData,
+              scenario: {
+                ...state.customScenarioData.scenario,
+                actions: deleteAction(state, portRef, time),
+              },
             },
           }));
         },
         setBehaviorMode(mode) {
-          setCurrentLevel((state) => ({
-            ...state,
+          setCurrentLevel({
             behaviorMode: mode,
-          }));
+          });
         },
         setLevelStatus(status) {
-          setCurrentLevel((state) => ({
-            ...state,
+          setCurrentLevel({
             levelStatus: status,
-          }));
+          });
         },
         setLevelPhase(phase) {
-          setCurrentLevel((state) => ({
-            ...state,
+          setCurrentLevel({
             phase: phase,
-          }));
+          });
         },
       };
     },
@@ -314,7 +329,7 @@ export const useGameStore = create<GameState>()(
 );
 
 function deleteAction(state: LevelState, portRef: PortRef, time: number): Action<any, any>[] {
-  return state.simulationInput.actions.filter(
+  return state.customScenarioData.scenario.actions.filter(
     (action) => !(action.time === time && deepEqual(action.portRef, portRef)),
   );
 }

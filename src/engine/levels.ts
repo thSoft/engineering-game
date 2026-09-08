@@ -136,8 +136,13 @@ export function getInitialLevelState(levelDefinition: LevelDefinition): LevelSta
       history: createSimulationInput(),
       initialState: [],
     },
-    simulationInput: createSimulationInput(),
-    currentTime: 0,
+    testCaseData: {
+      currentTime: 0,
+    },
+    customScenarioData: {
+      scenario: createSimulationInput(),
+      currentTime: 0,
+    },
     behaviorMode: BehaviorMode.EXPERIMENT,
     levelStatus: LevelStatus.NOT_STARTED,
     phase: LevelPhase.GOAL,
@@ -160,4 +165,15 @@ export function evaluateTestCase(testCase: TestCase, levelState: LevelState): Te
     assertionResults,
     success: assertionResults.every((result) => result.success),
   };
+}
+
+export function getCurrentTime(levelState: LevelState) {
+  switch (levelState.behaviorMode) {
+    case BehaviorMode.EXPERIMENT:
+      return Date.now();
+    case BehaviorMode.TEST_CASE:
+      return levelState.testCaseData.currentTime;
+    case BehaviorMode.CUSTOM_SCENARIO:
+      return levelState.customScenarioData.currentTime;
+  }
 }

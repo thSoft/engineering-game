@@ -4,7 +4,12 @@ import Dropdown from "antd/es/dropdown/dropdown";
 import Flex from "antd/es/flex";
 import _ from "lodash";
 import { ReactNode, useEffect, useRef } from "react";
-import { evaluateTestCase, LevelDefinition, TestCaseResult } from "../engine/levels";
+import {
+  evaluateTestCase,
+  getCurrentTime,
+  LevelDefinition,
+  TestCaseResult,
+} from "../engine/levels";
 import { PartInstance } from "../engine/parts";
 import { BehaviorMode, LevelState } from "../engine/simulation";
 import { useGameStore } from "../store/gameStore";
@@ -12,28 +17,23 @@ import { borderColor, iconSize } from "./designTokens";
 import { getPortRefLabel, getTimelineActions, TimelineActionData } from "./utils";
 import { FilePlay, FlaskConical, ShieldCheck } from "lucide-react";
 
-interface SimulationTimelineProps {
+interface Props {
   levelDefinition: LevelDefinition;
   levelState: LevelState;
   setCurrentTime: (currentTime: number) => void;
   parts: PartInstance[];
 }
 
-export function BehaviorView({
-  levelDefinition,
-  levelState,
-  setCurrentTime,
-  parts,
-}: SimulationTimelineProps) {
+export function BehaviorView({ levelDefinition, levelState, setCurrentTime, parts }: Props) {
   const behaviorMode = levelState.behaviorMode;
   const setBehaviorMode = useGameStore((s) => s.setBehaviorMode);
 
   const timelineRef = useRef<TimelineState>(null);
   useEffect(() => {
     if (timelineRef.current) {
-      timelineRef.current.setTime(levelState.currentTime);
+      timelineRef.current.setTime(getCurrentTime(levelState));
     }
-  }, [levelState.currentTime]);
+  }, [getCurrentTime(levelState)]);
 
   const trackHeaderRef = useRef<HTMLDivElement>(null);
   // Mirror the timeline's vertical scroll to the sidebar
@@ -44,7 +44,7 @@ export function BehaviorView({
   };
 
   const testCaseResult =
-    behaviorMode === BehaviorMode.TEST
+    behaviorMode === BehaviorMode.TEST_CASE
       ? evaluateTestCase(levelDefinition.testCase, levelState)
       : undefined;
   const timelineData = getTimelineData(levelDefinition, levelState, parts, testCaseResult);
@@ -149,7 +149,7 @@ export function BehaviorView({
                   Test Case
                 </Flex>
               ),
-              value: BehaviorMode.TEST,
+              value: BehaviorMode.TEST_CASE,
             },
             {
               label: (
@@ -158,7 +158,7 @@ export function BehaviorView({
                   Custom Scenario
                 </Flex>
               ),
-              value: BehaviorMode.SANDBOX,
+              value: BehaviorMode.CUSTOM_SCENARIO,
             },
           ]}
         />

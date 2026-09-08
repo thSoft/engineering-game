@@ -175,24 +175,33 @@ export type LevelState = {
   definitionId: LevelDefinitionId;
   parts: PartInstance[];
   connections: Connection[];
-  experimentData: ExperimentData;
-  simulationInput: SimulationInput;
-  currentTime: number;
   behaviorMode: BehaviorMode;
+  experimentData: ExperimentData;
+  testCaseData: TestCaseData;
+  customScenarioData: CustomScenarioData;
   levelStatus: LevelStatus;
   phase: LevelPhase;
 };
+
+export enum BehaviorMode {
+  EXPERIMENT,
+  TEST_CASE,
+  CUSTOM_SCENARIO,
+}
 
 export type ExperimentData = {
   history: SimulationInput;
   initialState: PortInstanceState[];
 };
 
-export enum BehaviorMode {
-  EXPERIMENT,
-  TEST,
-  SANDBOX,
-}
+export type TestCaseData = {
+  currentTime: number;
+};
+
+export type CustomScenarioData = {
+  scenario: SimulationInput;
+  currentTime: number;
+};
 
 export enum LevelStatus {
   NOT_STARTED,
@@ -295,9 +304,9 @@ export function getSimulationInput(
   levelDefinition: LevelDefinition,
 ): SimulationInput {
   switch (behaviorMode) {
-    case BehaviorMode.SANDBOX:
-      return levelState.simulationInput;
-    case BehaviorMode.TEST:
+    case BehaviorMode.CUSTOM_SCENARIO:
+      return levelState.customScenarioData.scenario;
+    case BehaviorMode.TEST_CASE:
       return levelDefinition.testCase.input;
     case BehaviorMode.EXPERIMENT:
       return levelState.experimentData.history;
