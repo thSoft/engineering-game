@@ -8,8 +8,8 @@ import NewLevels from "./NewLevels";
 import { getLevelIcon } from "./utils";
 
 function LevelSelector() {
-  const showNewLevels = useGameStore((s) => s.showNewLevels);
-  const levelStates = useGameStore((s) => s.levelStates);
+  const showNewLevels = useGameStore.showNewLevels();
+  const levelStates = useGameStore.levelStates();
   return (
     <div className="h-screen w-screen flex flex-col bg-slate-900 text-slate-100 overflow-hidden">
       {showNewLevels && <NewLevels />}

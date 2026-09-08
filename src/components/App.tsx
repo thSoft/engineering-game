@@ -4,7 +4,7 @@ import Level from "./Level";
 import LevelSelector from "./LevelSelector";
 
 function App() {
-  const currentLevelDefinitionId = useGameStore((s) => s.currentLevelDefinitionId);
+  const currentLevelDefinitionId = useGameStore.currentLevelDefinitionId();
   const content = currentLevelDefinitionId ? (
     <Level levelDefinitionId={currentLevelDefinitionId} />
   ) : (

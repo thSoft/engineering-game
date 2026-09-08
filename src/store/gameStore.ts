@@ -1,6 +1,6 @@
 import _ from "lodash";
 import { nanoid } from "nanoid";
-import { create } from "zustand";
+import { create, StoreApi, UseBoundStore } from "zustand";
 import { persist, type StorageValue } from "zustand/middleware";
 import { Connection, ConnectionId } from "../engine/connections";
 
@@ -36,6 +36,25 @@ import {
   simulate,
 } from "../engine/simulation";
 import { Draft, produce } from "immer";
+
+type WithHookSelectors<S> =
+  S extends UseBoundStore<StoreApi<infer T>>
+    ? S & {
+        [K in keyof T]: () => T[K];
+      }
+    : never;
+
+export function createHookSelectors<S extends UseBoundStore<StoreApi<object>>>(
+  store: S,
+): WithHookSelectors<S> {
+  const result = store as WithHookSelectors<S>;
+
+  for (const key of Object.keys(store.getState())) {
+    (result as any)[key] = () => store((state) => state[key as keyof typeof state]);
+  }
+
+  return result;
+}
 
 function setGameState(recipe: (state: Draft<GameState>) => void) {
   useGameStore.setState(produce(recipe));
@@ -246,30 +265,32 @@ export function setLevelPhase(phase: LevelPhase) {
   });
 }
 
-export const useGameStore = create<GameState>()(
-  persist(
-    (_) => {
-      return {
-        levelStates: [getInitialLevelState(DeskLamp)],
-        currentLevelDefinitionId: undefined,
-        showNewLevels: true,
-      };
-    },
-    {
-      name: "engineering-game",
-      storage: {
-        getItem: (name) => {
-          const raw = localStorage.getItem(name);
-          return raw ? (JSON.parse(raw) as StorageValue<GameState>) : null;
-        },
-        setItem: (name, value) => {
-          localStorage.setItem(name, JSON.stringify(value));
-        },
-        removeItem: (name) => {
-          localStorage.removeItem(name);
+export const useGameStore = createHookSelectors(
+  create<GameState>()(
+    persist(
+      (_) => {
+        return {
+          levelStates: [getInitialLevelState(DeskLamp)],
+          currentLevelDefinitionId: undefined,
+          showNewLevels: true,
+        };
+      },
+      {
+        name: "engineering-game",
+        storage: {
+          getItem: (name) => {
+            const raw = localStorage.getItem(name);
+            return raw ? (JSON.parse(raw) as StorageValue<GameState>) : null;
+          },
+          setItem: (name, value) => {
+            localStorage.setItem(name, JSON.stringify(value));
+          },
+          removeItem: (name) => {
+            localStorage.removeItem(name);
+          },
         },
       },
-    },
+    ),
   ),
 );
 

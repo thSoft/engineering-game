@@ -11,7 +11,7 @@ import { getLevelIcon } from "./utils";
 interface Props {}
 
 function NewLevels({}: Props) {
-  const levelStates = useGameStore((s) => s.levelStates);
+  const levelStates = useGameStore.levelStates();
   const newLevels = levelStates.filter(
     (levelState) => levelState.status === LevelStatus.NOT_STARTED,
   );
