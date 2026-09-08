@@ -14,6 +14,7 @@ interface Props {
 function SuccessView({ levelDefinition, levelState }: Props) {
   const setLevelPhase = useGameStore((state) => state.setLevelPhase);
   const backToProjects = () => {
+    setLevelPhase(LevelPhase.BUILD);
     useGameStore.getState().loadLevel(undefined);
   };
   return (
