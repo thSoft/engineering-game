@@ -13,7 +13,7 @@ interface Props {}
 function NewLevels({}: Props) {
   const levelStates = useGameStore((s) => s.levelStates);
   const newLevels = levelStates.filter(
-    (levelState) => levelState.levelStatus === LevelStatus.NOT_STARTED,
+    (levelState) => levelState.status === LevelStatus.NOT_STARTED,
   );
   const newLevelCount = newLevels.length;
   const handleClose = () => setShowNewLevels(false);

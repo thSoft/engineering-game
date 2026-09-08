@@ -30,7 +30,7 @@ export function LevelHeader({ levelDefinition, levelState }: Props) {
         <Button onClick={() => setLevelPhase(LevelPhase.GOAL)} icon={<Info />} variant="text" />
       </Flex>
       <Flex style={{ position: "absolute", right: 8 }} align="center">
-        <LevelStatusView levelStatus={levelState.levelStatus} />
+        <LevelStatusView levelStatus={levelState.status} />
       </Flex>
     </header>
   );

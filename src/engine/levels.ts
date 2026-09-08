@@ -144,7 +144,7 @@ export function getInitialLevelState(levelDefinition: LevelDefinition): LevelSta
       currentTime: 0,
     },
     behaviorMode: BehaviorMode.EXPERIMENT,
-    levelStatus: LevelStatus.NOT_STARTED,
+    status: LevelStatus.NOT_STARTED,
     phase: LevelPhase.GOAL,
   };
 }

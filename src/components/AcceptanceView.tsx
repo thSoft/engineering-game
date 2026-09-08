@@ -17,7 +17,7 @@ export default function AcceptanceView({ levelState, levelDefinition, testCaseRe
   const status = success ? "success" : "warning";
   const message = success ? "Tests passed" : "Tests failed";
 
-  const levelStatus = levelState.levelStatus;
+  const levelStatus = levelState.status;
 
   const timelineActions = getTimelineActions(
     BehaviorMode.TEST_CASE,

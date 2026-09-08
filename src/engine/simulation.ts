@@ -64,7 +64,7 @@ function computePropagatedPortStates(
 ): PortInstanceState[] {
   const visitedParts = new Set<PartId>();
   const queue: PartId[] = [firstPartId];
-  let portStates = structuredClone(initialPortStates);
+  let portStates = _.cloneDeep(initialPortStates);
 
   while (queue.length > 0) {
     const currentPartId = queue.shift();
@@ -179,7 +179,7 @@ export type LevelState = {
   experimentData: ExperimentData;
   testCaseData: TestCaseData;
   customScenarioData: CustomScenarioData;
-  levelStatus: LevelStatus;
+  status: LevelStatus;
   phase: LevelPhase;
 };
 
