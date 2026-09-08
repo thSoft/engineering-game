@@ -10,11 +10,9 @@ import {
   switchPart,
 } from "./levels";
 
-// Test desk lamp level in the following cases:
-// - no connections
-// - connection between plug and switch, switch and lightbulb
 test("Desk lamp", () => {
   testLevel(DeskLamp, [], false);
+  testLevel(DeskLamp, [connect(plug.out("powerOut"), switchPart.in("powerIn"))], false);
   testLevel(
     DeskLamp,
     [
