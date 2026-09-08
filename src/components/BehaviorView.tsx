@@ -12,7 +12,7 @@ import {
 } from "../engine/levels";
 import { PartInstance } from "../engine/parts";
 import { BehaviorMode, LevelState } from "../engine/simulation";
-import { useGameStore } from "../store/gameStore";
+import { deleteAction, setBehaviorMode, setCurrentTime } from "../store/gameStore";
 import { borderColor, iconSize } from "./designTokens";
 import { getPortRefLabel, getTimelineActions, TimelineActionData } from "./utils";
 import { FilePlay, FlaskConical, ShieldCheck } from "lucide-react";
@@ -20,13 +20,11 @@ import { FilePlay, FlaskConical, ShieldCheck } from "lucide-react";
 interface Props {
   levelDefinition: LevelDefinition;
   levelState: LevelState;
-  setCurrentTime: (currentTime: number) => void;
   parts: PartInstance[];
 }
 
-export function BehaviorView({ levelDefinition, levelState, setCurrentTime, parts }: Props) {
+export function BehaviorView({ levelDefinition, levelState, parts }: Props) {
   const behaviorMode = levelState.behaviorMode;
-  const setBehaviorMode = useGameStore((s) => s.setBehaviorMode);
 
   const timelineRef = useRef<TimelineState>(null);
   useEffect(() => {
@@ -206,7 +204,7 @@ function TimelineActionView(action: TimelineAction): ReactNode {
       label: (
         <div
           onClick={() => {
-            useGameStore.getState().deleteAction(action.data.portRef, action.start);
+            deleteAction(action.data.portRef, action.start);
           }}
         >
           Delete

@@ -2,11 +2,10 @@ import { Tag } from "antd";
 import Link from "antd/es/typography/Link";
 import { Verified, Wrench } from "lucide-react";
 import { LevelPhase, LevelStatus } from "../engine/simulation";
-import { useGameStore } from "../store/gameStore";
+import { setLevelPhase } from "../store/gameStore";
 import { iconSize } from "./designTokens.tsx";
 
 function LevelStatusView({ levelStatus }: { levelStatus: LevelStatus }) {
-  const setLevelPhase = useGameStore((s) => s.setLevelPhase);
   const descriptors = {
     [LevelStatus.NOT_STARTED]: { color: "default", icon: undefined, message: "Not Started" },
     [LevelStatus.IN_PROGRESS]: {

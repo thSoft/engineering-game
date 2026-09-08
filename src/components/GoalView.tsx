@@ -4,7 +4,7 @@ import Modal from "antd/es/modal/Modal";
 import { LevelDefinition } from "../engine/levels";
 import { LevelPhase, LevelState } from "../engine/simulation";
 import { modalWidth } from "./designTokens";
-import { useGameStore } from "../store/gameStore.ts";
+import { loadLevel, setLevelPhase } from "../store/gameStore.ts";
 
 interface Props {
   levelDefinition: LevelDefinition;
@@ -12,7 +12,6 @@ interface Props {
 }
 
 function GoalView({ levelDefinition, levelState }: Props) {
-  const setLevelPhase = useGameStore((state) => state.setLevelPhase);
   const handleClose = () => {
     setLevelPhase(LevelPhase.BUILD);
   };
@@ -26,9 +25,7 @@ function GoalView({ levelDefinition, levelState }: Props) {
           <Button type="primary" onClick={handleClose}>
             Build
           </Button>
-          <Button onClick={() => useGameStore.getState().loadLevel(undefined)}>
-            Back to projects
-          </Button>
+          <Button onClick={() => loadLevel(undefined)}>Back to projects</Button>
         </>
       }
       mask={{ blur: true }}

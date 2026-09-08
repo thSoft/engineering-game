@@ -4,7 +4,7 @@ import Modal from "antd/es/modal/Modal";
 import Link from "antd/es/typography/Link";
 import { getLevelDefinitionById } from "../engine/levels";
 import { LevelStatus } from "../engine/simulation";
-import { setShowNewLevels, useGameStore } from "../store/gameStore";
+import { loadLevel, setShowNewLevels, useGameStore } from "../store/gameStore";
 import { modalWidth } from "./designTokens";
 import { getLevelIcon } from "./utils";
 
@@ -50,7 +50,7 @@ function NewLevels({}: Props) {
                     <Link
                       onClick={() => {
                         setShowNewLevels(false);
-                        useGameStore.getState().loadLevel(levelState.definitionId);
+                        loadLevel(levelState.definitionId);
                       }}
                     >
                       Build a <strong>{levelDefinition.label}</strong>

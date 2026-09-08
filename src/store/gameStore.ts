@@ -10,7 +10,6 @@ import {
   getCurrentTime,
   getInitialLevelState,
   getLevelDefinitionById,
-  LevelDefinition,
   LevelDefinitionId,
 } from "../engine/levels";
 import {
@@ -87,227 +86,221 @@ function getNewExperimentData(state: LevelState) {
   };
 }
 
+function setCurrentLevel(
+  computeNewLevelState: Partial<LevelState> | ((oldLevelState: LevelState) => Partial<LevelState>),
+): void {
+  useGameStore.setState((state): Partial<GameState> => {
+    if (!state.currentLevelDefinitionId) return {};
+    const existingLevelState = getLevelStateByDefinitionId(state, state.currentLevelDefinitionId);
+    if (!existingLevelState) {
+      makeLevelAvailable(state.currentLevelDefinitionId);
+    }
+    return {
+      levelStates: state.levelStates.map((levelState) => {
+        const newLevelState =
+          typeof computeNewLevelState === "function"
+            ? computeNewLevelState(levelState)
+            : computeNewLevelState;
+        if (levelState.definitionId === state.currentLevelDefinitionId) {
+          return {
+            ...levelState,
+            ...newLevelState,
+          };
+        } else {
+          return levelState;
+        }
+      }),
+    };
+  });
+}
+
+export function addPart(definitionId: PartDefinitionId, position: PartPosition) {
+  const partId = nanoid();
+  const definition = getPartDefinitionById(definitionId);
+  if (!definition) return;
+
+  const newPart = createPartInstance(partId, position, definitionId, definition);
+  setCurrentLevel((state) => {
+    const newState = { ...state, parts: [...state.parts, newPart] };
+    return {
+      ...newState,
+      foo: 0,
+      experimentData: getNewExperimentData(newState),
+    };
+  });
+}
+
+export function deletePart(partId: PartId): void {
+  setCurrentLevel((state) => {
+    const removedPortRefs = (getPart(state.parts, partId)?.portInstances ?? []).map((port) =>
+      refPort(partId, port.key),
+    );
+
+    const newState = {
+      ...state,
+      parts: state.parts.filter((part) => part.id !== partId),
+      connections: state.connections.filter(
+        (connection) =>
+          !removedPortRefs.some((ref) => deepEqual(ref, connection.source)) &&
+          !removedPortRefs.some((ref) => deepEqual(ref, connection.target)),
+      ),
+    };
+    return {
+      ...newState,
+      experimentData: getNewExperimentData(newState),
+    };
+  });
+}
+
+export function movePart(partId: PartId, position: PartPosition): void {
+  setCurrentLevel((state) => ({
+    parts: state.parts.map((part) => (part.id === partId ? { ...part, position } : part)),
+  }));
+}
+
+export function addConnection(source: PortRef, target: PortRef) {
+  setCurrentLevel((state) => {
+    const sourceDefinition = getDefinitionOfPort(source, state.parts);
+    const targetDefinition = getDefinitionOfPort(target, state.parts);
+    if (!sourceDefinition || !targetDefinition) {
+      return state;
+    }
+
+    let sourcePortInstance: PortInstance | undefined;
+    let targetPortInstance: PortInstance | undefined;
+    for (const part of state.parts) {
+      for (const port of part.portInstances) {
+        if (deepEqual(refPort(part.id, port.key), source)) {
+          sourcePortInstance = port;
+        } else if (deepEqual(refPort(part.id, port.key), target)) {
+          targetPortInstance = port;
+        }
+      }
+    }
+
+    if (
+      !sourcePortInstance ||
+      !targetPortInstance ||
+      sourceDefinition.direction !== "output" ||
+      targetDefinition.direction !== "input" ||
+      sourceDefinition.kind !== targetDefinition.kind
+    ) {
+      return state;
+    }
+    const exists = state.connections.some(
+      (connection) => deepEqual(connection.source, source) && deepEqual(connection.target, target),
+    );
+    if (exists) return state;
+
+    const newConnection: Connection = {
+      id: nanoid(),
+      source,
+      target,
+    };
+    const updatedConnections = [...state.connections, newConnection];
+    const newState = { ...state, connections: updatedConnections };
+    return { ...newState, experimentData: getNewExperimentData(newState) };
+  });
+}
+
+export function deleteConnection(connectionId: ConnectionId) {
+  setCurrentLevel((state) => {
+    const updatedConnections = state.connections.filter(
+      (connection) => connection.id !== connectionId,
+    );
+    const newState = { ...state, connections: updatedConnections };
+    return { ...newState, experimentData: getNewExperimentData(newState) };
+  });
+}
+
+export function loadLevel(definitionId?: LevelDefinitionId) {
+  useGameStore.setState({
+    currentLevelDefinitionId: definitionId,
+  });
+  if (definitionId) {
+    const levelState = getLevelStateByDefinitionId(useGameStore.getState(), definitionId);
+    if (levelState && levelState.levelStatus === LevelStatus.NOT_STARTED) {
+      setCurrentLevel({ levelStatus: LevelStatus.IN_PROGRESS });
+    }
+  }
+}
+
+export function setCurrentTime(currentTime: number) {
+  setCurrentLevel((state) => {
+    switch (state.behaviorMode) {
+      case BehaviorMode.TEST_CASE:
+        return { testCaseData: { ...state.testCaseData, currentTime } };
+      case BehaviorMode.CUSTOM_SCENARIO:
+        return {
+          customScenarioData: { ...state.customScenarioData, currentTime },
+        };
+      default:
+        return state;
+    }
+  });
+}
+
+export function addAction(portRef: InputPortRef<any, any>, value: any) {
+  setCurrentLevel((state) => {
+    const time = getCurrentTime(state);
+    const action: Action<any, any> = {
+      time,
+      portRef,
+      value,
+    };
+    const newSimulationInput =
+      state.behaviorMode === BehaviorMode.CUSTOM_SCENARIO
+        ? {
+            ...state.customScenarioData.scenario,
+            actions: _.sortBy(
+              [...getActionsAfterDelete(state, portRef, time), action],
+              (action) => action.time,
+            ),
+          }
+        : state.customScenarioData.scenario;
+    const newHistory =
+      state.behaviorMode === BehaviorMode.EXPERIMENT
+        ? {
+            ...state.experimentData.history,
+            actions: [...state.experimentData.history.actions, action],
+          }
+        : state.experimentData.history;
+    return {
+      customScenarioData: { ...state.customScenarioData, scenario: newSimulationInput },
+      experimentData: {
+        ...state.experimentData,
+        history: newHistory,
+      },
+    } satisfies Partial<LevelState>;
+  });
+}
+
+export function setBehaviorMode(mode: BehaviorMode) {
+  setCurrentLevel({
+    behaviorMode: mode,
+  });
+}
+
+export function setLevelStatus(status: LevelStatus) {
+  setCurrentLevel({
+    levelStatus: status,
+  });
+}
+
+export function setLevelPhase(phase: LevelPhase) {
+  setCurrentLevel({
+    phase: phase,
+  });
+}
+
 export const useGameStore = create<GameState>()(
   persist(
-    (set) => {
-      function setCurrentLevel(
-        computeNewLevelState:
-          Partial<LevelState> | ((oldLevelState: LevelState) => Partial<LevelState>),
-      ): void {
-        set((state): Partial<GameState> => {
-          if (!state.currentLevelDefinitionId) return {};
-          const existingLevelState = getLevelStateByDefinitionId(
-            state,
-            state.currentLevelDefinitionId,
-          );
-          if (!existingLevelState) {
-            makeLevelAvailable(state.currentLevelDefinitionId);
-          }
-          return {
-            levelStates: state.levelStates.map((levelState) => {
-              const newLevelState =
-                typeof computeNewLevelState === "function"
-                  ? computeNewLevelState(levelState)
-                  : computeNewLevelState;
-              if (levelState.definitionId === state.currentLevelDefinitionId) {
-                return {
-                  ...levelState,
-                  ...newLevelState,
-                };
-              } else {
-                return levelState;
-              }
-            }),
-          };
-        });
-      }
-
-      const firstLevel: LevelDefinition = DeskLamp;
+    (_) => {
+      const firstLevel = DeskLamp;
       return {
         levelStates: [getInitialLevelState(firstLevel)],
         currentLevelDefinitionId: undefined,
         showNewLevels: true,
-
-        addPart: (definitionId, position) => {
-          const partId = nanoid();
-          const definition = getPartDefinitionById(definitionId);
-          if (!definition) return;
-
-          const newPart = createPartInstance(partId, position, definitionId, definition);
-          setCurrentLevel((state) => {
-            const newState = { ...state, parts: [...state.parts, newPart] };
-            return {
-              ...newState,
-              foo: 0,
-              experimentData: getNewExperimentData(newState),
-            };
-          });
-        },
-        deletePart: (partId) => {
-          setCurrentLevel((state) => {
-            const removedPortRefs = (getPart(state.parts, partId)?.portInstances ?? []).map(
-              (port) => refPort(partId, port.key),
-            );
-
-            const newState = {
-              ...state,
-              parts: state.parts.filter((part) => part.id !== partId),
-              connections: state.connections.filter(
-                (connection) =>
-                  !removedPortRefs.some((ref) => deepEqual(ref, connection.source)) &&
-                  !removedPortRefs.some((ref) => deepEqual(ref, connection.target)),
-              ),
-            };
-            return {
-              ...newState,
-              experimentData: getNewExperimentData(newState),
-            };
-          });
-        },
-        movePart: (partId, position) => {
-          setCurrentLevel((state) => ({
-            parts: state.parts.map((part) => (part.id === partId ? { ...part, position } : part)),
-          }));
-        },
-        addConnection: (source, target) => {
-          setCurrentLevel((state) => {
-            const sourceDefinition = getDefinitionOfPort(source, state.parts);
-            const targetDefinition = getDefinitionOfPort(target, state.parts);
-            if (!sourceDefinition || !targetDefinition) {
-              return state;
-            }
-
-            let sourcePortInstance: PortInstance | undefined;
-            let targetPortInstance: PortInstance | undefined;
-            for (const part of state.parts) {
-              for (const port of part.portInstances) {
-                if (deepEqual(refPort(part.id, port.key), source)) {
-                  sourcePortInstance = port;
-                } else if (deepEqual(refPort(part.id, port.key), target)) {
-                  targetPortInstance = port;
-                }
-              }
-            }
-
-            if (
-              !sourcePortInstance ||
-              !targetPortInstance ||
-              sourceDefinition.direction !== "output" ||
-              targetDefinition.direction !== "input" ||
-              sourceDefinition.kind !== targetDefinition.kind
-            ) {
-              return state;
-            }
-            const exists = state.connections.some(
-              (connection) =>
-                deepEqual(connection.source, source) && deepEqual(connection.target, target),
-            );
-            if (exists) return state;
-
-            const newConnection: Connection = {
-              id: nanoid(),
-              source,
-              target,
-            };
-            const updatedConnections = [...state.connections, newConnection];
-            const newState = { ...state, connections: updatedConnections };
-            return { ...newState, experimentData: getNewExperimentData(newState) };
-          });
-        },
-        deleteConnection: (connectionId) => {
-          setCurrentLevel((state) => {
-            const updatedConnections = state.connections.filter(
-              (connection) => connection.id !== connectionId,
-            );
-            const newState = { ...state, connections: updatedConnections };
-            return { ...newState, experimentData: getNewExperimentData(newState) };
-          });
-        },
-        loadLevel: (definitionId) => {
-          set({
-            currentLevelDefinitionId: definitionId,
-          });
-          if (definitionId) {
-            const levelState = getLevelStateByDefinitionId(useGameStore.getState(), definitionId);
-            if (levelState && levelState.levelStatus === LevelStatus.NOT_STARTED) {
-              setCurrentLevel({ levelStatus: LevelStatus.IN_PROGRESS });
-            }
-          }
-        },
-        setCurrentTime(currentTime) {
-          setCurrentLevel((state) => {
-            switch (state.behaviorMode) {
-              case BehaviorMode.TEST_CASE:
-                return { testCaseData: { ...state.testCaseData, currentTime } };
-              case BehaviorMode.CUSTOM_SCENARIO:
-                return {
-                  customScenarioData: { ...state.customScenarioData, currentTime },
-                };
-              default:
-                return state;
-            }
-          });
-        },
-        addAction(portRef, value) {
-          setCurrentLevel((state) => {
-            const time = getCurrentTime(state);
-            const action: Action<any, any> = {
-              time,
-              portRef,
-              value,
-            };
-            const newSimulationInput =
-              state.behaviorMode === BehaviorMode.CUSTOM_SCENARIO
-                ? {
-                    ...state.customScenarioData.scenario,
-                    actions: _.sortBy(
-                      [...deleteAction(state, portRef, time), action],
-                      (action) => action.time,
-                    ),
-                  }
-                : state.customScenarioData.scenario;
-            const newHistory =
-              state.behaviorMode === BehaviorMode.EXPERIMENT
-                ? {
-                    ...state.experimentData.history,
-                    actions: [...state.experimentData.history.actions, action],
-                  }
-                : state.experimentData.history;
-            return {
-              customScenarioData: { ...state.customScenarioData, scenario: newSimulationInput },
-              experimentData: {
-                ...state.experimentData,
-                history: newHistory,
-              },
-            } satisfies Partial<LevelState>;
-          });
-        },
-        deleteAction(portRef, time) {
-          setCurrentLevel((state) => ({
-            customScenarioData: {
-              ...state.customScenarioData,
-              scenario: {
-                ...state.customScenarioData.scenario,
-                actions: deleteAction(state, portRef, time),
-              },
-            },
-          }));
-        },
-        setBehaviorMode(mode) {
-          setCurrentLevel({
-            behaviorMode: mode,
-          });
-        },
-        setLevelStatus(status) {
-          setCurrentLevel({
-            levelStatus: status,
-          });
-        },
-        setLevelPhase(phase) {
-          setCurrentLevel({
-            phase: phase,
-          });
-        },
       };
     },
     {
@@ -328,10 +321,26 @@ export const useGameStore = create<GameState>()(
   ),
 );
 
-function deleteAction(state: LevelState, portRef: PortRef, time: number): Action<any, any>[] {
+function getActionsAfterDelete(
+  state: LevelState,
+  portRef: PortRef,
+  time: number,
+): Action<any, any>[] {
   return state.customScenarioData.scenario.actions.filter(
     (action) => !(action.time === time && deepEqual(action.portRef, portRef)),
   );
+}
+
+export function deleteAction(portRef: PortRef, time: number) {
+  setCurrentLevel((state) => ({
+    customScenarioData: {
+      ...state.customScenarioData,
+      scenario: {
+        ...state.customScenarioData.scenario,
+        actions: getActionsAfterDelete(state, portRef, time),
+      },
+    },
+  }));
 }
 
 export function getLevelStateByDefinitionId(
@@ -347,21 +356,8 @@ export type GameState = {
   levelStates: LevelState[];
   currentLevelDefinitionId: LevelDefinitionId | undefined;
   showNewLevels: boolean;
-
-  addPart: (definitionId: PartDefinitionId, position: PartPosition) => void;
-  deletePart: (partId: PartId) => void;
-  movePart: (partId: PartId, position: PartPosition) => void;
-  addConnection: (source: PortRef, target: PortRef) => void;
-  deleteConnection: (connectionId: ConnectionId) => void;
-  loadLevel: (definitionId?: LevelDefinitionId) => void;
-  setCurrentTime: (currentTime: number) => void;
-  addAction: (portRef: InputPortRef<any, any>, value: any) => void;
-  deleteAction: (portRef: InputPortRef<any, any>, time: number) => void;
-  setBehaviorMode: (mode: BehaviorMode) => void;
-  setLevelStatus: (status: LevelStatus) => void;
-  setLevelPhase: (phase: LevelPhase) => void;
 };
 
 export function setPortValue(portRef: PortRef, value: any) {
-  useGameStore.getState().addAction(portRef, value);
+  addAction(portRef, value);
 }

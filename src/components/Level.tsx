@@ -14,9 +14,6 @@ interface Props {
 }
 
 function Level({ levelDefinitionId }: Props) {
-  const setCurrentTime = useGameStore((s) => s.setCurrentTime);
-  const setLevelPhase = useGameStore((s) => s.setLevelPhase);
-  const loadLevel = useGameStore((s) => s.loadLevel);
   const levelState = useGameStore((s) => getLevelStateByDefinitionId(s, levelDefinitionId));
   const parts = levelState?.parts ?? [];
   const levelDefinition = getLevelDefinitionById(levelDefinitionId);
@@ -29,17 +26,12 @@ function Level({ levelDefinitionId }: Props) {
       <SuccessView levelDefinition={levelDefinition} levelState={levelState} />
 
       {/* ── Header ── */}
-      <LevelHeader
-        levelDefinition={levelDefinition}
-        levelState={levelState}
-        loadLevel={loadLevel}
-        setLevelPhase={setLevelPhase}
-      />
+      <LevelHeader levelDefinition={levelDefinition} levelState={levelState} />
 
       {/* ── Body ── */}
       <main className="flex-1 flex overflow-hidden relative">
         {/* Left panel: Part palette */}
-        <PartPalette availableParts={levelDefinition?.availableParts} />
+        <PartPalette availableParts={levelDefinition.availableParts} />
 
         {/* Workbench */}
         <ReactFlowProvider>
@@ -59,12 +51,7 @@ function Level({ levelDefinitionId }: Props) {
       {/* ── Footer ── */}
       <footer>
         {levelState && levelDefinition && (
-          <BehaviorView
-            levelDefinition={levelDefinition}
-            levelState={levelState}
-            setCurrentTime={setCurrentTime}
-            parts={parts}
-          />
+          <BehaviorView levelDefinition={levelDefinition} levelState={levelState} parts={parts} />
         )}
       </footer>
     </div>

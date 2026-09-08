@@ -37,7 +37,14 @@ import {
   simulate,
   SimulationResult,
 } from "../engine/simulation";
-import { setPortValue, useGameStore } from "../store/gameStore";
+import {
+  addConnection,
+  addPart,
+  deleteConnection,
+  deletePart,
+  movePart,
+  setPortValue,
+} from "../store/gameStore";
 import { connectableColor, flowOffColor, selectedColor } from "./designTokens";
 import PartNode, {
   PART_TYPE,
@@ -166,12 +173,6 @@ interface Props {
 export default function Workbench({ levelState, levelDefinition }: Props) {
   const parts = levelState?.parts ?? [];
   const connections = levelState?.connections ?? [];
-
-  const movePart = useGameStore((s) => s.movePart);
-  const deletePart = useGameStore((s) => s.deletePart);
-  const addConnection = useGameStore((s) => s.addConnection);
-  const deleteConnection = useGameStore((s) => s.deleteConnection);
-  const addPart = useGameStore((s) => s.addPart);
 
   const [selectedConnectionId, setSelectedConnectionId] = useState<ConnectionId | undefined>(
     undefined,

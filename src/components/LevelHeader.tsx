@@ -1,19 +1,18 @@
 import { Button, Flex } from "antd";
 import { ChevronLeft, Info } from "lucide-react";
-import { LevelDefinition, LevelDefinitionId } from "../engine/levels.ts";
+import { LevelDefinition } from "../engine/levels.ts";
 import { LevelPhase, LevelState } from "../engine/simulation.ts";
 import LevelStatusView from "./LevelStatusView.tsx";
 
 import { headerStyle } from "./designTokens.tsx";
+import { loadLevel, setLevelPhase } from "../store/gameStore.ts";
 
 interface Props {
   levelDefinition: LevelDefinition;
   levelState: LevelState;
-  loadLevel: (definitionId?: LevelDefinitionId | undefined) => void;
-  setLevelPhase: (phase: LevelPhase) => void;
 }
 
-export function LevelHeader({ levelDefinition, levelState, loadLevel, setLevelPhase }: Props) {
+export function LevelHeader({ levelDefinition, levelState }: Props) {
   return (
     <header style={headerStyle}>
       <Flex gap={8} align="center">

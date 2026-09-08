@@ -3,7 +3,7 @@ import CardMeta from "antd/es/card/CardMeta";
 import Modal from "antd/es/modal/Modal";
 import { LevelDefinition } from "../engine/levels";
 import { LevelPhase, LevelState } from "../engine/simulation";
-import { useGameStore } from "../store/gameStore";
+import { loadLevel, setLevelPhase } from "../store/gameStore";
 import { modalWidth } from "./designTokens";
 
 interface Props {
@@ -12,10 +12,9 @@ interface Props {
 }
 
 function SuccessView({ levelDefinition, levelState }: Props) {
-  const setLevelPhase = useGameStore((state) => state.setLevelPhase);
   const backToProjects = () => {
     setLevelPhase(LevelPhase.BUILD);
-    useGameStore.getState().loadLevel(undefined);
+    loadLevel(undefined);
   };
   return (
     <Modal

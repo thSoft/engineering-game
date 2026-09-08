@@ -1,26 +1,22 @@
 import { Boxes } from "lucide-react";
 import { useState } from "react";
 import { PartDefinition, PartDefinitionId } from "../engine/parts";
-import { useGameStore } from "../store/gameStore";
 import { borderColor } from "./designTokens";
 import { getColorStyle } from "./utils.tsx";
+import { addPart } from "../store/gameStore.ts";
 
 interface Props {
-  onAdd?: () => void;
-  availableParts?: PartDefinition<any, any, any>[];
+  availableParts: PartDefinition<any, any, any>[];
 }
 
-export default function PartPalette({ onAdd, availableParts = [] }: Props) {
+export default function PartPalette({ availableParts }: Props) {
   const [paletteOpen, setPaletteOpen] = useState(false);
-
-  const addPart = useGameStore((s) => s.addPart);
 
   const handleClick = (definitionId: PartDefinitionId) => {
     addPart(definitionId, {
       x: 180 + Math.random() * 160,
       y: 80 + Math.random() * 240,
     });
-    onAdd?.();
   };
 
   const handleDragStart = (e: React.DragEvent, type: PartDefinitionId) => {

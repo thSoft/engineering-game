@@ -2,7 +2,7 @@ import { Card, Col, Flex, Row } from "antd";
 import CardMeta from "antd/es/card/CardMeta";
 import { Cpu } from "lucide-react";
 import { getLevelDefinitionById } from "../engine/levels";
-import { useGameStore } from "../store/gameStore";
+import { loadLevel, useGameStore } from "../store/gameStore";
 import { headerStyle } from "./designTokens";
 import NewLevels from "./NewLevels";
 import { getLevelIcon } from "./utils";
@@ -37,7 +37,7 @@ function LevelSelector() {
               return (
                 <Col span={8} key={levelState.definitionId}>
                   <Card
-                    onClick={() => useGameStore.getState().loadLevel(levelState.definitionId)}
+                    onClick={() => loadLevel(levelState.definitionId)}
                     style={{ cursor: "pointer", width: 300 }}
                   >
                     <CardMeta avatar={getLevelIcon(definition)} title={definition.label}></CardMeta>
