@@ -2,11 +2,12 @@ import styles from "../../components/parts/shared/shared.module.css";
 import onImg from "../../components/parts/shared/powerIndicator/on.svg";
 import offImg from "../../components/parts/shared/powerIndicator/off.svg";
 import socketImg from "../../components/parts/shared/socket.svg";
-import switchOnImg from "./on.svg";
-import switchOffImg from "./off.svg";
+import backgroundImg from "./background.svg";
+import toggleImg from "./toggle.svg";
 import { PortDescriptor } from "../../engine/parts.tsx";
 import { PortView } from "../../components/PortView.tsx";
 import { Position } from "@xyflow/react";
+import { transitionSettings } from "../../components/designTokens.tsx";
 
 interface Props {
   powerIn: PortDescriptor<boolean>;
@@ -21,12 +22,21 @@ export function SwitchView({ powerIn, powerOut, toggle }: Props) {
         <img src={socketImg} alt="Socket" />
       </PortView>
       <img src={powerIn.value ? onImg : offImg} alt={powerIn.value ? "On" : "Off"} />
-      <img
-        src={toggle.value ? switchOnImg : switchOffImg}
-        alt={toggle.value ? "On" : "Off"}
-        onClick={() => toggle.setValue(!toggle.value)}
+      <svg
+        width={24}
+        height={40}
         style={{ cursor: "pointer" }}
-      />
+        onClick={() => toggle.setValue(!toggle.value)}
+      >
+        <image href={backgroundImg} />
+        <image
+          href={toggleImg}
+          style={{
+            transform: toggle.value ? "translateY(-10px)" : "none",
+            transition: `transform ${transitionSettings}`,
+          }}
+        />
+      </svg>
       <img src={powerOut.value ? onImg : offImg} alt={powerOut.value ? "On" : "Off"} />
       <PortView portDescriptor={powerOut} position={Position.Right}>
         <img src={socketImg} alt="Socket" />

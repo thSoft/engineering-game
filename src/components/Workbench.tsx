@@ -44,7 +44,7 @@ import {
   movePart,
   setPortValue,
 } from "../store/gameStore";
-import { connectableColor, flowOffColor, selectedColor } from "./designTokens";
+import { connectableColor, flowOffColor, flowOnColor, selectedColor } from "./designTokens";
 import PartNode, {
   PART_TYPE,
   type PartNodeData,
@@ -157,7 +157,7 @@ function buildEdge(
     style: {
       strokeWidth: 4,
       stroke: color,
-      filter: flowOn ? "drop-shadow(0px 0px 2px rgba(255, 255, 0, 1))" : undefined,
+      filter: flowOn ? `drop-shadow(0px 0px 2px ${flowOnColor})` : undefined,
     },
     data: {
       id: connection.id,

@@ -14,3 +14,4 @@ export const headerStyle = {
 };
 export const iconSize = 16;
 export const selectedColor = "#ffffff";
+export const transitionSettings = `0.05s ease-in-out`;

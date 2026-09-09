@@ -7,6 +7,7 @@ import styles from "../../components/parts/shared/shared.module.css";
 import socketImg from "../../components/parts/shared/socket.svg";
 import litImg from "./lit.svg";
 import unlitImg from "./unlit.svg";
+import { transitionSettings } from "../../components/designTokens.tsx";
 
 interface Props {
   powerIn: PortDescriptor<boolean>;
@@ -19,11 +20,12 @@ export function LightbulbView({ powerIn, lit }: Props) {
       <img
         src={lit.value ? litImg : unlitImg}
         alt={lit.value ? "Lit" : "Unlit"}
-        style={
-          lit.value
-            ? { filter: "brightness(1) drop-shadow(0 0 5px rgba(255, 255, 0, 0.8))" }
-            : { filter: "brightness(0.6)" }
-        }
+        style={{
+          filter: lit.value
+            ? "brightness(1) drop-shadow(0 0 5px rgba(255, 255, 0, 0.8))"
+            : "brightness(0.6)",
+          transition: `filter ${transitionSettings}`,
+        }}
       />
       <div className={styles.compartment91a4ffa918eb} style={{ flexDirection: "column" }}>
         <img
