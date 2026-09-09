@@ -1,10 +1,10 @@
 import { Position } from "@xyflow/react";
-import { PortDescriptor } from "../../../engine/parts.tsx";
-import { PortView } from "../../PortView.tsx";
-import offImg from "../shared/powerIndicator/off.svg";
-import onImg from "../shared/powerIndicator/on.svg";
-import styles from "../shared/shared.module.css";
-import socketImg from "../shared/socket.svg";
+import { PortDescriptor } from "../../engine/parts.tsx";
+import { PortView } from "../../components/PortView.tsx";
+import offImg from "../../components/parts/shared/powerIndicator/off.svg";
+import onImg from "../../components/parts/shared/powerIndicator/on.svg";
+import styles from "../../components/parts/shared/shared.module.css";
+import socketImg from "../../components/parts/shared/socket.svg";
 import litImg from "./lit.svg";
 import unlitImg from "./unlit.svg";
 

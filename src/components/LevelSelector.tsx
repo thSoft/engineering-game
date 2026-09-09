@@ -1,11 +1,11 @@
 import { Card, Col, Flex, Row } from "antd";
 import CardMeta from "antd/es/card/CardMeta";
 import { Cpu } from "lucide-react";
-import { getLevelDefinitionById } from "../engine/levels";
 import { loadLevel, useGameStore } from "../store/gameStore";
 import { headerStyle } from "./designTokens";
 import NewLevels from "./NewLevels";
 import { getLevelIcon } from "./utils";
+import { getLevelDefinitionById } from "../levels/levelDefinitions.ts";
 
 function LevelSelector() {
   const showNewLevels = useGameStore.showNewLevels();

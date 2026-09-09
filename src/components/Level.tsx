@@ -1,5 +1,5 @@
 import { ReactFlowProvider } from "@xyflow/react";
-import { evaluateTestCase, getLevelDefinitionById, LevelDefinitionId } from "../engine/levels";
+import { evaluateTestCase, LevelDefinitionId } from "../engine/levels";
 import { getLevelStateByDefinitionId, useGameStore } from "../store/gameStore";
 import GoalView from "./GoalView";
 import Workbench from "./Workbench.tsx";
@@ -8,6 +8,7 @@ import PartPalette from "./PartPalette";
 import { BehaviorView } from "./BehaviorView.tsx";
 import SuccessView from "./SuccessView";
 import AcceptanceView from "./AcceptanceView.tsx";
+import { getLevelDefinitionById } from "../levels/levelDefinitions.ts";
 
 interface Props {
   levelDefinitionId: LevelDefinitionId;

@@ -21,7 +21,6 @@ import {
   getDefinitionOfPort,
   getPortPath,
   PartDefinitionId,
-  partDefinitions,
   PartInstance,
   PortDefinition,
   PortDirection,
@@ -54,6 +53,7 @@ import PartNode, {
 } from "./PartNode";
 import { getPortColor } from "./utils.tsx";
 import { CONNECTION_TYPE, ConnectionEdge, ConnectionEdgeType } from "./ConnectionEdge.tsx";
+import { partDefinitions } from "../parts/partDefinitions.tsx";
 
 const nodeTypes: NodeTypes = { [PART_TYPE]: PartNode };
 

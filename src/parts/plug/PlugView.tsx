@@ -1,11 +1,11 @@
-import styles from "../shared/shared.module.css";
+import styles from "../../components/parts/shared/shared.module.css";
 import pluggedImg from "./plugged.svg";
 import unpluggedImg from "./unplugged.svg";
-import socketImg from "../shared/socket.svg";
-import onImg from "../shared/powerIndicator/on.svg";
-import offImg from "../shared/powerIndicator/off.svg";
-import { PortDescriptor } from "../../../engine/parts.tsx";
-import { PortView } from "../../PortView.tsx";
+import socketImg from "../../components/parts/shared/socket.svg";
+import onImg from "../../components/parts/shared/powerIndicator/on.svg";
+import offImg from "../../components/parts/shared/powerIndicator/off.svg";
+import { PortDescriptor } from "../../engine/parts.tsx";
+import { PortView } from "../../components/PortView.tsx";
 import { Position } from "@xyflow/react";
 
 interface Props {

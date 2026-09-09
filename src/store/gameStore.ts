@@ -6,10 +6,8 @@ import { Connection, ConnectionId } from "../engine/connections";
 
 import {
   createSimulationInput,
-  DeskLamp,
   getCurrentTime,
   getInitialLevelState,
-  getLevelDefinitionById,
   LevelDefinitionId,
 } from "../engine/levels";
 import {
@@ -17,7 +15,6 @@ import {
   deepEqual,
   getDefinitionOfPort,
   getPart,
-  getPartDefinitionById,
   InputPortRef,
   PartDefinitionId,
   PartId,
@@ -36,6 +33,9 @@ import {
   simulate,
 } from "../engine/simulation";
 import { Draft, produce } from "immer";
+import { DeskLamp } from "../levels/deskLamp/deskLamp.ts";
+import { getLevelDefinitionById } from "../levels/levelDefinitions.ts";
+import { getPartDefinitionById } from "../parts/partDefinitions.tsx";
 
 type WithHookSelectors<S> =
   S extends UseBoundStore<StoreApi<infer T>>

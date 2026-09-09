@@ -2,11 +2,11 @@ import { Button, Card, Flex } from "antd";
 import CardMeta from "antd/es/card/CardMeta";
 import Modal from "antd/es/modal/Modal";
 import Link from "antd/es/typography/Link";
-import { getLevelDefinitionById } from "../engine/levels";
 import { LevelStatus } from "../engine/simulation";
 import { loadLevel, setShowNewLevels, useGameStore } from "../store/gameStore";
 import { modalWidth } from "./designTokens";
 import { getLevelIcon } from "./utils";
+import { getLevelDefinitionById } from "../levels/levelDefinitions.ts";
 
 interface Props {}
 
