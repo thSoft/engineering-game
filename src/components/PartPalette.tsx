@@ -47,8 +47,7 @@ export default function PartPalette({ availableParts }: Props) {
             </div>
 
             <div className="p-2 space-y-1.5 flex-1 overflow-y-auto">
-              {availableParts.map(({ id, label, icon, color, description }) => {
-                const Icon = icon;
+              {availableParts.map(({ id, label, color, description }) => {
                 const colorStyle = getColorStyle(color);
 
                 return (
@@ -62,7 +61,7 @@ export default function PartPalette({ availableParts }: Props) {
                     style={colorStyle}
                   >
                     <div className="flex items-center gap-2">
-                      <Icon size={14} />
+                      {/* TODO render part in small non-interactively */}
                       <span className="text-xs font-semibold text-slate-200">{label}</span>
                     </div>
                     {description && (

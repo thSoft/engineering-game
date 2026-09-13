@@ -1,4 +1,3 @@
-import { Plug as PlugIcon } from "lucide-react";
 import { PlugView } from "./PlugView.tsx";
 import { definePart } from "../../engine/parts.tsx";
 import z from "zod";
@@ -23,7 +22,6 @@ export const Plug = definePart("plug", {
       defaultValue: false,
     },
   },
-  icon: PlugIcon,
   color: "#00d492",
   description: "Emits power if plugged in",
   render: ({ plugged }, _, { powerOut }) => {

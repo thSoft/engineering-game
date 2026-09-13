@@ -22,3 +22,5 @@ dist-ssr
 *.sw?
 .env
 *.tsbuildinfo
+
+/public/audio/spessasynth_processor.min.js

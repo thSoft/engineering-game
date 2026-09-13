@@ -33,9 +33,9 @@ import {
   simulate,
 } from "../engine/simulation";
 import { Draft, produce } from "immer";
-import { DeskLamp } from "../levels/deskLamp/deskLamp.ts";
 import { getLevelDefinitionById } from "../levels/levelDefinitions.ts";
 import { getPartDefinitionById } from "../parts/partDefinitions.tsx";
+import { Organ1Stop } from "../levels/organ1stop/organ1stop.ts";
 
 type WithHookSelectors<S> =
   S extends UseBoundStore<StoreApi<infer T>>
@@ -270,7 +270,7 @@ export const useGameStore = createHookSelectors(
     persist(
       (_) => {
         return {
-          levelStates: [getInitialLevelState(DeskLamp)],
+          levelStates: [getInitialLevelState(Organ1Stop)],
           currentLevelDefinitionId: undefined,
           showNewLevels: true,
         };

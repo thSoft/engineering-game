@@ -1,4 +1,3 @@
-import { ToggleRight } from "lucide-react";
 import { SwitchView } from "./SwitchView.tsx";
 import { definePart } from "../../engine/parts.tsx";
 import z from "zod";
@@ -30,7 +29,6 @@ export const Switch = definePart("switch", {
       defaultValue: false,
     },
   },
-  icon: ToggleRight,
   color: "#00bcff",
   description: "Toggles power flow",
   render: ({ powerIn, toggle }, _, { powerOut }) => {

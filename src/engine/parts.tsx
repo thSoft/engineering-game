@@ -1,7 +1,6 @@
 import { ReactNode } from "react";
 import z from "zod";
 import type { PortVisualState } from "../components/PartNode";
-import { LucideIcon } from "lucide-react";
 import { getPartDefinitionById } from "../parts/partDefinitions.tsx";
 
 // Part definitions
@@ -20,7 +19,6 @@ export type PartDefinition<
   parameters: P;
   inputPorts: I;
   outputPorts: O;
-  icon: LucideIcon;
   color: string;
   description: string;
   render: (

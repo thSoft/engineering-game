@@ -31,7 +31,6 @@ export type PartNodeType = Node<PartNodeData<any, any, any>, typeof PART_TYPE>;
 function PartNode({ data }: NodeProps<PartNodeType>) {
   const { instance, definition, inputPorts, outputPorts, parameterValues } = data;
   const nodeRef = useRef<HTMLDivElement>(null);
-  const Icon = definition.icon;
 
   return (
     <div ref={nodeRef}>
@@ -39,7 +38,6 @@ function PartNode({ data }: NodeProps<PartNodeType>) {
         definition.render(inputPorts, parameterValues, outputPorts)
       ) : (
         <div className="flex items-center gap-2 mb-1">
-          <Icon size={16} />
           <span className="text-sm font-semibold text-slate-100">{instance.label}</span>
         </div>
       )}
