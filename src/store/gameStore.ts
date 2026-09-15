@@ -328,3 +328,12 @@ export type GameState = {
 export function setPortValue(portRef: PortRef, value: any) {
   addAction(portRef, value);
 }
+
+export function setParameterValue(partId: PartId, parameterKey: string, value: any) {
+  setCurrentLevel((state) => {
+    const part = getPart(state.parts, partId);
+    if (part !== undefined) {
+      part.parameterValues[parameterKey] = value;
+    }
+  });
+}

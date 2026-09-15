@@ -20,6 +20,7 @@ import {
   getDefinitionOfPart,
   getDefinitionOfPort,
   getPortPath,
+  ParameterDescriptors,
   PartDefinitionId,
   PartInstance,
   PortDefinition,
@@ -42,6 +43,7 @@ import {
   deleteConnection,
   deletePart,
   movePart,
+  setParameterValue,
   setPortValue,
 } from "../store/gameStore";
 import { connectableColor, flowOffColor, flowOnColor, selectedColor } from "./designTokens";
@@ -87,6 +89,7 @@ function buildNodeData(
   levelState: LevelState,
   simulationResult: SimulationResult | undefined,
   currentTime: number,
+  partIndex: number,
 ): PartNodeData<any, any, any> | undefined {
   const { parts, connections } = levelState;
   const partDefinition = getDefinitionOfPart(part.id, parts);
@@ -119,13 +122,30 @@ function buildNodeData(
       }),
     );
   }
+  function makeParameterDescriptors(part: PartInstance): ParameterDescriptors<any> {
+    return Object.fromEntries(
+      Object.entries(part.parameterValues).map(([key, value]: [string, any]) => {
+        return [
+          key,
+          {
+            value,
+            setValue: (value: any) => setParameterValue(part.id, key, value),
+          },
+        ];
+      }),
+    );
+  }
   return {
     instance: part,
     definition: partDefinition,
     inputPorts: makePortDescriptors(partDefinition.inputPorts, "input"),
     outputPorts: makePortDescriptors(partDefinition.outputPorts, "output"),
-    parameterValues: part.parameterValues,
+    parameterDescriptors: makeParameterDescriptors(part),
     selected: false,
+    partDescriptor: {
+      instance: part,
+      index: partIndex,
+    },
   };
 }
 
@@ -219,7 +239,7 @@ export default function Workbench({ levelState, levelDefinition }: Props) {
   // Nodes and edges are derived purely from store state on every render —
   // no separate RF state, no sync effects, no position divergence possible.
   const nodes: PartNodeType[] = levelState
-    ? parts.flatMap((part) => {
+    ? parts.flatMap((part, partIndex) => {
         const data = buildNodeData(
           part,
           pendingPortRef,
@@ -228,6 +248,7 @@ export default function Workbench({ levelState, levelDefinition }: Props) {
           levelState,
           simulationResult,
           currentTime,
+          partIndex,
         );
         if (!data) return [];
         return [

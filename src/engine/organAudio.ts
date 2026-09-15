@@ -17,7 +17,7 @@ async function createSynth() {
 
   const synth = new WorkletSynthesizer(context);
 
-  const response = await fetch("audio/Jeux14.sf2");
+  const response = await fetch("audio/Jeux14_stripped.sf3");
   const soundfont = await response.arrayBuffer();
   await synth.soundBankManager.addSoundBank(soundfont, "jeux14");
 

@@ -9,7 +9,7 @@ export const Pipe = definePart("pipe", {
       // Length of the pipe, in cm
       label: "Length",
       schema: z.number(),
-      defaultValue: 39,
+      defaultValue: 78,
     },
   },
   inputPorts: {
@@ -34,8 +34,8 @@ export const Pipe = definePart("pipe", {
   },
   color: "#00d492",
   description: "Emits sound if air is flowing",
-  render: ({ air }, _, { sound }) => {
-    return <PipeView air={air} sound={sound} />;
+  render: ({ air }, { length }, { sound }, { index }) => {
+    return <PipeView air={air} sound={sound} length={length} partIndex={index} />;
   },
   compute: ({ air }, { length }) => ({
     sound: air ? 343.2 / (2 * (length / 100)) : 0,

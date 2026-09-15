@@ -23,8 +23,9 @@ export type PartDefinition<
   description: string;
   render: (
     inputPortDescriptors: PortDescriptors<I>,
-    parameters: ParameterValues<P>,
+    parameters: ParameterDescriptors<P>,
     outputPortDescriptors: PortDescriptors<O>,
+    partDescriptor: PartDescriptor,
   ) => ReactNode;
   compute: (inputPortValues: PortValues<I>, parameters: ParameterValues<P>) => PortValues<O>;
 };
@@ -72,6 +73,11 @@ export type PartInstance = {
   definitionId: PartDefinitionId;
   parameterValues: ParameterValues<any>;
   portInstances: PortInstance[];
+};
+
+export type PartDescriptor = {
+  instance: PartInstance;
+  index: number;
 };
 
 export function createPartInstance<
@@ -141,10 +147,20 @@ export type ParameterDefinition<T> = {
   schema: z.ZodType<T>;
   defaultValue: T;
 };
+
 type ParameterValue<P> = P extends ParameterDefinition<infer T> ? T : never;
 
 export type ParameterValues<T extends Record<string, ParameterDefinition<any>>> = {
   [K in keyof T]: ParameterValue<T[K]>;
+};
+
+export type ParameterDescriptor<V> = {
+  value: V;
+  setValue: (value: V) => void;
+};
+
+export type ParameterDescriptors<T extends Record<string, ParameterDefinition<any>>> = {
+  [K in keyof T]: ParameterDescriptor<ParameterValue<T[K]>>;
 };
 
 // Ports

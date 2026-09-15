@@ -16,11 +16,12 @@ type Props = {
   playing: boolean;
   frequency: number;
   stop: OrganStop;
+  channel: number;
   velocity?: number;
 };
 
-export function PipeSound({ playing, frequency, stop, velocity = 100 }: Props) {
-  const currentState = { frequency, stop, playing, velocity };
+export function PipeSound({ playing, frequency, stop, channel, velocity = 100 }: Props) {
+  const currentState = { frequency, stop, playing, velocity, channel };
   const previous = useRef<Props | null>(null);
   useEffect(() => {
     let cancelled = false;
@@ -32,9 +33,9 @@ export function PipeSound({ playing, frequency, stop, velocity = 100 }: Props) {
 
       function handleNote() {
         if (playing) {
-          synth.programChange(0, stop.program);
-          synth.pitchWheel(0, pitchBend);
-          synth.noteOn(0, note, velocity);
+          synth.programChange(channel, stop.program);
+          synth.pitchWheel(channel, pitchBend);
+          synth.noteOn(channel, note, velocity);
         }
         previous.current = currentState;
       }
@@ -52,7 +53,7 @@ export function PipeSound({ playing, frequency, stop, velocity = 100 }: Props) {
       if (!deepEqual(previousState, currentState)) {
         const { note: previousNote } = frequencyToMidi(previousState.frequency);
         if (previousState.playing) {
-          synth.noteOff(0, previousNote);
+          synth.noteOff(channel, previousNote);
         }
 
         handleNote();
@@ -63,7 +64,7 @@ export function PipeSound({ playing, frequency, stop, velocity = 100 }: Props) {
     return () => {
       cancelled = true;
     };
-  }, [frequency, playing, stop, velocity]);
+  }, [frequency, playing, stop, channel, velocity]);
 
   return null;
 }
