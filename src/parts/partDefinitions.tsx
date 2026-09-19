@@ -1,14 +1,20 @@
-import { Plug } from "./plug/plug.tsx";
 import { PartDefinitionId, PartDefinitionWithHelpers } from "../engine/parts.tsx";
-import { Switch } from "./switch/switch.tsx";
+import { Blower } from "./blower/blower.tsx";
 import { Lightbulb } from "./lightbulb/lightbulb.tsx";
+import { OrganKey } from "./organKey/organKey.tsx";
 import { Pipe } from "./pipe/pipe.tsx";
+import { Plug } from "./plug/plug.tsx";
+import { Switch } from "./switch/switch.tsx";
+import { Windchest } from "./windchest/windchest.tsx";
 
 export const partDefinitions: PartDefinitionWithHelpers<any, any, any>[] = [
   Plug,
   Switch,
   Lightbulb,
   Pipe,
+  Blower,
+  Windchest,
+  OrganKey,
 ];
 
 export function getPartDefinitionById(
