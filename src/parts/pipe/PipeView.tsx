@@ -25,7 +25,7 @@ export function PipeView({ air, sound, length, partIndex }: Props) {
         onChange={length.setValue}
         tooltip={{ formatter: (value) => `${value} cm` }}
         vertical
-        style={{ height: "100px" }}
+        style={{ height: "400px" }}
       />
       <button onClick={() => air.setValue(!air.value)}>{air.value ? "Stop" : "Play"}</button>
       <PortView key="air" portDescriptor={air} position={Position.Bottom}>

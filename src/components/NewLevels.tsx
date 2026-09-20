@@ -2,11 +2,12 @@ import { Button, Card, Flex } from "antd";
 import CardMeta from "antd/es/card/CardMeta";
 import Modal from "antd/es/modal/Modal";
 import Link from "antd/es/typography/Link";
+import indefinite from "indefinite";
 import { LevelStatus } from "../engine/simulation";
+import { getLevelDefinitionById } from "../levels/levelDefinitions.ts";
 import { loadLevel, setShowNewLevels, useGameStore } from "../store/gameStore";
 import { modalWidth } from "./designTokens";
 import { getLevelIcon } from "./utils";
-import { getLevelDefinitionById } from "../levels/levelDefinitions.ts";
 
 interface Props {}
 
@@ -53,7 +54,8 @@ function NewLevels({}: Props) {
                         loadLevel(levelState.definitionId);
                       }}
                     >
-                      Build a <strong>{levelDefinition.label}</strong>
+                      Build {indefinite(levelDefinition.label, { articleOnly: true })}{" "}
+                      <strong>{levelDefinition.label}</strong>
                     </Link>{" "}
                     for <strong>{levelDefinition.userName}</strong>
                   </span>

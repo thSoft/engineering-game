@@ -13,10 +13,10 @@ interface Props {
 export function OrganKeyView({ pressed, actionTriggered }: Props) {
   return (
     <Flex>
-      <Checkbox checked={pressed.value} onChange={() => pressed.setValue(!pressed.value)} />
-      <PortView portDescriptor={actionTriggered} position={Position.Right}>
+      <PortView portDescriptor={actionTriggered} position={Position.Left}>
         <img src={socketImg} alt="Socket" />
       </PortView>
+      <Checkbox checked={pressed.value} onChange={() => pressed.setValue(!pressed.value)} />
     </Flex>
   );
 }

@@ -31,7 +31,7 @@ export function PipeSound({ playing, frequency, stop, channel, velocity = 100 }:
 
       const { note, pitchBend } = frequencyToMidi(frequency);
 
-      function handleNote() {
+      function handleNoteOn() {
         if (playing) {
           synth.programChange(channel, stop.program);
           synth.pitchWheel(channel, pitchBend);
@@ -40,11 +40,15 @@ export function PipeSound({ playing, frequency, stop, channel, velocity = 100 }:
         previous.current = currentState;
       }
 
+      function handleNoteOff(previousNote: number) {
+        synth.noteOff(channel, previousNote);
+      }
+
       const previousState = previous.current;
 
       // First render.
       if (!previousState) {
-        handleNote();
+        handleNoteOn();
         return;
       }
 
@@ -53,10 +57,9 @@ export function PipeSound({ playing, frequency, stop, channel, velocity = 100 }:
       if (!deepEqual(previousState, currentState)) {
         const { note: previousNote } = frequencyToMidi(previousState.frequency);
         if (previousState.playing) {
-          synth.noteOff(channel, previousNote);
+          handleNoteOff(previousNote);
         }
-
-        handleNote();
+        handleNoteOn();
         return;
       }
     });

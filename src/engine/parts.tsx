@@ -58,8 +58,8 @@ export function definePart<
       ...definition.inputPorts,
       ...definition.outputPorts,
     },
-    instance: (id: string, position: PartPosition) => {
-      return createPartInstance<P, I, O>(id, position, partDefinitionId, definition);
+    instance: (id: string, position: PartPosition, label?: string) => {
+      return createPartInstance<P, I, O>(id, position, partDefinitionId, definition, label);
     },
   };
 }
@@ -89,6 +89,7 @@ export function createPartInstance<
   position: PartPosition,
   partDefinitionId: PartDefinitionId,
   definition: Omit<PartDefinition<P, I, O>, "id">,
+  label?: string,
 ) {
   const partId = toPartId(id);
   const inputPortRef = (portKey: keyof I): InputPortRef<PartDefinition<P, I, O>, keyof I> => ({
@@ -105,7 +106,7 @@ export function createPartInstance<
   return {
     id: partId,
     position,
-    label: definition.label,
+    label: label ?? definition.label,
     definitionId: partDefinitionId,
     parameterValues: Object.fromEntries(
       Object.entries(definition.parameters).map(([paramKey, paramDef]) => [

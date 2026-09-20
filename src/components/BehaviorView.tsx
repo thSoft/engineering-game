@@ -1,9 +1,11 @@
 import { Timeline, TimelineAction, TimelineState } from "@keplar-404/react-timeline-editor";
-import { Segmented } from "antd";
+import { Button, Segmented } from "antd";
 import Dropdown from "antd/es/dropdown/dropdown";
 import Flex from "antd/es/flex";
 import _ from "lodash";
-import { ReactNode, useEffect, useRef } from "react";
+import { FilePlay, FlaskConical, ShieldCheck } from "lucide-react";
+import { ReactNode, useEffect, useRef, useState } from "react";
+import { useIntervalWhen } from "rooks";
 import {
   evaluateTestCase,
   getCurrentTime,
@@ -15,7 +17,6 @@ import { BehaviorMode, LevelState } from "../engine/simulation";
 import { deleteAction, setBehaviorMode, setCurrentTime } from "../store/gameStore";
 import { borderColor, iconSize } from "./designTokens";
 import { getPortRefLabel, getTimelineActions, TimelineActionData } from "./utils";
-import { FilePlay, FlaskConical, ShieldCheck } from "lucide-react";
 
 interface Props {
   levelDefinition: LevelDefinition;
@@ -40,6 +41,13 @@ export function BehaviorView({ levelDefinition, levelState, parts }: Props) {
       trackHeaderRef.current.scrollTop = scrollTop;
     }
   };
+
+  const [playing, setPlaying] = useState(false);
+  const timeResolutionMs = 100;
+  function stepTime() {
+    setCurrentTime(getCurrentTime(levelState) + timeResolutionMs / 1000);
+  }
+  useIntervalWhen(stepTime, timeResolutionMs, playing);
 
   const testCaseResult =
     behaviorMode === BehaviorMode.TEST_CASE
@@ -129,7 +137,10 @@ export function BehaviorView({ levelDefinition, levelState, parts }: Props) {
       <Flex align="center" gap={8} style={{ padding: 4 }}>
         <Segmented
           value={behaviorMode}
-          onChange={(value) => setBehaviorMode(value)}
+          onChange={(value) => {
+            setPlaying(false);
+            setBehaviorMode(value);
+          }}
           options={[
             {
               label: (
@@ -160,6 +171,9 @@ export function BehaviorView({ levelDefinition, levelState, parts }: Props) {
             },
           ]}
         />
+        {[BehaviorMode.TEST_CASE, BehaviorMode.CUSTOM_SCENARIO].includes(behaviorMode) && (
+          <Button onClick={() => setPlaying(!playing)}>{playing ? "Pause" : "Play"}</Button>
+        )}
       </Flex>
     </Flex>
   );

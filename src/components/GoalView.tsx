@@ -1,10 +1,11 @@
 import { Button, Card } from "antd";
 import CardMeta from "antd/es/card/CardMeta";
 import Modal from "antd/es/modal/Modal";
+import indefinite from "indefinite";
 import { LevelDefinition } from "../engine/levels";
 import { LevelPhase, LevelState } from "../engine/simulation";
-import { modalWidth } from "./designTokens";
 import { loadLevel, setLevelPhase } from "../store/gameStore.ts";
+import { modalWidth } from "./designTokens";
 
 interface Props {
   levelDefinition: LevelDefinition;
@@ -34,7 +35,8 @@ function GoalView({ levelDefinition, levelState }: Props) {
       <Card
         title={
           <span>
-            <strong>{levelDefinition.userName}</strong> needs a{" "}
+            <strong>{levelDefinition.userName}</strong> needs{" "}
+            {indefinite(levelDefinition.label, { articleOnly: true })}{" "}
             <strong>{levelDefinition.label}.</strong>
           </span>
         }

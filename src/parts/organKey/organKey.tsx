@@ -4,14 +4,20 @@ import { OrganKeyView } from "./OrganKeyView.tsx";
 
 export const OrganKey = definePart("organKey", {
   label: "Organ Key",
-  parameters: {},
+  parameters: {
+    black: {
+      defaultValue: false,
+      label: "black",
+      schema: z.boolean(),
+    },
+  },
   inputPorts: {
     pressed: {
       label: "pressed",
       kind: "state",
       schema: z.boolean(),
       defaultValue: false,
-      renderAction: (value, partLabel) => (value ? `Depress ${partLabel}` : `Release ${partLabel}`),
+      renderAction: (value, partLabel) => (value ? `Press ${partLabel}` : `Release ${partLabel}`),
     },
   },
   outputPorts: {
