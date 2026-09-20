@@ -145,6 +145,7 @@ function buildNodeData(
     partDescriptor: {
       instance: part,
       index: partIndex,
+      isExperiment: levelState.behaviorMode === BehaviorMode.EXPERIMENT,
     },
   };
 }

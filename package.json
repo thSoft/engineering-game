@@ -26,6 +26,7 @@
     "react-dom": "^19.2.8",
     "rooks": "^9.9.0",
     "spessasynth_lib": "^4.3.14",
+    "use-animation-frame": "^1.0.0",
     "zod": "^4.4.3",
     "zustand": "^5.0.14"
   },

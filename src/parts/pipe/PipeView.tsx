@@ -11,9 +11,10 @@ interface Props {
   sound: PortDescriptor<number>;
   length: ParameterDescriptor<number>;
   partIndex: number;
+  isExperiment: boolean;
 }
 
-export function PipeView({ air, sound, length, partIndex }: Props) {
+export function PipeView({ air, sound, length, partIndex, isExperiment }: Props) {
   const deferredLength = useDeferredValue(length.value); // Prevent "Maximum update depth exceeded"
 
   return (
@@ -31,12 +32,14 @@ export function PipeView({ air, sound, length, partIndex }: Props) {
       <PortView key="air" portDescriptor={air} position={Position.Bottom}>
         <img src={socketImg} alt="Socket" />
       </PortView>
-      <PipeSound
-        playing={sound.value > 0}
-        frequency={sound.value}
-        stop={gedackt8}
-        channel={partIndex}
-      />
+      {isExperiment && (
+        <PipeSound
+          playing={sound.value > 0}
+          frequency={sound.value}
+          stop={gedackt8}
+          channel={partIndex}
+        />
+      )}
     </div>
   );
 }

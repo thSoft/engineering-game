@@ -34,8 +34,16 @@ export const Pipe = definePart("pipe", {
   },
   color: "#00d492",
   description: "Emits sound if air is flowing",
-  render: ({ air }, { length }, { sound }, { index }) => {
-    return <PipeView air={air} sound={sound} length={length} partIndex={index} />;
+  render: ({ air }, { length }, { sound }, { index, isExperiment }) => {
+    return (
+      <PipeView
+        air={air}
+        sound={sound}
+        length={length}
+        partIndex={index}
+        isExperiment={isExperiment}
+      />
+    );
   },
   compute: ({ air }, { length }) => ({
     sound: air ? 343.2 / (2 * (length / 100)) : 0,

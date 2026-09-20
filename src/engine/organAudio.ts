@@ -10,6 +10,22 @@ export function getOrganSynth(): Promise<WorkletSynthesizer> {
   return synthPromise;
 }
 
+/**
+ * Discard the current audio context and its queued MIDI events.
+ *
+ * SpessaSynth has no API for removing individual future events, so stopping a
+ * timeline run requires replacing its context rather than only sending note-off.
+ */
+export async function resetOrganSynth() {
+  const activeSynth = synthPromise;
+  synthPromise = undefined;
+  if (!activeSynth) return;
+
+  const synth = await activeSynth;
+  synth.stopAll(true);
+  await (synth.context as AudioContext).close();
+}
+
 async function createSynth() {
   const context = new AudioContext();
 

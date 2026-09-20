@@ -154,6 +154,9 @@ importers:
       spessasynth_lib:
         specifier: ^4.3.14
         version: 4.3.14
+      use-animation-frame:
+        specifier: ^1.0.0
+        version: 1.0.0(react@19.2.8)
       zod:
         specifier: ^4.4.3
         version: 4.4.3
@@ -1804,6 +1807,11 @@ packages:
     peerDependencies:
       browserslist: '>= 4.21.0'
 
+  use-animation-frame@1.0.0:
+    resolution: {integrity: sha512-Nxvmx8a1omfLbYtSSEMDHy70zDUsuKSei08VMGb4viD9DAYVF9n+YElJVfi2OA4ERhByPBRQ4gY4QOoLNxH+wQ==}
+    peerDependencies:
+      react: '>=16.8.0'
+
   use-sync-external-store@1.6.0:
     resolution: {integrity: sha512-Pp6GSwGP/NrPIrxVFAIkOQeyw8lFenOHijQWkUTrDvrF4ALqylP2C/KCkeS9dpUM3KvYRQhna5vt7IL95+ZQ9w==}
     peerDependencies:
@@ -3448,6 +3456,10 @@ snapshots:
       browserslist: 4.28.8
       escalade: 3.2.0
       picocolors: 1.1.1
+
+  use-animation-frame@1.0.0(react@19.2.8):
+    dependencies:
+      react: 19.2.8
 
   use-sync-external-store@1.6.0(react@19.2.8):
     dependencies:

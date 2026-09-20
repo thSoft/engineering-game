@@ -5,20 +5,22 @@ import Flex from "antd/es/flex";
 import _ from "lodash";
 import { FilePlay, FlaskConical, ShieldCheck } from "lucide-react";
 import { ReactNode, useEffect, useRef, useState } from "react";
-import { useIntervalWhen } from "rooks";
+import useAnimationFrame from "use-animation-frame";
 import {
   evaluateTestCase,
   getCurrentTime,
   LevelDefinition,
   TestCaseResult,
 } from "../engine/levels";
+import { getOrganSynth, resetOrganSynth } from "../engine/organAudio";
 import { PartInstance } from "../engine/parts";
 import { BehaviorMode, LevelState } from "../engine/simulation";
 import { deleteAction, setBehaviorMode, setCurrentTime } from "../store/gameStore";
 import { borderColor, iconSize } from "./designTokens";
+import { TimelinePipeSounds } from "./TimelinePipeSounds";
 import { getPortRefLabel, getTimelineActions, TimelineActionData } from "./utils";
 
-interface Props {
+export interface Props {
   levelDefinition: LevelDefinition;
   levelState: LevelState;
   parts: PartInstance[];
@@ -43,11 +45,13 @@ export function BehaviorView({ levelDefinition, levelState, parts }: Props) {
   };
 
   const [playing, setPlaying] = useState(false);
-  const timeResolutionMs = 100;
-  function stepTime() {
-    setCurrentTime(getCurrentTime(levelState) + timeResolutionMs / 1000);
+  const [playbackStartTime, setPlaybackStartTime] = useState<number>();
+  function stepTime({ delta }: { delta: number }) {
+    if (behaviorMode !== BehaviorMode.EXPERIMENT && playing) {
+      setCurrentTime(getCurrentTime(levelState) + delta);
+    }
   }
-  useIntervalWhen(stepTime, timeResolutionMs, playing);
+  useAnimationFrame(stepTime);
 
   const testCaseResult =
     behaviorMode === BehaviorMode.TEST_CASE
@@ -133,12 +137,21 @@ export function BehaviorView({ levelDefinition, levelState, parts }: Props) {
             </div>
           </>
         )}
+        {behaviorMode !== BehaviorMode.EXPERIMENT && playing && playbackStartTime !== undefined && (
+          <TimelinePipeSounds
+            levelDefinition={levelDefinition}
+            levelState={levelState}
+            parts={parts}
+            startTime={playbackStartTime}
+          />
+        )}
       </div>
       <Flex align="center" gap={8} style={{ padding: 4 }}>
         <Segmented
           value={behaviorMode}
           onChange={(value) => {
             setPlaying(false);
+            void resetOrganSynth();
             setBehaviorMode(value);
           }}
           options={[
@@ -172,7 +185,19 @@ export function BehaviorView({ levelDefinition, levelState, parts }: Props) {
           ]}
         />
         {[BehaviorMode.TEST_CASE, BehaviorMode.CUSTOM_SCENARIO].includes(behaviorMode) && (
-          <Button onClick={() => setPlaying(!playing)}>{playing ? "Pause" : "Play"}</Button>
+          <Button
+            onClick={async () => {
+              if (playing) {
+                resetOrganSynth();
+              } else {
+                await getOrganSynth(); // Ensure that advancing the timeline begins when playback
+                setPlaybackStartTime(getCurrentTime(levelState));
+              }
+              setPlaying(!playing);
+            }}
+          >
+            {playing ? "Pause" : "Play"}
+          </Button>
         )}
       </Flex>
     </Flex>

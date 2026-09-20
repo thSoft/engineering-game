@@ -7,7 +7,7 @@ import { Plug } from "./plug/plug.tsx";
 import { Switch } from "./switch/switch.tsx";
 import { Windchest } from "./windchest/windchest.tsx";
 
-export const partDefinitions: PartDefinitionWithHelpers<any, any, any>[] = [
+export const partDefinitions = [
   Plug,
   Switch,
   Lightbulb,
@@ -15,7 +15,7 @@ export const partDefinitions: PartDefinitionWithHelpers<any, any, any>[] = [
   Blower,
   Windchest,
   OrganKey,
-];
+] as const;
 
 export function getPartDefinitionById(
   definitionId: PartDefinitionId,

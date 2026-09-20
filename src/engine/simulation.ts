@@ -6,6 +6,7 @@ import {
   getDefinitionOfPart,
   getPart,
   InputPortRef,
+  OutputPortRef,
   PartDefinition,
   PartId,
   PartInstance,
@@ -276,6 +277,27 @@ export function simulate(
   };
 }
 
+export function getPortValueAt<
+  P extends PartDefinition<any, any, any>,
+  K extends keyof P["inputPorts"],
+>(
+  portRef: InputPortRef<P, K>,
+  time: number,
+  simulationResult: SimulationResult,
+): PortValue<P["inputPorts"][K]> | undefined;
+export function getPortValueAt<
+  P extends PartDefinition<any, any, any>,
+  K extends keyof P["outputPorts"],
+>(
+  portRef: OutputPortRef<P, K>,
+  time: number,
+  simulationResult: SimulationResult,
+): PortValue<P["outputPorts"][K]> | undefined;
+export function getPortValueAt(
+  portRef: PortRef,
+  time: number,
+  simulationResult: SimulationResult,
+): PortValue<any> | undefined;
 export function getPortValueAt(
   portRef: PortRef<any, any>,
   time: number,

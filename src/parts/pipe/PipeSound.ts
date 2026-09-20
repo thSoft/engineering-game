@@ -1,3 +1,4 @@
+import type { WorkletSynthesizer } from "spessasynth_lib";
 import { useEffect, useRef } from "react";
 import { getOrganSynth } from "../../engine/organAudio.ts";
 import { deepEqual } from "../../engine/parts.tsx";
@@ -12,55 +13,51 @@ export const gedackt8: OrganStop = {
   program: 51,
 };
 
-type Props = {
+export type PipeSoundState = {
   playing: boolean;
   frequency: number;
   stop: OrganStop;
   channel: number;
-  velocity?: number;
+  velocity: number;
 };
 
+type Props = Omit<PipeSoundState, "velocity"> & { velocity?: number };
+
+type SynthMethodOptions = NonNullable<Parameters<WorkletSynthesizer["noteOn"]>[3]>;
+
+/** Schedule a transition between two pipe states on the shared organ synthesizer. */
+export function schedulePipeSound(
+  synth: WorkletSynthesizer,
+  current: PipeSoundState,
+  previous: PipeSoundState | undefined,
+  options?: SynthMethodOptions,
+) {
+  if (previous?.playing) {
+    const { note } = frequencyToMidi(previous.frequency);
+    synth.noteOff(previous.channel, note, options);
+  }
+
+  if (current.playing) {
+    const { note, pitchBend } = frequencyToMidi(current.frequency);
+    synth.programChange(current.channel, current.stop.program, options);
+    synth.pitchWheel(current.channel, pitchBend, options);
+    synth.noteOn(current.channel, note, current.velocity, options);
+  }
+}
+
+/** Plays live experiment changes immediately. Timeline playback uses schedulePipeSound instead. */
 export function PipeSound({ playing, frequency, stop, channel, velocity = 100 }: Props) {
   const currentState = { frequency, stop, playing, velocity, channel };
-  const previous = useRef<Props | null>(null);
+  const previous = useRef<PipeSoundState | undefined>(undefined);
   useEffect(() => {
     let cancelled = false;
 
     getOrganSynth().then((synth) => {
       if (cancelled) return;
-
-      const { note, pitchBend } = frequencyToMidi(frequency);
-
-      function handleNoteOn() {
-        if (playing) {
-          synth.programChange(channel, stop.program);
-          synth.pitchWheel(channel, pitchBend);
-          synth.noteOn(channel, note, velocity);
-        }
-        previous.current = currentState;
-      }
-
-      function handleNoteOff(previousNote: number) {
-        synth.noteOff(channel, previousNote);
-      }
-
       const previousState = previous.current;
-
-      // First render.
-      if (!previousState) {
-        handleNoteOn();
-        return;
-      }
-
-      // Prop changed.
-
-      if (!deepEqual(previousState, currentState)) {
-        const { note: previousNote } = frequencyToMidi(previousState.frequency);
-        if (previousState.playing) {
-          handleNoteOff(previousNote);
-        }
-        handleNoteOn();
-        return;
+      if (!previousState || !deepEqual(previousState, currentState)) {
+        schedulePipeSound(synth, currentState, previousState);
+        previous.current = currentState;
       }
     });
 

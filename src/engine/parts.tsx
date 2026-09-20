@@ -78,6 +78,7 @@ export type PartInstance = {
 export type PartDescriptor = {
   instance: PartInstance;
   index: number;
+  isExperiment: boolean;
 };
 
 export function createPartInstance<
@@ -204,12 +205,16 @@ export type PortInstance = {
   key: string;
 };
 
+declare const portDefinitionType: unique symbol;
+
 export type InputPortRef<
   P extends PartDefinition<any, any, any>,
   K extends keyof P["inputPorts"] = keyof P["inputPorts"],
 > = {
   partId: PartId;
   portKey: K;
+  /** Preserves the part definition for type inference without adding runtime data. */
+  readonly [portDefinitionType]?: P;
 };
 
 export type OutputPortRef<
@@ -218,6 +223,8 @@ export type OutputPortRef<
 > = {
   partId: PartId;
   portKey: K;
+  /** Preserves the part definition for type inference without adding runtime data. */
+  readonly [portDefinitionType]?: P;
 };
 
 export type PortRef<
@@ -226,6 +233,15 @@ export type PortRef<
   OK extends keyof P["outputPorts"] = keyof P["outputPorts"],
 > = InputPortRef<P, IK> | OutputPortRef<P, OK>;
 
+export function refPort<
+  P extends PartDefinition<any, any, any>,
+  K extends keyof P["inputPorts"] = keyof P["inputPorts"],
+>(partId: PartId, portKey: K): InputPortRef<P, K>;
+export function refPort<
+  P extends PartDefinition<any, any, any>,
+  K extends keyof P["outputPorts"] = keyof P["outputPorts"],
+>(partId: PartId, portKey: K): OutputPortRef<P, K>;
+export function refPort(partId: PartId, portKey: string): PortRef;
 export function refPort(partId: PartId, portKey: string): PortRef {
   return { partId, portKey };
 }
