@@ -1,11 +1,8 @@
 import { defineLevel } from "../../engine/levels.ts";
+import { createPartInstance, inPort, PartInstance } from "../../engine/parts.tsx";
 import { action } from "../../engine/simulation.ts";
-import { Blower } from "../../parts/blower/blower.tsx";
-import { OrganKey } from "../../parts/organKey/organKey.tsx";
-import { Pipe } from "../../parts/pipe/pipe.tsx";
-import { Windchest } from "../../parts/windchest/windchest.tsx";
 
-const blower = Blower.instance("blower", { x: 0, y: -400 });
+const blower = createPartInstance("Blower", "blower", { x: 0, y: -400 });
 
 const padding = 30;
 
@@ -25,9 +22,9 @@ const pitches = {
   c5: { name: "C5", frequency: 523.25 },
 };
 
-const organKeys: ReturnType<typeof OrganKey.instance>[] = Object.entries(pitches).map(
+const organKeys: PartInstance<"OrganKey">[] = Object.entries(pitches).map(
   ([pitchId, pitch], index) =>
-    OrganKey.instance(`key${pitchId}`, { x: 0, y: padding * -index }, pitch.name),
+    createPartInstance("OrganKey", `key${pitchId}`, { x: 0, y: padding * -index }, pitch.name),
 );
 
 type MelodyNote = {
@@ -55,7 +52,7 @@ function getMelodyNoteActions(
   bpm: number,
 ) {
   const index = Object.keys(pitches).indexOf(pitchId);
-  const pressed = organKeys[index].in("pressed");
+  const pressed = inPort(organKeys[index], "pressed");
   return [
     action(time, pressed, true),
     action(time + toAbsoluteTime(bpm, duration), pressed, false),
@@ -83,14 +80,14 @@ function getMelodyActions(melody: MelodyNote[], startBeat: number, bpm: number) 
 
 export const Organ1Stop = defineLevel("organ1Stop", {
   label: "Organ with One Stop",
-  availableParts: [Pipe, Blower, Windchest, OrganKey],
+  availableParts: ["Pipe", "Blower", "Windchest", "OrganKey"],
   fixedParts: [blower, ...organKeys],
   exposedPorts: [],
   testCase: {
     input: {
       startTime: 0,
       actions: [
-        action(0, blower.in("toggle"), true),
+        action(0, inPort(blower, "toggle"), true),
         ...getMelodyActions(bachToccataIntro, 0.5, 32),
       ],
     },

@@ -1,7 +1,7 @@
-import type { WorkletSynthesizer } from "spessasynth_lib";
+import _ from "lodash";
 import { useEffect, useRef } from "react";
+import type { WorkletSynthesizer } from "spessasynth_lib";
 import { getOrganSynth } from "../../engine/organAudio.ts";
-import { deepEqual } from "../../engine/parts.tsx";
 
 export type OrganStop = {
   bank: number;
@@ -55,7 +55,7 @@ export function PipeSound({ playing, frequency, stop, channel, velocity = 100 }:
     getOrganSynth().then((synth) => {
       if (cancelled) return;
       const previousState = previous.current;
-      if (!previousState || !deepEqual(previousState, currentState)) {
+      if (!previousState || !_.isEqual(previousState, currentState)) {
         schedulePipeSound(synth, currentState, previousState);
         previous.current = currentState;
       }

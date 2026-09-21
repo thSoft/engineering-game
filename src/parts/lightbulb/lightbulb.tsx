@@ -1,8 +1,8 @@
-import { LightbulbView } from "./LightbulbView.tsx";
-import { definePart } from "../../engine/parts.tsx";
 import z from "zod";
+import { definePart } from "../../engine/parts.tsx";
+import { LightbulbView } from "./LightbulbView.tsx";
 
-export const Lightbulb = definePart("lightbulb", {
+export const Lightbulb = definePart({
   label: "Lightbulb",
   parameters: {},
   inputPorts: {

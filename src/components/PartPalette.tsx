@@ -1,12 +1,13 @@
 import { Boxes } from "lucide-react";
 import { useState } from "react";
-import { PartDefinition, PartDefinitionId } from "../engine/parts";
+import { PartDefinitionId } from "../engine/parts";
+import { getPartDefinitionById } from "../parts/partDefinitions.tsx";
+import { addPart } from "../store/gameStore.ts";
 import { borderColor } from "./designTokens";
 import { getColorStyle } from "./utils.tsx";
-import { addPart } from "../store/gameStore.ts";
 
 interface Props {
-  availableParts: PartDefinition<any, any, any>[];
+  availableParts: PartDefinitionId[];
 }
 
 export default function PartPalette({ availableParts }: Props) {
@@ -47,7 +48,8 @@ export default function PartPalette({ availableParts }: Props) {
             </div>
 
             <div className="p-2 space-y-1.5 flex-1 overflow-y-auto">
-              {availableParts.map(({ id, label, color, description }) => {
+              {availableParts.map((id) => {
+                const { label, color, description } = getPartDefinitionById(id);
                 const colorStyle = getColorStyle(color);
 
                 return (

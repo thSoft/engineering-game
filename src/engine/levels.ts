@@ -1,7 +1,8 @@
+import _ from "lodash";
 import {
-  deepEqual,
   OutputPortRef,
-  PartDefinition,
+  PartDefinitionId,
+  PartDefinitions,
   PartInstance,
   PortRef,
   PortValue,
@@ -22,38 +23,41 @@ export type LevelDefinitionId = string & { __brand: "LevelDefinitionId" };
 export type LevelDefinition = {
   id: LevelDefinitionId;
   label: string;
-  availableParts: PartDefinition<any, any, any>[];
+  availableParts: PartDefinitionId[];
   fixedParts: PartInstance[];
-  exposedPorts: PortRef<any, any, any>[];
+  exposedPorts: PortRef[];
   testCase: TestCase;
   userName: string;
   userNeedQuote: string;
   successQuote: string;
 };
 
-export function isExposed(portRef: PortRef<any, any, any>, levelDefinition: LevelDefinition) {
-  return levelDefinition.exposedPorts.some((exposedPort) => deepEqual(portRef, exposedPort));
+export function isExposed(portRef: PortRef, levelDefinition: LevelDefinition) {
+  return levelDefinition.exposedPorts.some((exposedPort) => _.isEqual(portRef, exposedPort));
 }
 
 export type TestCase = {
   input: SimulationInput;
-  assertions: Assertion<any, any>[];
+  assertions: Assertion[];
 };
 
-export type Assertion<P extends PartDefinition<any, any, any>, K extends keyof P["outputPorts"]> = {
+export type Assertion<
+  Id extends PartDefinitionId = any,
+  Key extends keyof PartDefinitions[Id]["outputPorts"] & string = any,
+> = {
   time: number;
-  portRef: OutputPortRef<P, K>;
-  value: PortValue<P["outputPorts"][K]>;
+  portRef: OutputPortRef<Id, Key>;
+  value: PortValue<PartDefinitions[Id]["outputPorts"][Key]>;
 };
 
 export function assertion<
-  P extends PartDefinition<any, any, any>,
-  K extends keyof P["outputPorts"],
+  Id extends PartDefinitionId,
+  Key extends keyof PartDefinitions[Id]["outputPorts"] & string,
 >(
   time: number,
-  portRef: OutputPortRef<P, K>,
-  value: PortValue<P["outputPorts"][K]>,
-): Assertion<P, K> {
+  portRef: OutputPortRef<Id, Key>,
+  value: PortValue<PartDefinitions[Id]["outputPorts"][Key]>,
+): Assertion<Id, Key> {
   return {
     time,
     portRef,
@@ -69,7 +73,7 @@ export type TestCaseResult = {
 };
 
 export type AssertionResult = {
-  assertion: Assertion<any, any>;
+  assertion: Assertion;
   actualValue: PortValue<any>;
   success: boolean;
   // TODO trace
@@ -112,7 +116,7 @@ export function evaluateTestCase(testCase: TestCase, levelState: LevelState): Te
     return {
       assertion,
       actualValue,
-      success: deepEqual(actualValue, assertion.value),
+      success: _.isEqual(actualValue, assertion.value),
     };
   });
   return {

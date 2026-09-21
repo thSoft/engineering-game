@@ -3,7 +3,6 @@ import _ from "lodash";
 import { ReactNode } from "react";
 import { AssertionResult, LevelDefinition, TestCaseResult } from "../engine/levels";
 import {
-  deepEqual,
   getDefinitionOfPart,
   getDefinitionOfPort,
   getPart,
@@ -113,7 +112,7 @@ export function getTimelineActions(
     ),
     ...simulationAssertions.map((assertion, index) => {
       const assertionResult = testCaseResult?.assertionResults.find((result) =>
-        deepEqual(result.assertion, assertion),
+        _.isEqual(result.assertion, assertion),
       );
       return timelineAction(
         index,

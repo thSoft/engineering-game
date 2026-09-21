@@ -1,8 +1,8 @@
-import { definePart } from "../../engine/parts.tsx";
 import z from "zod";
+import { definePart } from "../../engine/parts.tsx";
 import { PipeView } from "./PipeView.tsx";
 
-export const Pipe = definePart("pipe", {
+export const Pipe = definePart({
   label: "Pipe",
   parameters: {
     length: {

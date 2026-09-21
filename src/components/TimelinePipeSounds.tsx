@@ -2,9 +2,8 @@ import _ from "lodash";
 import { useEffect, useState } from "react";
 import { LevelDefinition } from "../engine/levels";
 import { getOrganSynth } from "../engine/organAudio";
-import { PartId, PartInstance, refPort } from "../engine/parts";
+import { isPartOf, outPort, PartId, PartInstance } from "../engine/parts";
 import { getPortValueAt, getSimulationInput, LevelState, simulate } from "../engine/simulation";
-import { Pipe } from "../parts/pipe/pipe";
 import { gedackt8, PipeSoundState, schedulePipeSound } from "../parts/pipe/PipeSound";
 
 interface Props {
@@ -20,11 +19,13 @@ export function TimelinePipeSounds({ levelDefinition, levelState, parts, startTi
     const input = getSimulationInput(levelState.behaviorMode, levelState, levelDefinition);
     return {
       simulationResult: simulate(input, levelState),
-      pipeStates: parts.flatMap((part, channel) =>
-        part.definitionId === Pipe.id // TODO change DSL design so that part is narrowed
-          ? [{ part, channel, soundPort: refPort<typeof Pipe>(part.id, "sound") }]
-          : [],
-      ),
+      pipeStates: parts
+        .filter(isPartOf("Pipe"))
+        .map((pipe, pipeIndex) => ({
+          part: pipe,
+          channel: pipeIndex,
+          soundPort: outPort(pipe, "sound"),
+        })),
     };
   });
 

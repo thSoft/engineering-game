@@ -20,7 +20,7 @@ function createAirOut(name: string): PortDefinition<boolean> {
   };
 }
 
-export const Windchest = definePart("windchest", {
+export const Windchest = definePart({
   label: "Windchest",
   parameters: {},
   inputPorts: {

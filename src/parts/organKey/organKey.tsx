@@ -2,7 +2,7 @@ import z from "zod";
 import { definePart } from "../../engine/parts.tsx";
 import { OrganKeyView } from "./OrganKeyView.tsx";
 
-export const OrganKey = definePart("organKey", {
+export const OrganKey = definePart({
   label: "Organ Key",
   parameters: {
     black: {

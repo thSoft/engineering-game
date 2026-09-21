@@ -1,4 +1,4 @@
-import { PartDefinitionId, PartDefinitionWithHelpers } from "../engine/parts.tsx";
+import { PartDefinitionId, PartDefinitions } from "../engine/parts.tsx";
 import { Blower } from "./blower/blower.tsx";
 import { Lightbulb } from "./lightbulb/lightbulb.tsx";
 import { OrganKey } from "./organKey/organKey.tsx";
@@ -7,7 +7,7 @@ import { Plug } from "./plug/plug.tsx";
 import { Switch } from "./switch/switch.tsx";
 import { Windchest } from "./windchest/windchest.tsx";
 
-export const partDefinitions = [
+export const partDefinitions = {
   Plug,
   Switch,
   Lightbulb,
@@ -15,10 +15,10 @@ export const partDefinitions = [
   Blower,
   Windchest,
   OrganKey,
-] as const;
+} as const;
 
-export function getPartDefinitionById(
-  definitionId: PartDefinitionId,
-): PartDefinitionWithHelpers<any, any, any> | undefined {
-  return partDefinitions.find((definition) => definition.id === definitionId);
+export function getPartDefinitionById<Id extends PartDefinitionId>(
+  definitionId: Id,
+): PartDefinitions[Id] {
+  return partDefinitions[definitionId];
 }

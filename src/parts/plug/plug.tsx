@@ -1,8 +1,8 @@
-import { PlugView } from "./PlugView.tsx";
-import { definePart } from "../../engine/parts.tsx";
 import z from "zod";
+import { definePart } from "../../engine/parts.tsx";
+import { PlugView } from "./PlugView.tsx";
 
-export const Plug = definePart("plug", {
+export const Plug = definePart({
   label: "Plug",
   parameters: {},
   inputPorts: {

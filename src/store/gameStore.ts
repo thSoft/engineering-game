@@ -2,8 +2,9 @@ import _ from "lodash";
 import { nanoid } from "nanoid";
 import { create, StoreApi, UseBoundStore } from "zustand";
 import { persist, type StorageValue } from "zustand/middleware";
-import { Connection, ConnectionId } from "../engine/connections";
+import { ConnectionId, createConnection } from "../engine/connections";
 
+import { Draft, produce } from "immer";
 import {
   createSimulationInput,
   getCurrentTime,
@@ -12,14 +13,13 @@ import {
 } from "../engine/levels";
 import {
   createPartInstance,
-  deepEqual,
   getDefinitionOfPort,
   getPart,
+  getPort,
   InputPortRef,
   PartDefinitionId,
   PartId,
   PartPosition,
-  PortInstance,
   PortRef,
   refPort,
 } from "../engine/parts";
@@ -32,9 +32,8 @@ import {
   LevelStatus,
   simulate,
 } from "../engine/simulation";
-import { Draft, produce } from "immer";
+import { DeskLamp } from "../levels/deskLamp/deskLamp.ts";
 import { getLevelDefinitionById } from "../levels/levelDefinitions.ts";
-import { getPartDefinitionById } from "../parts/partDefinitions.tsx";
 import { Organ1Stop } from "../levels/organ1stop/organ1stop.ts";
 
 type WithHookSelectors<S> =
@@ -82,7 +81,7 @@ function updateExperimentData(state: Draft<LevelState>) {
         state,
         state.experimentData.initialState,
       );
-      const values = _.maxBy(simulationResult.actionResults, getTime)?.states;
+      const values = _.maxBy(simulationResult.actionResults, getTime)?.state;
       if (values !== undefined) {
         state.experimentData.initialState = values.filter((value) => {
           const portDefinition = getDefinitionOfPort(value.portRef, state.parts);
@@ -112,10 +111,7 @@ function setCurrentLevel(mutateLevelState: (draft: Draft<LevelState>) => void): 
 
 export function addPart(definitionId: PartDefinitionId, position: PartPosition) {
   const partId = nanoid();
-  const definition = getPartDefinitionById(definitionId);
-  if (!definition) return;
-
-  const newPart = createPartInstance(partId, position, definitionId, definition);
+  const newPart = createPartInstance(definitionId, partId, position);
   setCurrentLevel((state) => {
     state.parts.push(newPart);
     updateExperimentData(state);
@@ -131,8 +127,8 @@ export function deletePart(partId: PartId): void {
     state.parts = state.parts.filter((part) => part.id !== partId);
     state.connections = state.connections.filter(
       (connection) =>
-        !removedPortRefs.some((ref) => deepEqual(ref, connection.source)) &&
-        !removedPortRefs.some((ref) => deepEqual(ref, connection.target)),
+        !removedPortRefs.some((ref) => _.isEqual(ref, connection.source)) &&
+        !removedPortRefs.some((ref) => _.isEqual(ref, connection.target)),
     );
     updateExperimentData(state);
   });
@@ -155,38 +151,26 @@ export function addConnection(source: PortRef, target: PortRef) {
     if (!sourceDefinition || !targetDefinition) {
       return;
     }
-
-    let sourcePortInstance: PortInstance | undefined;
-    let targetPortInstance: PortInstance | undefined;
-    for (const part of state.parts) {
-      for (const port of part.portInstances) {
-        if (deepEqual(refPort(part.id, port.key), source)) {
-          sourcePortInstance = port;
-        } else if (deepEqual(refPort(part.id, port.key), target)) {
-          targetPortInstance = port;
-        }
-      }
-    }
-
     if (
-      !sourcePortInstance ||
-      !targetPortInstance ||
       sourceDefinition.direction !== "output" ||
       targetDefinition.direction !== "input" ||
       sourceDefinition.kind !== targetDefinition.kind
     ) {
       return;
     }
+
+    const sourcePortInstance = getPort(source, state.parts);
+    const targetPortInstance = getPort(target, state.parts);
+    if (!sourcePortInstance || !targetPortInstance) {
+      return;
+    }
+
     const exists = state.connections.some(
-      (connection) => deepEqual(connection.source, source) && deepEqual(connection.target, target),
+      (connection) => _.isEqual(connection.source, source) && _.isEqual(connection.target, target),
     );
     if (exists) return;
 
-    const newConnection: Connection = {
-      id: nanoid(),
-      source,
-      target,
-    };
+    const newConnection = createConnection(source, target);
     state.connections.push(newConnection);
     updateExperimentData(state);
   });
@@ -230,7 +214,7 @@ export function setCurrentTime(currentTime: number) {
 export function addAction(portRef: InputPortRef<any, any>, value: any) {
   setCurrentLevel((state) => {
     const time = getCurrentTime(state);
-    const action: Action<any, any> = {
+    const action: Action = {
       time,
       portRef,
       value,
@@ -270,7 +254,7 @@ export const useGameStore = createHookSelectors(
     persist(
       (_) => {
         return {
-          levelStates: [getInitialLevelState(Organ1Stop)],
+          levelStates: [DeskLamp, Organ1Stop].map((definition) => getInitialLevelState(definition)),
           currentLevelDefinitionId: undefined,
           showNewLevels: true,
         };
@@ -296,11 +280,11 @@ export const useGameStore = createHookSelectors(
 
 function getActionsAfterDelete(
   state: LevelState,
-  portRef: PortRef,
+  portRef: InputPortRef<any, any>,
   time: number,
-): Action<any, any>[] {
+): Action[] {
   return state.customScenarioData.scenario.actions.filter(
-    (action) => !(action.time === time && deepEqual(action.portRef, portRef)),
+    (action) => !(action.time === time && _.isEqual(action.portRef, portRef)),
   );
 }
 
@@ -333,7 +317,8 @@ export function setParameterValue(partId: PartId, parameterKey: string, value: a
   setCurrentLevel((state) => {
     const part = getPart(state.parts, partId);
     if (part !== undefined) {
-      part.parameterValues[parameterKey] = value;
+      const parameterValues = part.parameterValues as Record<string, any>;
+      parameterValues[parameterKey] = value;
     }
   });
 }

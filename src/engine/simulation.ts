@@ -2,12 +2,13 @@ import _ from "lodash";
 import { Connection, getConnectionsWithSource, getConnectionsWithTarget } from "./connections";
 import { LevelDefinition, LevelDefinitionId } from "./levels";
 import {
-  deepEqual,
   getDefinitionOfPart,
   getPart,
   InputPortRef,
   OutputPortRef,
   PartDefinition,
+  PartDefinitionId,
+  PartDefinitions,
   PartId,
   PartInstance,
   PortRef,
@@ -17,20 +18,26 @@ import {
 
 export type SimulationInput = {
   startTime: number;
-  actions: Action<any, any>[];
+  actions: Action[];
 };
 
-export type Action<P extends PartDefinition<any, any, any>, K extends keyof P["inputPorts"]> = {
+export type Action<
+  Id extends PartDefinitionId = any,
+  Key extends keyof PartDefinitions[Id]["inputPorts"] & string = any,
+> = {
   time: number;
-  portRef: InputPortRef<P, K>;
-  value: PortValue<P["inputPorts"][K]>;
+  portRef: InputPortRef<Id, Key>;
+  value: PortValue<PartDefinitions[Id]["inputPorts"][Key]>;
 };
 
-export function action<P extends PartDefinition<any, any, any>, K extends keyof P["inputPorts"]>(
+export function action<
+  Id extends PartDefinitionId,
+  Key extends keyof PartDefinitions[Id]["inputPorts"] & string,
+>(
   time: number,
-  portRef: InputPortRef<P, K>,
-  value: PortValue<P["inputPorts"][K]>,
-): Action<P, K> {
+  portRef: InputPortRef<Id, Key>,
+  value: PortValue<PartDefinitions[Id]["inputPorts"][Key]>,
+): Action<Id, Key> {
   return {
     time,
     portRef,
@@ -44,28 +51,24 @@ export type SimulationResult = {
 };
 
 export type SimulationActionResult = {
-  action?: Action<any, any>;
-  states: PortInstanceState[];
+  action?: Action;
+  state: PortInstanceValue[];
 };
 
-export type PortInstanceState<
-  P extends PartDefinition<any, any, any> = PartDefinition<any, any, any>,
-  IK extends keyof P["inputPorts"] = keyof P["inputPorts"],
-  OK extends keyof P["outputPorts"] = keyof P["outputPorts"],
-> = {
-  portRef: PortRef<P, IK, OK>;
-  value: PortValue<P["inputPorts"][IK]> | PortValue<P["outputPorts"][OK]>;
+export type PortInstanceValue = {
+  portRef: PortRef;
+  value: PortValue<any>;
 };
 
-function computePropagatedPortStates(
+function computePropagatedState(
   firstPartId: PartId,
   connections: Connection[],
   parts: PartInstance[],
-  initialPortStates: PortInstanceState[],
-): PortInstanceState[] {
+  initialState: PortInstanceValue[],
+): PortInstanceValue[] {
   const visitedParts = new Set<PartId>();
   const queue: PartId[] = [firstPartId];
-  let portStates = _.cloneDeep(initialPortStates);
+  let state = _.cloneDeep(initialState);
 
   while (queue.length > 0) {
     const currentPartId = queue.shift();
@@ -77,22 +80,18 @@ function computePropagatedPortStates(
     if (visitedParts.has(currentPart.id)) continue;
     visitedParts.add(currentPart.id);
 
-    // Compute input port states from connections
+    // Compute input port values from connections
     for (const inputPortKey of Object.keys(partDefinition.inputPorts)) {
       const currentPortRef = refPort(currentPart.id, inputPortKey);
       const incomingConnections = getConnectionsWithTarget(currentPortRef, connections);
       if (incomingConnections.length > 0) {
         const sourcePortRef = incomingConnections[0].source;
-        portStates = setPortValue(
-          currentPortRef,
-          getPortValue(sourcePortRef, portStates, parts),
-          portStates,
-        );
+        state = setPortValue(currentPortRef, getPortValue(sourcePortRef, state, parts), state);
       }
     }
 
-    // Compute output ports from computed input port states using the part's output computation logic
-    portStates = computeOutputStateForPart(currentPart, partDefinition, portStates, parts);
+    // Compute output ports from computed input port values using the part's output computation logic
+    state = computeOutputStateForPart(currentPart, partDefinition, state, parts);
 
     // Enqueue connected parts for further propagation
     for (const outputPortKey of Object.keys(partDefinition.outputPorts)) {
@@ -106,49 +105,42 @@ function computePropagatedPortStates(
       }
     }
   }
-  return portStates;
+  return state;
 }
 
 function computeOutputStateForPart(
   partInstance: PartInstance,
   partDefinition: PartDefinition<any, any, any>,
-  portStates: PortInstanceState[],
+  state: PortInstanceValue[],
   parts: PartInstance[],
-): PortInstanceState[] {
-  const inputPortStatesRecord = Object.fromEntries(
+): PortInstanceValue[] {
+  const inputStateRecord = Object.fromEntries(
     Object.keys(partDefinition.inputPorts).map((portKey) => {
       const portRef = refPort(partInstance.id, portKey);
-      const state = getPortValue(portRef, portStates, parts);
-      return [portKey, state];
+      const portValue = getPortValue(portRef, state, parts);
+      return [portKey, portValue];
     }),
   );
-  const outputPortStatesRecord = partDefinition.compute(
-    inputPortStatesRecord,
-    partInstance.parameterValues,
-  );
-  const outputPortStates = Object.entries(outputPortStatesRecord).map(([portKey, value]) => ({
+  const outputStateRecord = partDefinition.compute(inputStateRecord, partInstance.parameterValues);
+  const outputState = Object.entries(outputStateRecord).map(([portKey, value]) => ({
     portRef: refPort(partInstance.id, portKey),
     value,
   }));
-  return applyStates(outputPortStates, portStates);
+  return applyState(outputState, state);
 }
 
-function applyStates(
-  newStates: PortInstanceState[],
-  existingStates: PortInstanceState[],
-): PortInstanceState[] {
-  return newStates.reduce(
-    (updatedPortStates, { portRef, value }) => setPortValue(portRef, value, updatedPortStates),
-    existingStates,
+function applyState(
+  newState: PortInstanceValue[],
+  existingState: PortInstanceValue[],
+): PortInstanceValue[] {
+  return newState.reduce(
+    (updatedState, { portRef, value }) => setPortValue(portRef, value, updatedState),
+    existingState,
   );
 }
 
-function getPortValue(
-  portRef: PortRef<any, any>,
-  portStates: PortInstanceState[],
-  parts: PartInstance[],
-) {
-  const portState = portStates.find((state) => deepEqual(state.portRef, portRef));
+function getPortValue(portRef: PortRef, state: PortInstanceValue[], parts: PartInstance[]) {
+  const portState = state.find((state) => _.isEqual(state.portRef, portRef));
   if (portState) {
     return portState.value;
   } else {
@@ -159,12 +151,12 @@ function getPortValue(
 }
 
 function setPortValue(
-  portRef: PortRef<any, any>,
+  portRef: PortRef,
   value: any,
-  portStates: PortInstanceState[],
-): PortInstanceState[] {
+  state: PortInstanceValue[],
+): PortInstanceValue[] {
   return [
-    ...portStates.filter((state) => !deepEqual(state.portRef, portRef)),
+    ...state.filter((state) => !_.isEqual(state.portRef, portRef)),
     {
       portRef,
       value,
@@ -192,7 +184,7 @@ export enum BehaviorMode {
 
 export type ExperimentData = {
   history: SimulationInput;
-  initialState: PortInstanceState[];
+  initialState: PortInstanceValue[];
 };
 
 export type TestCaseData = {
@@ -219,16 +211,16 @@ export enum LevelPhase {
 export function simulate(
   input: SimulationInput,
   levelState: LevelState,
-  overrideInitialState?: PortInstanceState[],
+  overrideInitialState?: PortInstanceValue[],
 ): SimulationResult {
-  const initialStates: PortInstanceState[] = levelState.parts.flatMap((part) => {
+  const initialState: PortInstanceValue[] = levelState.parts.flatMap((part) => {
     const definition = getDefinitionOfPart(part.id, levelState.parts);
     if (!definition) return [];
     return Object.keys(definition.inputPorts).map((portKey) => {
       const portRef = refPort(part.id, portKey);
       const overridenValue = overrideInitialState
         ? overrideInitialState.find((portInstanceState) =>
-            deepEqual(portInstanceState.portRef, portRef),
+            _.isEqual(portInstanceState.portRef, portRef),
           )
         : undefined;
       const value = overridenValue?.value ?? definition.inputPorts[portKey].defaultValue;
@@ -238,10 +230,10 @@ export function simulate(
       };
     });
   });
-  const propagatedInitialStates = levelState.parts.reduce(
-    (states, part) =>
-      computePropagatedPortStates(part.id, levelState.connections, levelState.parts, states),
-    initialStates,
+  const propagatedInitialState = levelState.parts.reduce(
+    (state, part) =>
+      computePropagatedState(part.id, levelState.connections, levelState.parts, state),
+    initialState,
   );
   const actionResults: SimulationActionResult[] = _.sortBy(
     input.actions,
@@ -249,25 +241,25 @@ export function simulate(
   ).reduce(
     (previousResults, action, index) => {
       const previousResult = previousResults[index];
-      const statesBeforeAction = previousResult.states;
-      const updatedStates = setPortValue(action.portRef, action.value, statesBeforeAction);
-      const statesAfterAction = computePropagatedPortStates(
+      const stateBeforeAction = previousResult.state;
+      const updatedState = setPortValue(action.portRef, action.value, stateBeforeAction);
+      const stateAfterAction = computePropagatedState(
         action.portRef.partId,
         levelState.connections,
         levelState.parts,
-        updatedStates,
+        updatedState,
       );
       return [
         ...previousResults,
         {
           action: action,
-          states: statesAfterAction,
+          state: stateAfterAction,
         },
       ];
     },
     [
       {
-        states: propagatedInitialStates,
+        state: propagatedInitialState,
       },
     ],
   );
@@ -278,42 +270,42 @@ export function simulate(
 }
 
 export function getPortValueAt<
-  P extends PartDefinition<any, any, any>,
-  K extends keyof P["inputPorts"],
+  Id extends PartDefinitionId,
+  Key extends keyof PartDefinitions[Id]["inputPorts"] & string,
 >(
-  portRef: InputPortRef<P, K>,
+  portRef: InputPortRef<Id, Key>,
   time: number,
   simulationResult: SimulationResult,
-): PortValue<P["inputPorts"][K]> | undefined;
+): PortValue<PartDefinitions[Id]["inputPorts"][Key]> | undefined;
 export function getPortValueAt<
-  P extends PartDefinition<any, any, any>,
-  K extends keyof P["outputPorts"],
+  Id extends PartDefinitionId,
+  Key extends keyof PartDefinitions[Id]["outputPorts"] & string,
 >(
-  portRef: OutputPortRef<P, K>,
+  portRef: OutputPortRef<Id, Key>,
   time: number,
   simulationResult: SimulationResult,
-): PortValue<P["outputPorts"][K]> | undefined;
+): PortValue<PartDefinitions[Id]["outputPorts"][Key]> | undefined;
 export function getPortValueAt(
   portRef: PortRef,
   time: number,
   simulationResult: SimulationResult,
 ): PortValue<any> | undefined;
 export function getPortValueAt(
-  portRef: PortRef<any, any>,
+  portRef: PortRef,
   time: number,
   simulationResult: SimulationResult,
 ): PortValue<any> | undefined {
-  function stateMatches(state: PortInstanceState) {
-    return deepEqual(state.portRef, portRef);
+  function stateMatches(state: PortInstanceValue) {
+    return _.isEqual(state.portRef, portRef);
   }
   const earlierMatchingResults = _.sortBy(
     simulationResult.actionResults.filter(
-      (result) => getTime(result) <= time && result.states.some(stateMatches),
+      (result) => getTime(result) <= time && result.state.some(stateMatches),
     ),
     getTime,
   );
   const latestMatchingResult = _.last(earlierMatchingResults);
-  return latestMatchingResult?.states.find(stateMatches)?.value;
+  return latestMatchingResult?.state.find(stateMatches)?.value;
 }
 
 export function getTime(result: SimulationActionResult) {

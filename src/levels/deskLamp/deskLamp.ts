@@ -1,30 +1,28 @@
-import { action } from "../../engine/simulation.ts";
 import { assertion, defineLevel } from "../../engine/levels.ts";
-import { Plug } from "../../parts/plug/plug.tsx";
-import { Switch } from "../../parts/switch/switch.tsx";
-import { Lightbulb } from "../../parts/lightbulb/lightbulb.tsx";
+import { createPartInstance, inPort, outPort } from "../../engine/parts.tsx";
+import { action } from "../../engine/simulation.ts";
 
-export const plug = Plug.instance("plug-0", { x: -150, y: 4 });
-export const switchPart = Switch.instance("switch-0", { x: 5.5, y: 4 });
-export const lightbulb = Lightbulb.instance("lightbulb-0", { x: 150, y: -42 });
+export const plug = createPartInstance("Plug", "plug-0", { x: -150, y: 4 });
+export const switchPart = createPartInstance("Switch", "switch-0", { x: 5.5, y: 4 });
+export const lightbulb = createPartInstance("Lightbulb", "lightbulb-0", { x: 150, y: -42 });
 
 export const DeskLamp = defineLevel("deskLamp", {
   label: "Desk Lamp",
   availableParts: [],
   fixedParts: [plug, switchPart, lightbulb],
-  exposedPorts: [plug.in("plugged"), switchPart.in("toggle"), lightbulb.out("lit")],
+  exposedPorts: [inPort(plug, "plugged"), inPort(switchPart, "toggle"), outPort(lightbulb, "lit")],
   testCase: {
     input: {
       startTime: 0,
       actions: [
-        action(1, plug.in("plugged"), true),
-        action(2, switchPart.in("toggle"), true),
-        action(3, switchPart.in("toggle"), false),
+        action(1, inPort(plug, "plugged"), true),
+        action(2, inPort(switchPart, "toggle"), true),
+        action(3, inPort(switchPart, "toggle"), false),
       ],
     },
     assertions: [
-      assertion(2, lightbulb.out("lit"), true),
-      assertion(3, lightbulb.out("lit"), false),
+      assertion(2, outPort(lightbulb, "lit"), true),
+      assertion(3, outPort(lightbulb, "lit"), false),
     ],
   },
   userName: "Ada",

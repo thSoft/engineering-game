@@ -1,20 +1,15 @@
 import { ReactNode } from "react";
 import z from "zod";
 import type { PortVisualState } from "../components/PartNode";
-import { getPartDefinitionById } from "../parts/partDefinitions.tsx";
+import { getPartDefinitionById, partDefinitions } from "../parts/partDefinitions.tsx";
 
-// Part definitions
-
-// Part types and functions
-
-export type PartDefinitionId = string & { __brand: "PartDefinitionId" };
+// Parts
 
 export type PartDefinition<
   P extends Record<string, ParameterDefinition<any>>,
   I extends Record<string, PortDefinition<any>>,
   O extends Record<string, PortDefinition<any>>,
 > = {
-  id: PartDefinitionId;
   label: string;
   parameters: P;
   inputPorts: I;
@@ -41,69 +36,49 @@ export type PartDefinitionWithHelpers<
   O extends Record<string, PortDefinition<any>>,
 > = PartDefinition<P, I, O> & {
   allPorts: I & O;
-  instance: (id: PartId, position: PartPosition) => PartInstance;
 };
 
 export function definePart<
   const P extends Record<string, ParameterDefinition<any>>,
   const I extends Record<string, PortDefinition<any>>,
   const O extends Record<string, PortDefinition<any>>,
->(id: string, definition: Omit<PartDefinition<P, I, O>, "id">) {
-  const partDefinitionId = id as PartDefinitionId;
+>(definition: PartDefinition<P, I, O>): PartDefinitionWithHelpers<P, I, O> {
   return {
-    id: partDefinitionId,
     ...definition,
 
     allPorts: {
       ...definition.inputPorts,
       ...definition.outputPorts,
     },
-    instance: (id: string, position: PartPosition, label?: string) => {
-      return createPartInstance<P, I, O>(id, position, partDefinitionId, definition, label);
-    },
   };
 }
 
-export type PartId = string & { __brand: "PartId" };
+export type PartDefinitions = typeof partDefinitions;
 
-export type PartInstance = {
+export type PartDefinitionId = keyof PartDefinitions;
+
+export type PartId = string & { readonly __brand?: "PartId" };
+
+export type PartInstance<K extends PartDefinitionId = PartDefinitionId> = {
   id: PartId;
   label: string;
   position: PartPosition;
-  definitionId: PartDefinitionId;
-  parameterValues: ParameterValues<any>;
+  definitionId: K;
+  parameterValues: ParameterValues<PartDefinitions[K]["parameters"]>;
   portInstances: PortInstance[];
 };
 
-export type PartDescriptor = {
-  instance: PartInstance;
-  index: number;
-  isExperiment: boolean;
-};
-
-export function createPartInstance<
-  const P extends Record<string, ParameterDefinition<any>>,
-  const I extends Record<string, PortDefinition<any>>,
-  const O extends Record<string, PortDefinition<any>>,
->(
+export function createPartInstance<K extends PartDefinitionId>(
+  partDefinitionId: K,
   id: string,
   position: PartPosition,
-  partDefinitionId: PartDefinitionId,
-  definition: Omit<PartDefinition<P, I, O>, "id">,
   label?: string,
-) {
+): PartInstance<K> {
   const partId = toPartId(id);
-  const inputPortRef = (portKey: keyof I): InputPortRef<PartDefinition<P, I, O>, keyof I> => ({
-    partId: partId,
-    portKey,
-  });
-  const outputPortRef = (portKey: keyof O): OutputPortRef<PartDefinition<P, I, O>, keyof O> => ({
-    partId: partId,
-    portKey,
-  });
   const createPortInstance = (portKey: string): PortInstance => ({
     key: portKey,
   });
+  const definition = getPartDefinitionById(partDefinitionId);
   return {
     id: partId,
     position,
@@ -114,14 +89,11 @@ export function createPartInstance<
         paramKey,
         paramDef.defaultValue,
       ]),
-    ),
+    ) as ParameterValues<PartDefinitions[K]["parameters"]>,
     portInstances: [
       ...Object.keys(definition.inputPorts).map((key) => createPortInstance(key)),
       ...Object.keys(definition.outputPorts).map((key) => createPortInstance(key)),
     ],
-
-    in: inputPortRef,
-    out: outputPortRef,
   };
 }
 
@@ -138,9 +110,19 @@ export function getDefinitionOfPart(
   return getPartDefinitionById(partInstance.definitionId);
 }
 
-export function getPart(parts: PartInstance[], partId: string) {
+export function getPart(parts: PartInstance[], partId: PartId) {
   return parts.find((part) => part.id === partId);
 }
+
+export function isPartOf<K extends PartDefinitionId>(definitionId: K) {
+  return (part: PartInstance): part is PartInstance<K> => part.definitionId === definitionId;
+}
+
+export type PartDescriptor = {
+  instance: PartInstance;
+  index: number;
+  isExperiment: boolean;
+};
 
 // Parameters
 
@@ -150,11 +132,14 @@ export type ParameterDefinition<T> = {
   defaultValue: T;
 };
 
-type ParameterValue<P> = P extends ParameterDefinition<infer T> ? T : never;
+export type ParameterValue<P> = P extends ParameterDefinition<infer T> ? T : never;
 
 export type ParameterValues<T extends Record<string, ParameterDefinition<any>>> = {
   [K in keyof T]: ParameterValue<T[K]>;
 };
+
+export type ParameterKey<K extends PartDefinitionId> = keyof PartDefinitions[K]["parameters"] &
+  string;
 
 export type ParameterDescriptor<V> = {
   value: V;
@@ -186,21 +171,6 @@ type PortValues<T extends Record<string, PortDefinition<any>>> = {
   [K in keyof T]: PortValue<T[K]>;
 };
 
-export type PortDescriptor<V> = {
-  ref: PortRef;
-  definition: PortDefinitionWithHelpers<V>;
-  value: V;
-  visualState: PortVisualState;
-  exposed: boolean;
-  connected: boolean;
-  setValue: (value: V) => void;
-  startOrFinishConnection: () => void;
-};
-
-export type PortDescriptors<T extends Record<string, PortDefinition<any>>> = {
-  [K in keyof T]: PortDescriptor<PortValue<T[K]>>;
-};
-
 export type PortInstance = {
   key: string;
 };
@@ -208,40 +178,46 @@ export type PortInstance = {
 declare const portDefinitionType: unique symbol;
 
 export type InputPortRef<
-  P extends PartDefinition<any, any, any>,
-  K extends keyof P["inputPorts"] = keyof P["inputPorts"],
+  Id extends PartDefinitionId = PartDefinitionId,
+  Key extends keyof PartDefinitions[Id]["inputPorts"] & string =
+    keyof PartDefinitions[Id]["inputPorts"] & string,
 > = {
   partId: PartId;
-  portKey: K;
+  portKey: Key;
   /** Preserves the part definition for type inference without adding runtime data. */
-  readonly [portDefinitionType]?: P;
+  readonly [portDefinitionType]?: Key;
 };
+
+export function inPort<
+  Id extends PartDefinitionId,
+  Key extends keyof PartDefinitions[Id]["inputPorts"] & string,
+>(part: PartInstance<Id>, portKey: Key): InputPortRef<Id, Key> {
+  return { partId: part.id, portKey };
+}
 
 export type OutputPortRef<
-  P extends PartDefinition<any, any, any>,
-  K extends keyof P["outputPorts"],
+  Id extends PartDefinitionId = PartDefinitionId,
+  Key extends keyof PartDefinitions[Id]["outputPorts"] & string =
+    keyof PartDefinitions[Id]["outputPorts"] & string,
 > = {
   partId: PartId;
-  portKey: K;
+  portKey: Key;
   /** Preserves the part definition for type inference without adding runtime data. */
-  readonly [portDefinitionType]?: P;
+  readonly [portDefinitionType]?: Key;
 };
 
-export type PortRef<
-  P extends PartDefinition<any, any, any> = PartDefinition<any, any, any>,
-  IK extends keyof P["inputPorts"] = keyof P["inputPorts"],
-  OK extends keyof P["outputPorts"] = keyof P["outputPorts"],
-> = InputPortRef<P, IK> | OutputPortRef<P, OK>;
+export function outPort<
+  Id extends PartDefinitionId,
+  Key extends keyof PartDefinitions[Id]["outputPorts"] & string,
+>(part: PartInstance<Id>, portKey: Key): OutputPortRef<Id, Key> {
+  return { partId: part.id, portKey };
+}
 
-export function refPort<
-  P extends PartDefinition<any, any, any>,
-  K extends keyof P["inputPorts"] = keyof P["inputPorts"],
->(partId: PartId, portKey: K): InputPortRef<P, K>;
-export function refPort<
-  P extends PartDefinition<any, any, any>,
-  K extends keyof P["outputPorts"] = keyof P["outputPorts"],
->(partId: PartId, portKey: K): OutputPortRef<P, K>;
-export function refPort(partId: PartId, portKey: string): PortRef;
+export type PortRef = {
+  partId: PartId;
+  portKey: string;
+};
+
 export function refPort(partId: PartId, portKey: string): PortRef {
   return { partId, portKey };
 }
@@ -271,6 +247,23 @@ export function getDefinitionOfPort(
   return undefined;
 }
 
-export function deepEqual(a: any, b: any) {
-  return JSON.stringify(a) === JSON.stringify(b);
+export function getPort(portRef: PortRef, parts: PartInstance[]): PortInstance | undefined {
+  const part = parts.find((p) => p.id === portRef.partId);
+  if (!part) return undefined;
+  return part.portInstances.find((port) => port.key === portRef.portKey);
 }
+
+export type PortDescriptor<V> = {
+  ref: PortRef;
+  definition: PortDefinitionWithHelpers<V>;
+  value: V;
+  visualState: PortVisualState;
+  exposed: boolean;
+  connected: boolean;
+  setValue: (value: V) => void;
+  startOrFinishConnection: () => void;
+};
+
+export type PortDescriptors<T extends Record<string, PortDefinition<any>>> = {
+  [K in keyof T]: PortDescriptor<PortValue<T[K]>>;
+};

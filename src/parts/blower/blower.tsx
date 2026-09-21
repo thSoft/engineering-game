@@ -2,7 +2,7 @@ import z from "zod";
 import { definePart } from "../../engine/parts.tsx";
 import { BlowerView } from "./BlowerView.tsx";
 
-export const Blower = definePart("blower", {
+export const Blower = definePart({
   label: "Blower",
   parameters: {},
   inputPorts: {

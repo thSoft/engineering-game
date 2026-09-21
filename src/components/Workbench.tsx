@@ -7,6 +7,7 @@ import {
   useReactFlow,
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
+import _ from "lodash";
 import { useState } from "react";
 import {
   Connection,
@@ -16,7 +17,6 @@ import {
 } from "../engine/connections";
 import { getCurrentTime, isExposed, LevelDefinition } from "../engine/levels";
 import {
-  deepEqual,
   getDefinitionOfPart,
   getDefinitionOfPort,
   getPortPath,
@@ -37,6 +37,7 @@ import {
   simulate,
   SimulationResult,
 } from "../engine/simulation";
+import { partDefinitions } from "../parts/partDefinitions.tsx";
 import {
   addConnection,
   addPart,
@@ -46,6 +47,7 @@ import {
   setParameterValue,
   setPortValue,
 } from "../store/gameStore";
+import { CONNECTION_TYPE, ConnectionEdge, ConnectionEdgeType } from "./ConnectionEdge.tsx";
 import { connectableColor, flowOffColor, flowOnColor, selectedColor } from "./designTokens";
 import PartNode, {
   PART_TYPE,
@@ -54,8 +56,6 @@ import PartNode, {
   type PortVisualState,
 } from "./PartNode";
 import { getPortColor } from "./utils.tsx";
-import { CONNECTION_TYPE, ConnectionEdge, ConnectionEdgeType } from "./ConnectionEdge.tsx";
-import { partDefinitions } from "../parts/partDefinitions.tsx";
 
 const nodeTypes: NodeTypes = { [PART_TYPE]: PartNode };
 
@@ -66,7 +66,7 @@ function getPortVisualState(
   connections: Connection[],
 ): PortVisualState {
   if (!selectedPort) return "idle";
-  if (deepEqual(candidatePort, selectedPort)) return "selected";
+  if (_.isEqual(candidatePort, selectedPort)) return "selected";
   const selectedPortDefinition = getDefinitionOfPort(selectedPort, parts);
   if (!selectedPortDefinition) return "idle";
   const candidatePortDefinition = getDefinitionOfPort(candidatePort, parts);
@@ -74,7 +74,7 @@ function getPortVisualState(
   if (candidatePortDefinition.direction === selectedPortDefinition.direction) return "blocked";
   if (candidatePortDefinition.kind !== selectedPortDefinition.kind) return "blocked";
   const targetAlreadyConnected = connections.some((connection) =>
-    deepEqual(connection.target, candidatePort),
+    _.isEqual(connection.target, candidatePort),
   );
   if (targetAlreadyConnected) return "blocked";
   if (candidatePort.partId === selectedPort.partId) return "blocked";
@@ -208,7 +208,7 @@ export default function Workbench({ levelState, levelDefinition }: Props) {
       setPendingPortRef(portRef);
       return;
     }
-    if (deepEqual(pendingPortRef, portRef)) {
+    if (_.isEqual(pendingPortRef, portRef)) {
       setPendingPortRef(undefined);
       return;
     }
@@ -305,11 +305,7 @@ export default function Workbench({ levelState, levelDefinition }: Props) {
   const onDrop = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     const partDefinitionId = e.dataTransfer.getData("application/x-part-type") as PartDefinitionId;
-    if (
-      !partDefinitionId ||
-      !partDefinitions.some((definition) => definition.id === partDefinitionId)
-    )
-      return;
+    if (!partDefinitionId || !Object.keys(partDefinitions).includes(partDefinitionId)) return;
     const flowPosition = screenToFlowPosition({ x: e.clientX, y: e.clientY });
     addPart(partDefinitionId, {
       x: flowPosition.x,

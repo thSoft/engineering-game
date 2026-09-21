@@ -1,8 +1,8 @@
-import { SwitchView } from "./SwitchView.tsx";
-import { definePart } from "../../engine/parts.tsx";
 import z from "zod";
+import { definePart } from "../../engine/parts.tsx";
+import { SwitchView } from "./SwitchView.tsx";
 
-export const Switch = definePart("switch", {
+export const Switch = definePart({
   label: "Switch",
   parameters: {},
   inputPorts: {
