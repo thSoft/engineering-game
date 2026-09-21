@@ -3,7 +3,6 @@ import { useState } from "react";
 import { PartDefinitionId } from "../engine/parts";
 import { getPartDefinitionById } from "../parts/partDefinitions.tsx";
 import { addPart } from "../store/gameStore.ts";
-import { borderColor } from "./designTokens";
 import { getColorStyle } from "./utils.tsx";
 
 interface Props {
@@ -34,19 +33,18 @@ export default function PartPalette({ availableParts }: Props) {
         <button
           onClick={() => setPaletteOpen((v) => !v)}
           aria-label={paletteOpen ? "Collapse parts panel" : "Expand parts panel"}
-          className="flex items-center justify-center h-10 w-full shrink-0 border-b border-slate-700/60 text-slate-500 hover:text-slate-300 hover:bg-slate-700/40 transition"
+          className="flex items-center justify-center h-10 gap-2 w-full shrink-0 border-b border-slate-700/60 text-slate-500 hover:text-slate-300 hover:bg-slate-700/40 transition"
           title="Parts"
         >
           <Boxes size={16} />
+          {paletteOpen && (
+            <p className="text-[11px] font-semibold uppercase tracking-widest text-slate-500">
+              Parts
+            </p>
+          )}
         </button>
         {paletteOpen && (
           <div className="flex flex-col flex-1 overflow-hidden">
-            <div className="px-3 pt-3 pb-2 border-b" style={{ borderColor: borderColor }}>
-              <p className="text-[11px] font-semibold uppercase tracking-widest text-slate-500">
-                Parts
-              </p>
-            </div>
-
             <div className="p-2 space-y-1.5 flex-1 overflow-y-auto">
               {availableParts.map((id) => {
                 const { label, color, description } = getPartDefinitionById(id);

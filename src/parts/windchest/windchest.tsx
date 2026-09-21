@@ -60,7 +60,7 @@ export const Windchest = definePart({
     c5AirOut: createAirOut("C5 Air Out"),
   },
   color: "#99ddff",
-  description: "Controls the flow of air to the notes",
+  description: "Controls the flow of air to the pipes",
   render: ({ airIn, ...valves }, _, airOuts) => {
     return <WindchestView airIn={airIn} valves={valves} airOuts={airOuts} />;
   },

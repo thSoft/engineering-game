@@ -8,7 +8,7 @@ import { PartInstance } from "../engine/parts";
 import { BehaviorMode, LevelState } from "../engine/simulation";
 import { setBehaviorMode } from "../store/gameStore";
 import { borderColor, iconSize } from "./designTokens";
-import { TimelineView } from "./TimelineView.tsx";
+import { TIMELINE_HEIGHT, TimelineView } from "./TimelineView.tsx";
 
 export interface Props {
   levelDefinition: LevelDefinition;
@@ -22,15 +22,24 @@ export function BehaviorView({ levelDefinition, levelState, parts }: Props) {
 
   return (
     <Flex vertical style={{ borderTop: `1px solid ${borderColor}` }}>
-      {behaviorMode !== BehaviorMode.EXPERIMENT && (
-        <TimelineView
-          levelState={levelState}
-          levelDefinition={levelDefinition}
-          parts={parts}
-          playing={playing}
-          setPlaying={setPlaying}
-        />
-      )}
+      <div
+        style={{
+          width: "100%",
+          height: behaviorMode !== BehaviorMode.EXPERIMENT ? TIMELINE_HEIGHT : 0,
+          transition: "height 0.05s ease-in-out",
+          overflow: "hidden",
+        }}
+      >
+        {behaviorMode !== BehaviorMode.EXPERIMENT && (
+          <TimelineView
+            levelState={levelState}
+            levelDefinition={levelDefinition}
+            parts={parts}
+            playing={playing}
+            setPlaying={setPlaying}
+          />
+        )}
+      </div>
       <Flex align="center" gap={8} style={{ padding: 4 }}>
         <Segmented
           value={behaviorMode}

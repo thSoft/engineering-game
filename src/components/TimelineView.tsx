@@ -1,24 +1,25 @@
-import { BehaviorMode, LevelState } from "../engine/simulation.ts";
+import { Timeline, TimelineState } from "@keplar-404/react-timeline-editor";
+import { TimelineAction } from "@keplar-404/timeline-engine";
+import { Button, theme } from "antd";
+import Dropdown from "antd/es/dropdown/dropdown";
+import Flex from "antd/es/flex";
+import _ from "lodash";
+import { Pause, Play } from "lucide-react";
+import { ReactNode, useEffect, useRef, useState } from "react";
+import useAnimationFrame from "use-animation-frame";
 import {
   evaluateTestCase,
   getCurrentTime,
   LevelDefinition,
   TestCaseResult,
 } from "../engine/levels.ts";
-import { PartInstance } from "../engine/parts.tsx";
-import { ReactNode, useEffect, useRef, useState } from "react";
-import { Timeline, TimelineState } from "@keplar-404/react-timeline-editor";
-import { deleteAction, setCurrentTime } from "../store/gameStore.ts";
-import useAnimationFrame from "use-animation-frame";
-import { Button } from "antd";
 import { getOrganSynth, resetOrganSynth } from "../engine/organAudio.ts";
-import Flex from "antd/es/flex";
-import { borderColor } from "./designTokens.tsx";
+import { PartInstance } from "../engine/parts.tsx";
+import { BehaviorMode, LevelState } from "../engine/simulation.ts";
+import { deleteAction, setCurrentTime } from "../store/gameStore.ts";
+import { borderColor, iconSize } from "./designTokens.tsx";
 import { TimelinePipeSounds } from "./TimelinePipeSounds.tsx";
-import { TimelineAction } from "@keplar-404/timeline-engine";
 import { getPortRefLabel, getTimelineActions, TimelineActionData } from "./utils.tsx";
-import Dropdown from "antd/es/dropdown/dropdown";
-import _ from "lodash";
 
 interface Props {
   levelState: LevelState;
@@ -28,6 +29,9 @@ interface Props {
   setPlaying: (value: ((prevState: boolean) => boolean) | boolean) => void;
 }
 
+export const TIMELINE_HEIGHT = 200;
+
+const HEADER_WIDTH = 160;
 export function TimelineView({ levelState, levelDefinition, parts, playing, setPlaying }: Props) {
   const behaviorMode = levelState.behaviorMode;
   const timelineRef = useRef<TimelineState>(null);
@@ -64,93 +68,95 @@ export function TimelineView({ levelState, levelDefinition, parts, playing, setP
   const rowHeight = 32;
   const cursorHeight = 10;
 
+  const { token } = theme.useToken();
   return (
-    <Flex
-      style={{
-        width: "100%",
-        height: behaviorMode !== BehaviorMode.EXPERIMENT ? 200 : 0,
-        transition: "height 0.05s ease-in-out",
-      }}
-    >
-      <Button
-        onClick={async () => {
-          if (playing) {
-            void resetOrganSynth();
-          } else {
-            await getOrganSynth(); // Ensure that advancing the timeline begins when playback
-            setPlaybackStartTime(getCurrentTime(levelState));
-          }
-          setPlaying(!playing);
+    <Flex>
+      {/* Controls */}
+      <Flex
+        style={{
+          position: "absolute",
+          zIndex: 1,
+          width: HEADER_WIDTH,
+          background: token.colorBgContainer,
         }}
       >
-        {playing ? "Pause" : "Play"}
-      </Button>
-      {behaviorMode !== BehaviorMode.EXPERIMENT && (
-        <>
-          {/* Side Panel for Lane Labels */}
-          <div
-            ref={trackHeaderRef}
+        <Button
+          onClick={async () => {
+            if (playing) {
+              void resetOrganSynth();
+            } else {
+              await getOrganSynth(); // Ensure that advancing the timeline begins when playback
+              setPlaybackStartTime(getCurrentTime(levelState));
+            }
+            setPlaying(!playing);
+          }}
+          title={playing ? "Pause" : "Play"}
+        >
+          {playing ? <Pause size={iconSize} /> : <Play size={iconSize} />}
+        </Button>
+      </Flex>
+      {/* Side Panel for Lane Labels */}
+      <div
+        ref={trackHeaderRef}
+        style={{
+          width: HEADER_WIDTH,
+          height: TIMELINE_HEIGHT,
+          overflow: "hidden",
+        }}
+      >
+        <Flex
+          vertical
+          align="center"
+          style={{ marginTop: `calc(${rowHeight}px + ${cursorHeight}px)` }}
+        >
+          <table
             style={{
-              width: "160px",
-              overflowY: "hidden", // Hide scrollbar — handled by sync
-              position: "relative",
+              borderCollapse: "collapse",
+              width: "calc(100% - 16px)", // Account for padding
+              borderTop: `1px solid ${borderColor}`,
             }}
           >
-            <Flex
-              vertical
-              align="center"
-              style={{ marginTop: `calc(${rowHeight}px + ${cursorHeight}px)` }}
-            >
-              <table
-                style={{
-                  borderCollapse: "collapse",
-                  width: "calc(100% - 16px)", // Account for padding
-                  borderTop: `1px solid ${borderColor}`,
-                }}
-              >
-                <tbody>
-                  {timelineData.map((row) => (
-                    <tr
-                      key={row.id}
-                      style={{
-                        height: `${rowHeight}px`, // Must match Timeline's rowHeight prop
-                        lineHeight: `${rowHeight}px`,
-                        borderBottom: `1px solid ${borderColor}`,
-                        paddingLeft: "10px",
-                        fontSize: "12px",
-                      }}
-                    >
-                      <td>{row.partLabel}</td>
-                      <td>{row.portLabel}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </Flex>
-          </div>
-          {/* Main Timeline */}
-          <div style={{ flex: 1, overflow: "hidden" }}>
-            <Timeline
-              disableDrag={true}
-              gridSnap={true}
-              style={{ width: "100%" }}
-              editorData={timelineData}
-              getActionRender={TimelineActionView}
-              effects={{}}
-              onCursorDragEnd={(time) => {
-                setCurrentTime(time);
-              }}
-              onClickTimeArea={(time) => {
-                setCurrentTime(time);
-              }}
-              ref={timelineRef}
-              onScroll={handleScroll}
-              rowHeight={rowHeight}
-            />
-          </div>
-        </>
-      )}
-      {behaviorMode !== BehaviorMode.EXPERIMENT && playing && playbackStartTime !== undefined && (
+            <tbody>
+              {timelineData.map((row) => (
+                <tr
+                  key={row.id}
+                  style={{
+                    height: `${rowHeight}px`, // Must match Timeline's rowHeight prop
+                    lineHeight: `${rowHeight}px`,
+                    borderBottom: `1px solid ${borderColor}`,
+                    paddingLeft: "10px",
+                    fontSize: "12px",
+                  }}
+                >
+                  <td>{row.partLabel}</td>
+                  <td>{row.portLabel}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </Flex>
+      </div>
+      {/* Main Timeline */}
+      <div style={{ flex: 1 }}>
+        <Timeline
+          disableDrag={true}
+          gridSnap={true}
+          style={{ width: "100%", height: 200 }}
+          editorData={timelineData}
+          getActionRender={TimelineActionView}
+          effects={{}}
+          onCursorDragEnd={(time) => {
+            setCurrentTime(time);
+          }}
+          onClickTimeArea={(time) => {
+            setCurrentTime(time);
+          }}
+          ref={timelineRef}
+          onScroll={handleScroll}
+          rowHeight={rowHeight}
+        />
+      </div>
+      {playing && playbackStartTime !== undefined && (
         <TimelinePipeSounds
           levelDefinition={levelDefinition}
           levelState={levelState}

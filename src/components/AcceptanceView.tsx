@@ -2,9 +2,9 @@ import { Button, Flex, Result, Tooltip } from "antd";
 import { PackageCheck } from "lucide-react";
 import { LevelDefinition, TestCaseResult } from "../engine/levels";
 import { BehaviorMode, LevelPhase, LevelState, LevelStatus } from "../engine/simulation";
+import { setLevelPhase, setLevelStatus } from "../store/gameStore.ts";
 import { borderColor } from "./designTokens";
 import { ActionValue, getPortRefLabel, getTimelineActions, TimelineActionData } from "./utils";
-import { setLevelPhase, setLevelStatus } from "../store/gameStore.ts";
 
 interface Props {
   levelState: LevelState;
@@ -33,6 +33,8 @@ export default function AcceptanceView({ levelState, levelDefinition, testCaseRe
         paddingLeft: 12,
         paddingRight: 12,
         borderLeft: `1px solid ${borderColor}`,
+        overflowX: "hidden",
+        overflowY: "auto",
       }}
     >
       <Flex vertical align="center" gap={8}>
