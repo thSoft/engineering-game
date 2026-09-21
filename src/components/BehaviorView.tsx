@@ -1,24 +1,14 @@
-import { Timeline, TimelineAction, TimelineState } from "@keplar-404/react-timeline-editor";
-import { Button, Segmented } from "antd";
-import Dropdown from "antd/es/dropdown/dropdown";
+import { Segmented } from "antd";
 import Flex from "antd/es/flex";
-import _ from "lodash";
 import { FilePlay, FlaskConical, ShieldCheck } from "lucide-react";
-import { ReactNode, useEffect, useRef, useState } from "react";
-import useAnimationFrame from "use-animation-frame";
-import {
-  evaluateTestCase,
-  getCurrentTime,
-  LevelDefinition,
-  TestCaseResult,
-} from "../engine/levels";
-import { getOrganSynth, resetOrganSynth } from "../engine/organAudio";
+import { useState } from "react";
+import { LevelDefinition } from "../engine/levels";
+import { resetOrganSynth } from "../engine/organAudio";
 import { PartInstance } from "../engine/parts";
 import { BehaviorMode, LevelState } from "../engine/simulation";
-import { deleteAction, setBehaviorMode, setCurrentTime } from "../store/gameStore";
+import { setBehaviorMode } from "../store/gameStore";
 import { borderColor, iconSize } from "./designTokens";
-import { TimelinePipeSounds } from "./TimelinePipeSounds";
-import { getPortRefLabel, getTimelineActions, TimelineActionData } from "./utils";
+import { TimelineView } from "./TimelineView.tsx";
 
 export interface Props {
   levelDefinition: LevelDefinition;
@@ -28,130 +18,25 @@ export interface Props {
 
 export function BehaviorView({ levelDefinition, levelState, parts }: Props) {
   const behaviorMode = levelState.behaviorMode;
-
-  const timelineRef = useRef<TimelineState>(null);
-  useEffect(() => {
-    if (timelineRef.current) {
-      timelineRef.current.setTime(getCurrentTime(levelState));
-    }
-  }, [getCurrentTime(levelState)]);
-
-  const trackHeaderRef = useRef<HTMLDivElement>(null);
-  // Mirror the timeline's vertical scroll to the sidebar
-  const handleScroll = ({ scrollTop }: { scrollTop: number }) => {
-    if (trackHeaderRef.current) {
-      trackHeaderRef.current.scrollTop = scrollTop;
-    }
-  };
-
   const [playing, setPlaying] = useState(false);
-  const [playbackStartTime, setPlaybackStartTime] = useState<number>();
-  function stepTime({ delta }: { delta: number }) {
-    if (behaviorMode !== BehaviorMode.EXPERIMENT && playing) {
-      setCurrentTime(getCurrentTime(levelState) + delta);
-    }
-  }
-  useAnimationFrame(stepTime);
-
-  const testCaseResult =
-    behaviorMode === BehaviorMode.TEST_CASE
-      ? evaluateTestCase(levelDefinition.testCase, levelState)
-      : undefined;
-  const timelineData = getTimelineData(levelDefinition, levelState, parts, testCaseResult);
-
-  const rowHeight = 32;
-  const cursorHeight = 10;
 
   return (
     <Flex vertical style={{ borderTop: `1px solid ${borderColor}` }}>
-      <div
-        style={{
-          display: "flex",
-          width: "100%",
-          height: behaviorMode !== BehaviorMode.EXPERIMENT ? 200 : 0,
-          transition: "height 0.05s ease-in-out",
-        }}
-      >
-        {behaviorMode !== BehaviorMode.EXPERIMENT && (
-          <>
-            {/* Side Panel for Lane Labels */}
-            <div
-              ref={trackHeaderRef}
-              style={{
-                width: "160px",
-                overflowY: "hidden", // Hide scrollbar — handled by sync
-                position: "relative",
-              }}
-            >
-              <Flex
-                vertical
-                align="center"
-                style={{ marginTop: `calc(${rowHeight}px + ${cursorHeight}px)` }}
-              >
-                <table
-                  style={{
-                    borderCollapse: "collapse",
-                    width: "calc(100% - 16px)", // Account for padding
-                    borderTop: `1px solid ${borderColor}`,
-                  }}
-                >
-                  <tbody>
-                    {timelineData.map((row) => (
-                      <tr
-                        key={row.id}
-                        style={{
-                          height: `${rowHeight}px`, // Must match Timeline's rowHeight prop
-                          lineHeight: `${rowHeight}px`,
-                          borderBottom: `1px solid ${borderColor}`,
-                          paddingLeft: "10px",
-                          fontSize: "12px",
-                        }}
-                      >
-                        <td>{row.partLabel}</td>
-                        <td>{row.portLabel}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </Flex>
-            </div>
-            {/* Main Timeline */}
-            <div style={{ flex: 1, overflow: "hidden" }}>
-              <Timeline
-                disableDrag={true}
-                gridSnap={true}
-                style={{ width: "100%" }}
-                editorData={timelineData}
-                getActionRender={TimelineActionView}
-                effects={{}}
-                onCursorDragEnd={(time) => {
-                  setCurrentTime(time);
-                }}
-                onClickTimeArea={(time) => {
-                  setCurrentTime(time);
-                }}
-                ref={timelineRef}
-                onScroll={handleScroll}
-                rowHeight={rowHeight}
-              />
-            </div>
-          </>
-        )}
-        {behaviorMode !== BehaviorMode.EXPERIMENT && playing && playbackStartTime !== undefined && (
-          <TimelinePipeSounds
-            levelDefinition={levelDefinition}
-            levelState={levelState}
-            parts={parts}
-            startTime={playbackStartTime}
-          />
-        )}
-      </div>
+      {behaviorMode !== BehaviorMode.EXPERIMENT && (
+        <TimelineView
+          levelState={levelState}
+          levelDefinition={levelDefinition}
+          parts={parts}
+          playing={playing}
+          setPlaying={setPlaying}
+        />
+      )}
       <Flex align="center" gap={8} style={{ padding: 4 }}>
         <Segmented
           value={behaviorMode}
           onChange={(value) => {
-            setPlaying(false);
             void resetOrganSynth();
+            setPlaying(false);
             setBehaviorMode(value);
           }}
           options={[
@@ -184,85 +69,7 @@ export function BehaviorView({ levelDefinition, levelState, parts }: Props) {
             },
           ]}
         />
-        {[BehaviorMode.TEST_CASE, BehaviorMode.CUSTOM_SCENARIO].includes(behaviorMode) && (
-          <Button
-            onClick={async () => {
-              if (playing) {
-                resetOrganSynth();
-              } else {
-                await getOrganSynth(); // Ensure that advancing the timeline begins when playback
-                setPlaybackStartTime(getCurrentTime(levelState));
-              }
-              setPlaying(!playing);
-            }}
-          >
-            {playing ? "Pause" : "Play"}
-          </Button>
-        )}
       </Flex>
     </Flex>
-  );
-}
-
-function getTimelineData(
-  levelDefinition: LevelDefinition,
-  levelState: LevelState,
-  parts: PartInstance[],
-  testCaseResult: TestCaseResult | undefined,
-) {
-  const timelineActions: TimelineAction[] = getTimelineActions(
-    levelState.behaviorMode,
-    levelState,
-    levelDefinition,
-    testCaseResult,
-  );
-  const timelineActionsGroupedByPortRef = _.groupBy(timelineActions, (action) =>
-    action.data ? JSON.stringify(action.data.portRef) : "",
-  );
-  return Object.entries(timelineActionsGroupedByPortRef).map(([portRef, actions]) => {
-    const { partLabel, portLabel } =
-      actions.length > 0
-        ? getPortRefLabel(actions[0].data.portRef, parts)
-        : { partLabel: "", portLabel: "" };
-    return {
-      id: portRef,
-      partLabel,
-      portLabel,
-      actions: actions,
-    };
-  });
-}
-
-function TimelineActionView(action: TimelineAction): ReactNode {
-  if (!(action.data instanceof TimelineActionData)) return null;
-  const { value, postfix, color } = action.data.value.getDisplayInfo();
-
-  const items = [
-    {
-      key: "delete",
-      label: (
-        <div
-          onClick={() => {
-            deleteAction(action.data.portRef, action.start);
-          }}
-        >
-          Delete
-        </div>
-      ),
-    },
-  ];
-
-  const view = (
-    <div style={{ height: "100%", alignContent: "center", color: color ?? "inherit" }}>
-      {value}
-      {postfix}
-    </div>
-  );
-  return action.data.readOnly ? (
-    view
-  ) : (
-    <Dropdown menu={{ items }} trigger={["click"]}>
-      {view}
-    </Dropdown>
   );
 }
