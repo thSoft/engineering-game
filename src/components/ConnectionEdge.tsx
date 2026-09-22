@@ -1,7 +1,6 @@
 import { Edge, EdgeProps, getSmoothStepPath } from "@xyflow/react";
-import { Popover } from "antd";
-import ConnectionContextMenu from "./ConnectionContextMenu.tsx";
 import { ConnectionId } from "../engine/connections.ts";
+import ConnectionContextMenu from "./ConnectionContextMenu.tsx";
 
 export type ConnectionEdgeData = {
   id: ConnectionId;
@@ -44,13 +43,9 @@ export function ConnectionEdge({
     />
   );
   return data ? (
-    <Popover
-      open={selected}
-      placement="top"
-      content={<ConnectionContextMenu connectionId={data.id} />}
-    >
+    <ConnectionContextMenu connectionId={data.id} open={selected}>
       {path}
-    </Popover>
+    </ConnectionContextMenu>
   ) : (
     path
   );

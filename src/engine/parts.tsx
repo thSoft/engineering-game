@@ -18,7 +18,7 @@ export type PartDefinition<
   description: string;
   render: (
     inputPortDescriptors: PortDescriptors<I>,
-    parameters: ParameterDescriptors<P>,
+    parameterDescriptors: ParameterDescriptors<P>,
     outputPortDescriptors: PortDescriptors<O>,
     partDescriptor: PartDescriptor,
   ) => ReactNode;
@@ -122,6 +122,7 @@ export type PartDescriptor = {
   instance: PartInstance;
   index: number;
   isExperiment: boolean;
+  isFixed: boolean;
 };
 
 // Parameters

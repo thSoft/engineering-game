@@ -1,12 +1,12 @@
-import styles from "../../components/parts/shared/shared.module.css";
-import outletImg from "./outlet.svg";
-import connectorImg from "./connector.svg";
-import socketImg from "../../components/parts/shared/socket.svg";
-import onImg from "../../components/parts/shared/powerIndicator/on.svg";
-import offImg from "../../components/parts/shared/powerIndicator/off.svg";
-import { PortDescriptor } from "../../engine/parts.tsx";
-import { PortView } from "../../components/PortView.tsx";
 import { Position } from "@xyflow/react";
+import offImg from "../../components/parts/shared/powerIndicator/off.svg";
+import onImg from "../../components/parts/shared/powerIndicator/on.svg";
+import styles from "../../components/parts/shared/shared.module.css";
+import socketImg from "../../components/parts/shared/socket.svg";
+import { PortView } from "../../components/PortView.tsx";
+import { PortDescriptor } from "../../engine/parts.tsx";
+import connectorImg from "./connector.svg";
+import outletImg from "./outlet.svg";
 
 interface Props {
   plugged: PortDescriptor<boolean>;
@@ -20,7 +20,10 @@ export function PlugView({ plugged, powerOut }: Props) {
         width="45"
         height="48"
         style={{ cursor: "pointer" }}
-        onClick={() => plugged.setValue(!plugged.value)}
+        onClick={(e) => {
+          e.stopPropagation();
+          return plugged.setValue(!plugged.value);
+        }}
       >
         <image
           href={connectorImg}

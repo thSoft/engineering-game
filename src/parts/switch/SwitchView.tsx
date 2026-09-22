@@ -1,13 +1,13 @@
-import styles from "../../components/parts/shared/shared.module.css";
-import onImg from "../../components/parts/shared/powerIndicator/on.svg";
-import offImg from "../../components/parts/shared/powerIndicator/off.svg";
-import socketImg from "../../components/parts/shared/socket.svg";
-import backgroundImg from "./background.svg";
-import toggleImg from "./toggle.svg";
-import { PortDescriptor } from "../../engine/parts.tsx";
-import { PortView } from "../../components/PortView.tsx";
 import { Position } from "@xyflow/react";
 import { transitionSettings } from "../../components/designTokens.tsx";
+import offImg from "../../components/parts/shared/powerIndicator/off.svg";
+import onImg from "../../components/parts/shared/powerIndicator/on.svg";
+import styles from "../../components/parts/shared/shared.module.css";
+import socketImg from "../../components/parts/shared/socket.svg";
+import { PortView } from "../../components/PortView.tsx";
+import { PortDescriptor } from "../../engine/parts.tsx";
+import backgroundImg from "./background.svg";
+import toggleImg from "./toggle.svg";
 
 interface Props {
   powerIn: PortDescriptor<boolean>;
@@ -26,7 +26,10 @@ export function SwitchView({ powerIn, powerOut, toggle }: Props) {
         width={24}
         height={40}
         style={{ cursor: "pointer" }}
-        onClick={() => toggle.setValue(!toggle.value)}
+        onClick={(e) => {
+          e.stopPropagation();
+          return toggle.setValue(!toggle.value);
+        }}
       >
         <image href={backgroundImg} />
         <image

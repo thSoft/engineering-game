@@ -20,10 +20,11 @@ export function PipeView({ air, sound, length, partIndex, isExperiment }: Props)
   return (
     <div>
       <Slider
+        step={0.5}
         className="nodrag" // Prevent React Flow handling drag
         min={4}
         value={deferredLength}
-        onChange={length.setValue}
+        onChange={(e) => length.setValue(e)}
         tooltip={{ formatter: (value) => `${value} cm` }}
         vertical
         style={{ height: "400px" }}

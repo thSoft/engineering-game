@@ -1,3 +1,5 @@
+import { DropdownProps } from "antd";
+
 export const stateColor = "#A78BFA";
 export const eventColor = "#FB923C";
 export const flowOffColor = "#8CA0B3";
@@ -15,3 +17,8 @@ export const headerStyle = {
 export const iconSize = 16;
 export const selectedColor = "#ffffff";
 export const transitionSettings = `0.05s ease-in-out`;
+export const dropdownProps: DropdownProps = {
+  styles: { root: { minWidth: 0 } },
+  placement: "top",
+  arrow: true,
+};

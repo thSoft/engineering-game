@@ -1,6 +1,6 @@
+import { Handle, Position } from "@xyflow/react";
 import { ReactNode } from "react";
 import { getPortPath, PortDescriptor } from "../engine/parts.tsx";
-import { Handle, Position } from "@xyflow/react";
 
 import { getPortColor } from "./utils.tsx";
 
@@ -16,7 +16,10 @@ export function PortView({ children, portDescriptor, position }: Props) {
       id={getPortPath(portDescriptor.ref)}
       type={portDescriptor.definition.direction === "output" ? "source" : "target"}
       position={position ?? Position.Right}
-      onClick={portDescriptor.startOrFinishConnection}
+      onClick={(e) => {
+        e.stopPropagation();
+        portDescriptor.startOrFinishConnection();
+      }}
       style={{
         cursor: "pointer",
         border: `2px solid ${getPortColor(portDescriptor.definition.kind, portDescriptor.visualState)}`,

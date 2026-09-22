@@ -1,22 +1,33 @@
+import Dropdown from "antd/es/dropdown/index";
 import { Trash2 } from "lucide-react";
 import type { ConnectionId } from "../engine/connections";
 import { deleteConnection } from "../store/gameStore.ts";
+import { dropdownProps, iconSize } from "./designTokens.tsx";
 
 interface Props {
   connectionId: ConnectionId;
+  children: React.ReactNode;
+  open?: boolean;
 }
 
-export default function ConnectionContextMenu({ connectionId }: Props) {
+export default function ConnectionContextMenu({ connectionId, children, open }: Props) {
   return (
-    <div role="menu">
-      <button
-        role="menuitem"
-        onClick={() => deleteConnection(connectionId)}
-        className="flex w-full items-center gap-2.5 px-3 py-2 text-left text-rose-400 transition hover:bg-rose-500/10"
-      >
-        <Trash2 size={14} className="shrink-0" />
-        <span className="text-xs font-medium">Delete connection</span>
-      </button>
-    </div>
+    <Dropdown
+      {...dropdownProps}
+      open={open}
+      menu={{
+        items: [
+          {
+            key: "delete",
+            label: "Delete connection",
+            icon: <Trash2 size={iconSize} />,
+            onClick: () => deleteConnection(connectionId),
+            danger: true,
+          },
+        ],
+      }}
+    >
+      {children}
+    </Dropdown>
   );
 }

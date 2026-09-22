@@ -138,14 +138,14 @@ function buildNodeData(
   return {
     instance: part,
     definition: partDefinition,
-    inputPorts: makePortDescriptors(partDefinition.inputPorts, "input"),
-    outputPorts: makePortDescriptors(partDefinition.outputPorts, "output"),
+    inputPortDescriptors: makePortDescriptors(partDefinition.inputPorts, "input"),
+    outputPortDescriptors: makePortDescriptors(partDefinition.outputPorts, "output"),
     parameterDescriptors: makeParameterDescriptors(part),
-    selected: false,
     partDescriptor: {
       instance: part,
       index: partIndex,
       isExperiment: levelState.behaviorMode === BehaviorMode.EXPERIMENT,
+      isFixed: levelDefinition.fixedParts.some((fixedPart) => fixedPart.id === part.id),
     },
   };
 }
@@ -357,6 +357,7 @@ export default function Workbench({ levelState, levelDefinition }: Props) {
         fitViewOptions={{ padding: 0.25 }}
         proOptions={{ hideAttribution: true }}
         colorMode="dark"
+        selectNodesOnDrag={false}
       >
         <Controls />
       </ReactFlow>
