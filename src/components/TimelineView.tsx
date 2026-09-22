@@ -5,7 +5,7 @@ import Dropdown from "antd/es/dropdown/dropdown";
 import Flex from "antd/es/flex";
 import _ from "lodash";
 import { Pause, Play, SkipBack } from "lucide-react";
-import { ReactNode, useEffect, useRef, useState } from "react";
+import { ReactNode, useEffect, useRef } from "react";
 import useAnimationFrame from "use-animation-frame";
 import {
   evaluateTestCase,
@@ -14,12 +14,18 @@ import {
   TestCaseResult,
 } from "../engine/levels.ts";
 import { getOrganSynth, resetOrganSynth } from "../engine/organAudio.ts";
-import { PartInstance } from "../engine/parts.tsx";
-import { BehaviorMode, LevelState } from "../engine/simulation.ts";
+import { isPartOf, outPort, PartId, PartInstance } from "../engine/parts.tsx";
+import {
+  BehaviorMode,
+  getPortValueAt,
+  getSimulationInput,
+  LevelState,
+  simulate,
+} from "../engine/simulation.ts";
 import { deleteAction, setCurrentTime } from "../store/gameStore.ts";
 import { borderColor, iconSize } from "./designTokens.tsx";
-import { TimelinePipeSounds } from "./TimelinePipeSounds.tsx";
 import { getPortRefLabel, getTimelineActions, TimelineActionData } from "./utils.tsx";
+import { gedackt8, PipeSoundState, schedulePipeSound } from "../parts/pipe/PipeSound.ts";
 
 interface Props {
   levelState: LevelState;
@@ -32,6 +38,7 @@ interface Props {
 export const TIMELINE_HEIGHT = 200;
 
 const HEADER_WIDTH = 160;
+
 export function TimelineView({ levelState, levelDefinition, parts, playing, setPlaying }: Props) {
   const behaviorMode = levelState.behaviorMode;
   const timelineRef = useRef<TimelineState>(null);
@@ -48,8 +55,6 @@ export function TimelineView({ levelState, levelDefinition, parts, playing, setP
       trackHeaderRef.current.scrollTop = scrollTop;
     }
   };
-
-  const [playbackStartTime, setPlaybackStartTime] = useState<number>();
 
   function stepTime({ delta }: { delta: number }) {
     if (behaviorMode !== BehaviorMode.EXPERIMENT && playing) {
@@ -85,8 +90,8 @@ export function TimelineView({ levelState, levelDefinition, parts, playing, setP
             if (playing) {
               void resetOrganSynth();
             } else {
-              await getOrganSynth(); // Ensure that advancing the timeline begins when playback
-              setPlaybackStartTime(getCurrentTime(levelState));
+              await getOrganSynth(); // Ensure that advancing the timeline starts at the same time as playback
+              void startPlayback(levelDefinition, levelState, parts, getCurrentTime(levelState));
             }
             setPlaying(!playing);
           }}
@@ -96,6 +101,8 @@ export function TimelineView({ levelState, levelDefinition, parts, playing, setP
         </Button>
         <Button
           onClick={() => {
+            void resetOrganSynth();
+            setPlaying(() => false);
             setCurrentTime(0);
           }}
           title={"Go to start"}
@@ -154,26 +161,71 @@ export function TimelineView({ levelState, levelDefinition, parts, playing, setP
           getActionRender={TimelineActionView}
           effects={{}}
           onCursorDragEnd={(time) => {
-            setCurrentTime(time);
+            if (!playing) {
+              setCurrentTime(time);
+            }
           }}
           onClickTimeArea={(time) => {
-            setCurrentTime(time);
+            if (!playing) {
+              setCurrentTime(time);
+            }
           }}
           ref={timelineRef}
           onScroll={handleScroll}
           rowHeight={rowHeight}
         />
       </div>
-      {playing && playbackStartTime !== undefined && (
-        <TimelinePipeSounds
-          levelDefinition={levelDefinition}
-          levelState={levelState}
-          parts={parts}
-          startTime={playbackStartTime}
-        />
-      )}
     </Flex>
   );
+}
+
+export async function startPlayback(
+  levelDefinition: LevelDefinition,
+  levelState: LevelState,
+  parts: PartInstance[],
+  startTime: number,
+) {
+  // Capture the scenario at the moment playback starts
+  const input = getSimulationInput(levelState.behaviorMode, levelState, levelDefinition);
+  const simulationResult = simulate(input, levelState);
+  const pipeStates = parts.filter(isPartOf("Pipe")).map((pipe, pipeIndex) => ({
+    part: pipe,
+    channel: pipeIndex,
+    soundPort: outPort(pipe, "sound"),
+  }));
+
+  const synth = await getOrganSynth();
+  // A new run replaces any audible notes from an experiment or prior playback run
+  synth.stopAll(true);
+  const states = new Map<PartId, PipeSoundState>();
+  function schedule(time: number, state: PipeSoundState, key: PartId) {
+    const previous = states.get(key);
+    if (!previous || !_.isEqual(previous, state)) {
+      schedulePipeSound(synth, state, previous, { time });
+      states.set(key, state);
+    }
+  }
+
+  // Current state of the pipes at the start time
+  for (const { part, channel, soundPort } of pipeStates) {
+    const frequency = getPortValueAt(soundPort, startTime, simulationResult) ?? 0;
+    schedule(0, toPipeSoundState(frequency, channel), part.id);
+  }
+
+  // Upcoming notes
+  for (const result of simulationResult.actionResults) {
+    const actionTime = result.action?.time;
+    if (actionTime === undefined || actionTime <= startTime) continue;
+    const time = actionTime - startTime;
+    for (const { part, channel, soundPort } of pipeStates) {
+      const frequency = getPortValueAt(soundPort, actionTime, simulationResult) ?? 0;
+      schedule(time, toPipeSoundState(frequency, channel), part.id);
+    }
+  }
+}
+
+function toPipeSoundState(frequency: number, channel: number): PipeSoundState {
+  return { playing: frequency > 0, frequency, stop: gedackt8, channel, velocity: 100 };
 }
 
 function getTimelineData(
