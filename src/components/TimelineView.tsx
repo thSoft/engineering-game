@@ -4,7 +4,7 @@ import { Button, theme } from "antd";
 import Dropdown from "antd/es/dropdown/dropdown";
 import Flex from "antd/es/flex";
 import _ from "lodash";
-import { Pause, Play } from "lucide-react";
+import { Pause, Play, SkipBack } from "lucide-react";
 import { ReactNode, useEffect, useRef, useState } from "react";
 import useAnimationFrame from "use-animation-frame";
 import {
@@ -93,6 +93,14 @@ export function TimelineView({ levelState, levelDefinition, parts, playing, setP
           title={playing ? "Pause" : "Play"}
         >
           {playing ? <Pause size={iconSize} /> : <Play size={iconSize} />}
+        </Button>
+        <Button
+          onClick={() => {
+            setCurrentTime(0);
+          }}
+          title={"Go to start"}
+        >
+          <SkipBack size={iconSize} />
         </Button>
       </Flex>
       {/* Side Panel for Lane Labels */}
