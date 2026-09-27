@@ -114,7 +114,7 @@ export function getPart(parts: PartInstance[], partId: PartId) {
   return parts.find((part) => part.id === partId);
 }
 
-export function isPartOf<K extends PartDefinitionId>(definitionId: K) {
+export function isPartInstanceOf<K extends PartDefinitionId>(definitionId: K) {
   return (part: PartInstance): part is PartInstance<K> => part.definitionId === definitionId;
 }
 

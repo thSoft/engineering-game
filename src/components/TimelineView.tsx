@@ -14,7 +14,7 @@ import {
   TestCaseResult,
 } from "../engine/levels.ts";
 import { getOrganSynth, resetOrganSynth } from "../engine/organAudio.ts";
-import { isPartOf, outPort, PartId, PartInstance } from "../engine/parts.tsx";
+import { isPartInstanceOf, outPort, PartId, PartInstance } from "../engine/parts.tsx";
 import {
   BehaviorMode,
   getPortValueAt,
@@ -188,7 +188,7 @@ export async function startPlayback(
   // Capture the scenario at the moment playback starts
   const input = getSimulationInput(levelState.behaviorMode, levelState, levelDefinition);
   const simulationResult = simulate(input, levelState);
-  const pipeStates = parts.filter(isPartOf("Pipe")).map((pipe, pipeIndex) => ({
+  const pipeStates = parts.filter(isPartInstanceOf("Pipe")).map((pipe, pipeIndex) => ({
     part: pipe,
     channel: pipeIndex,
     soundPort: outPort(pipe, "sound"),
