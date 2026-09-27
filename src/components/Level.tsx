@@ -16,7 +16,6 @@ interface Props {
 
 function Level({ levelDefinitionId }: Props) {
   const levelState = useGameStore((s) => getLevelStateByDefinitionId(s, levelDefinitionId));
-  const parts = levelState?.parts ?? [];
   const levelDefinition = getLevelDefinitionById(levelDefinitionId);
   if (!levelState || !levelDefinition) return null;
   const testCaseResult = evaluateTestCase(levelDefinition.testCase, levelState);
@@ -52,7 +51,7 @@ function Level({ levelDefinitionId }: Props) {
       {/* ── Footer ── */}
       <footer>
         {levelState && levelDefinition && (
-          <BehaviorView levelDefinition={levelDefinition} levelState={levelState} parts={parts} />
+          <BehaviorView levelDefinition={levelDefinition} levelState={levelState} />
         )}
       </footer>
     </div>

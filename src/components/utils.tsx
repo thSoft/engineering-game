@@ -1,7 +1,7 @@
 import { TimelineAction } from "@keplar-404/timeline-engine";
 import _ from "lodash";
 import { ReactNode } from "react";
-import { AssertionResult, LevelDefinition, TestCaseResult } from "../engine/levels";
+import { Assertion, AssertionResult, LevelDefinition, TestCaseResult } from "../engine/levels";
 import {
   getDefinitionOfPart,
   getDefinitionOfPort,
@@ -21,7 +21,7 @@ import {
 } from "./designTokens.tsx";
 import type { PortVisualState } from "./PartNode";
 
-export function displayPortValue(portValue: any): ReactNode {
+export function displayPortValue(portValue: any): string {
   return portValue ? "ON" : "OFF";
 }
 
@@ -39,15 +39,12 @@ export function getPortRefLabel(
 
 export class TimelineActionData {
   constructor(
-    readonly portRef: PortRef,
-    readonly portDefinition: PortDefinition<any> | undefined,
     readonly value: TimelineValue,
     readonly readOnly: boolean,
   ) {}
 }
 
 export abstract class TimelineValue {
-  abstract getRawValue(): any;
   abstract getDisplayInfo(): {
     icon: ReactNode;
     type: ReactNode;
@@ -55,14 +52,17 @@ export abstract class TimelineValue {
     value: ReactNode;
     color: string | undefined;
   };
+  abstract getLanePath(levelState: LevelState): string[];
+  abstract getStepLabel(levelState: LevelState): string;
 }
 
 export class ActionValue extends TimelineValue {
-  constructor(readonly value: any) {
+  constructor(
+    readonly portRef: PortRef,
+    readonly portDefinition: PortDefinition<any> | undefined,
+    readonly value: any,
+  ) {
     super();
-  }
-  getRawValue() {
-    return this.value;
   }
   getDisplayInfo() {
     return {
@@ -73,17 +73,27 @@ export class ActionValue extends TimelineValue {
       color: undefined,
     };
   }
+  getLanePath(levelState: LevelState) {
+    const { partLabel, portLabel } = getPortRefLabel(this.portRef, levelState.parts);
+    return [partLabel, portLabel];
+  }
+  getStepLabel(levelState: LevelState) {
+    const { type, value } = this.getDisplayInfo();
+
+    const renderer = this.portDefinition?.renderAction;
+    const { partLabel, portLabel } = getPortRefLabel(this.portRef, levelState.parts);
+    return renderer
+      ? `${renderer(this.value, partLabel)}`
+      : `${type} ${partLabel}'s ${portLabel} = ${value}`;
+  }
 }
 
-export class AssertionValue extends TimelineValue {
+export class AssertionValue<D> extends TimelineValue {
   constructor(
-    readonly expectedValue: any,
-    readonly result: AssertionResult | undefined,
+    readonly assertion: Assertion<D>,
+    readonly result: AssertionResult<D> | undefined,
   ) {
     super();
-  }
-  getRawValue() {
-    return this.expectedValue;
   }
   getDisplayInfo() {
     const icon = this.result?.success ? "✅" : "❌";
@@ -91,9 +101,15 @@ export class AssertionValue extends TimelineValue {
       icon: icon,
       type: "Check",
       postfix: `?${icon}`,
-      value: displayPortValue(this.expectedValue),
+      value: this.assertion.timelineActionLabel,
       color: this.result?.success ? "lightgreen" : "red",
     };
+  }
+  getLanePath(levelState: LevelState): string[] {
+    return this.assertion.getLanePath(levelState);
+  }
+  getStepLabel(levelState: LevelState) {
+    return this.assertion.getStepLabel(levelState);
   }
 }
 
@@ -107,29 +123,23 @@ export function getTimelineActions(
   const simulationAssertions =
     behaviorMode === BehaviorMode.TEST_CASE ? levelDefinition.testCase.assertions : [];
   const timelineActions: TimelineAction[] = [
-    ...simulationActions.map((action, index) =>
-      timelineAction(index, action.time, action.portRef, new ActionValue(action.value), levelState),
-    ),
-    ...simulationAssertions.map((assertion, index) => {
-      const assertionResult = testCaseResult?.assertionResults.find((result) =>
-        _.isEqual(result.assertion, assertion),
+    ...simulationActions.map((action, index) => {
+      const portDefinition = getDefinitionOfPort(action.portRef, levelState.parts);
+      return timelineAction(
+        index,
+        action.time,
+        new ActionValue(action.portRef, portDefinition, action.value),
       );
+    }),
+    ...simulationAssertions.map((assertion, index) => {
       return timelineAction(
         index,
         assertion.time,
-        assertion.portRef,
-        new AssertionValue(assertion.value, assertionResult),
-        levelState,
+        new AssertionValue(assertion, testCaseResult?.assertionResults[index]),
       );
     }),
   ];
-  function timelineAction(
-    index: number,
-    time: number,
-    portRef: PortRef,
-    value: TimelineValue,
-    levelState: LevelState,
-  ): TimelineAction {
+  function timelineAction(index: number, time: number, value: TimelineValue): TimelineAction {
     return {
       id: index.toString(),
       start: time,
@@ -137,12 +147,7 @@ export function getTimelineActions(
       effectId: "",
       movable: false,
       flexible: false,
-      data: new TimelineActionData(
-        portRef,
-        getDefinitionOfPort(portRef, levelState.parts),
-        value,
-        behaviorMode === BehaviorMode.TEST_CASE,
-      ),
+      data: new TimelineActionData(value, behaviorMode === BehaviorMode.TEST_CASE),
     };
   }
   return _.sortBy(timelineActions, (action) => action.start);

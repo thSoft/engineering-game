@@ -1,4 +1,4 @@
-import { Timeline, TimelineState } from "@keplar-404/react-timeline-editor";
+import { Timeline, TimelineRow, TimelineState } from "@keplar-404/react-timeline-editor";
 import { TimelineAction } from "@keplar-404/timeline-engine";
 import { Button, theme } from "antd";
 import Dropdown from "antd/es/dropdown/dropdown";
@@ -14,7 +14,7 @@ import {
   TestCaseResult,
 } from "../engine/levels.ts";
 import { getOrganSynth, resetOrganSynth } from "../engine/organAudio.ts";
-import { isPartInstanceOf, outPort, PartId, PartInstance } from "../engine/parts.tsx";
+import { isPartInstanceOf, outPort, PartId } from "../engine/parts.tsx";
 import {
   BehaviorMode,
   getPortValueAt,
@@ -24,13 +24,12 @@ import {
 } from "../engine/simulation.ts";
 import { deleteAction, setCurrentTime } from "../store/gameStore.ts";
 import { borderColor, iconSize } from "./designTokens.tsx";
-import { getPortRefLabel, getTimelineActions, TimelineActionData } from "./utils.tsx";
+import { getTimelineActions, TimelineActionData } from "./utils.tsx";
 import { gedackt8, PipeSoundState, schedulePipeSound } from "../parts/pipe/PipeSound.ts";
 
 interface Props {
   levelState: LevelState;
   levelDefinition: LevelDefinition;
-  parts: PartInstance[];
   playing: boolean;
   setPlaying: (value: ((prevState: boolean) => boolean) | boolean) => void;
 }
@@ -39,7 +38,7 @@ export const TIMELINE_HEIGHT = 200;
 
 const HEADER_WIDTH = 160;
 
-export function TimelineView({ levelState, levelDefinition, parts, playing, setPlaying }: Props) {
+export function TimelineView({ levelState, levelDefinition, playing, setPlaying }: Props) {
   const behaviorMode = levelState.behaviorMode;
   const timelineRef = useRef<TimelineState>(null);
   useEffect(() => {
@@ -48,11 +47,11 @@ export function TimelineView({ levelState, levelDefinition, parts, playing, setP
     }
   }, [getCurrentTime(levelState)]);
 
-  const trackHeaderRef = useRef<HTMLDivElement>(null);
+  const laneHeaderRef = useRef<HTMLDivElement>(null);
   // Mirror the timeline's vertical scroll to the sidebar
   const handleScroll = ({ scrollTop }: { scrollTop: number }) => {
-    if (trackHeaderRef.current) {
-      trackHeaderRef.current.scrollTop = scrollTop;
+    if (laneHeaderRef.current) {
+      laneHeaderRef.current.scrollTop = scrollTop;
     }
   };
 
@@ -68,7 +67,7 @@ export function TimelineView({ levelState, levelDefinition, parts, playing, setP
     behaviorMode === BehaviorMode.TEST_CASE
       ? evaluateTestCase(levelDefinition.testCase, levelState)
       : undefined;
-  const timelineData = getTimelineData(levelDefinition, levelState, parts, testCaseResult);
+  const timelineData = getTimelineData(levelDefinition, levelState, testCaseResult);
 
   const rowHeight = 32;
   const cursorHeight = 10;
@@ -91,7 +90,7 @@ export function TimelineView({ levelState, levelDefinition, parts, playing, setP
               void resetOrganSynth();
             } else {
               await getOrganSynth(); // Ensure that advancing the timeline starts at the same time as playback
-              void startPlayback(levelDefinition, levelState, parts, getCurrentTime(levelState));
+              void startPlayback(levelDefinition, levelState, getCurrentTime(levelState));
             }
             setPlaying(!playing);
           }}
@@ -112,7 +111,7 @@ export function TimelineView({ levelState, levelDefinition, parts, playing, setP
       </Flex>
       {/* Side Panel for Lane Labels */}
       <div
-        ref={trackHeaderRef}
+        ref={laneHeaderRef}
         style={{
           width: HEADER_WIDTH,
           height: TIMELINE_HEIGHT,
@@ -143,8 +142,9 @@ export function TimelineView({ levelState, levelDefinition, parts, playing, setP
                     fontSize: "12px",
                   }}
                 >
-                  <td>{row.partLabel}</td>
-                  <td>{row.portLabel}</td>
+                  {row.lanePath.map((segment) => (
+                    <td>{segment}</td>
+                  ))}
                 </tr>
               ))}
             </tbody>
@@ -182,13 +182,12 @@ export function TimelineView({ levelState, levelDefinition, parts, playing, setP
 export async function startPlayback(
   levelDefinition: LevelDefinition,
   levelState: LevelState,
-  parts: PartInstance[],
   startTime: number,
 ) {
   // Capture the scenario at the moment playback starts
   const input = getSimulationInput(levelState.behaviorMode, levelState, levelDefinition);
   const simulationResult = simulate(input, levelState);
-  const pipeStates = parts.filter(isPartInstanceOf("Pipe")).map((pipe, pipeIndex) => ({
+  const pipeStates = levelState.parts.filter(isPartInstanceOf("Pipe")).map((pipe, pipeIndex) => ({
     part: pipe,
     channel: pipeIndex,
     soundPort: outPort(pipe, "sound"),
@@ -228,31 +227,32 @@ function toPipeSoundState(frequency: number, channel: number): PipeSoundState {
   return { playing: frequency > 0, frequency, stop: gedackt8, channel, velocity: 100 };
 }
 
+export type CustomTimelineRow = TimelineRow & {
+  lanePath: string[];
+};
+
 function getTimelineData(
   levelDefinition: LevelDefinition,
   levelState: LevelState,
-  parts: PartInstance[],
   testCaseResult: TestCaseResult | undefined,
-) {
+): CustomTimelineRow[] {
   const timelineActions: TimelineAction[] = getTimelineActions(
     levelState.behaviorMode,
     levelState,
     levelDefinition,
     testCaseResult,
   );
-  const timelineActionsGroupedByPortRef = _.groupBy(timelineActions, (action) =>
-    action.data ? JSON.stringify(action.data.portRef) : "",
+  const timelineActionsGroupedByLane = _.groupBy(timelineActions, (action) =>
+    action.data instanceof TimelineActionData ? action.data.value.getLanePath(levelState) : null,
   );
-  return Object.entries(timelineActionsGroupedByPortRef).map(([portRef, actions]) => {
-    const { partLabel, portLabel } =
-      actions.length > 0
-        ? getPortRefLabel(actions[0].data.portRef, parts)
-        : { partLabel: "", portLabel: "" };
+  return Object.entries(timelineActionsGroupedByLane).map(([lanePath, actions]) => {
     return {
-      id: portRef,
-      partLabel,
-      portLabel,
-      actions: actions,
+      id: lanePath.toString(),
+      lanePath:
+        actions.length > 0 && actions[0].data instanceof TimelineActionData
+          ? actions[0].data.value.getLanePath(levelState)
+          : [],
+      actions,
     };
   });
 }

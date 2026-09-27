@@ -1,5 +1,6 @@
 import _ from "lodash";
 import {
+  getDefinitionOfPort,
   OutputPortRef,
   PartDefinitionId,
   PartDefinitions,
@@ -17,6 +18,7 @@ import {
   SimulationInput,
   SimulationResult,
 } from "./simulation";
+import { displayPortValue, getPortRefLabel } from "../components/utils.tsx";
 
 export type LevelDefinitionId = string & { __brand: "LevelDefinitionId" };
 
@@ -41,42 +43,63 @@ export type TestCase = {
   assertions: Assertion[];
 };
 
-export type Assertion<
-  Id extends PartDefinitionId = any,
-  Key extends keyof PartDefinitions[Id]["outputPorts"] & string = any,
-> = {
+export type Assertion<D = any> = {
   time: number;
-  portRef: OutputPortRef<Id, Key>;
-  value: PortValue<PartDefinitions[Id]["outputPorts"][Key]>;
+  calculate: (simulationResult: SimulationResult) => AssertionResult<D>;
+  getStepLabel: (levelState: LevelState) => string;
+  getLanePath: (levelState: LevelState) => string[];
+  timelineActionLabel: string;
 };
 
-export function assertion<
-  Id extends PartDefinitionId,
-  Key extends keyof PartDefinitions[Id]["outputPorts"] & string,
+export type PortAssertionDebugInfo = {
+  actualValue: PortValue<any>;
+};
+
+export function portAssertion<
+  Id extends PartDefinitionId = any,
+  Key extends keyof PartDefinitions[Id]["outputPorts"] & string = any,
 >(
   time: number,
   portRef: OutputPortRef<Id, Key>,
-  value: PortValue<PartDefinitions[Id]["outputPorts"][Key]>,
-): Assertion<Id, Key> {
+  expectedValue: PortValue<PartDefinitions[Id]["outputPorts"][Key]>,
+): Assertion<PortAssertionDebugInfo> {
   return {
     time,
-    portRef,
-    value,
+    calculate: (simulationResult) => {
+      const actualValue = getPortValueAt(portRef, time, simulationResult);
+      return {
+        success: _.isEqual(actualValue, expectedValue),
+        debugInfo: {
+          actualValue,
+        },
+      };
+    },
+    getStepLabel: (levelState) => {
+      const definition = getDefinitionOfPort(portRef, levelState.parts);
+      const { partLabel, portLabel } = getPortRefLabel(portRef, levelState.parts);
+      const renderer = definition?.renderAssertion;
+      return renderer
+        ? `${renderer(expectedValue, partLabel)}`
+        : `${partLabel}'s ${portLabel} should be ${expectedValue}`;
+    },
+    getLanePath: (levelState) => {
+      const { partLabel, portLabel } = getPortRefLabel(portRef, levelState.parts);
+      return [partLabel, portLabel];
+    },
+    timelineActionLabel: displayPortValue(expectedValue),
   };
 }
 
 export type TestCaseResult = {
   testCase: TestCase;
   simulationResult: SimulationResult;
-  assertionResults: AssertionResult[];
+  assertionResults: AssertionResult<any>[];
   success: boolean;
 };
 
-export type AssertionResult = {
-  assertion: Assertion;
-  actualValue: PortValue<any>;
+export type AssertionResult<D> = {
   success: boolean;
-  // TODO trace
+  debugInfo: D;
 };
 
 export function defineLevel(id: string, definition: Omit<LevelDefinition, "id">) {
@@ -111,14 +134,9 @@ export function getInitialLevelState(levelDefinition: LevelDefinition): LevelSta
 
 export function evaluateTestCase(testCase: TestCase, levelState: LevelState): TestCaseResult {
   const simulationResult = simulate(testCase.input, levelState);
-  const assertionResults = testCase.assertions.map((assertion) => {
-    const actualValue = getPortValueAt(assertion.portRef, assertion.time, simulationResult);
-    return {
-      assertion,
-      actualValue,
-      success: _.isEqual(actualValue, assertion.value),
-    };
-  });
+  const assertionResults: AssertionResult<any>[] = testCase.assertions.map((assertion) =>
+    assertion.calculate(simulationResult),
+  );
   return {
     testCase,
     simulationResult,

@@ -4,7 +4,6 @@ import { FilePlay, FlaskConical, ShieldCheck } from "lucide-react";
 import { useState } from "react";
 import { LevelDefinition } from "../engine/levels";
 import { resetOrganSynth } from "../engine/organAudio";
-import { PartInstance } from "../engine/parts";
 import { BehaviorMode, LevelState } from "../engine/simulation";
 import { setBehaviorMode } from "../store/gameStore";
 import { borderColor, iconSize } from "./designTokens";
@@ -13,10 +12,9 @@ import { TIMELINE_HEIGHT, TimelineView } from "./TimelineView.tsx";
 export interface Props {
   levelDefinition: LevelDefinition;
   levelState: LevelState;
-  parts: PartInstance[];
 }
 
-export function BehaviorView({ levelDefinition, levelState, parts }: Props) {
+export function BehaviorView({ levelDefinition, levelState }: Props) {
   const behaviorMode = levelState.behaviorMode;
   const [playing, setPlaying] = useState(false);
 
@@ -34,7 +32,6 @@ export function BehaviorView({ levelDefinition, levelState, parts }: Props) {
           <TimelineView
             levelState={levelState}
             levelDefinition={levelDefinition}
-            parts={parts}
             playing={playing}
             setPlaying={setPlaying}
           />

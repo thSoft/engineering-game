@@ -4,7 +4,7 @@ import { LevelDefinition, TestCaseResult } from "../engine/levels";
 import { BehaviorMode, LevelPhase, LevelState, LevelStatus } from "../engine/simulation";
 import { setLevelPhase, setLevelStatus } from "../store/gameStore.ts";
 import { borderColor } from "./designTokens";
-import { ActionValue, getPortRefLabel, getTimelineActions, TimelineActionData } from "./utils";
+import { getTimelineActions, TimelineActionData } from "./utils";
 
 interface Props {
   levelState: LevelState;
@@ -73,28 +73,14 @@ export default function AcceptanceView({ levelState, levelDefinition, testCaseRe
           }}
         >
           <tbody>
-            {timelineActions.map((action, index) => {
+            {timelineActions.map((action) => {
               if (!(action.data instanceof TimelineActionData)) return null;
-              const { icon, type, value, color } = action.data.value.getDisplayInfo();
-              const renderer =
-                action.data.value instanceof ActionValue
-                  ? action.data.portDefinition?.renderAction
-                  : action.data.portDefinition?.renderAssertion;
-              const { partLabel, portLabel } = getPortRefLabel(
-                action.data.portRef,
-                levelState.parts,
-              );
+              const label = action.data.value.getStepLabel(levelState);
+              const { icon, color } = action.data.value.getDisplayInfo();
               return (
-                <tr
-                  key={index}
-                  style={{ borderBottom: `1px solid ${borderColor}`, color: color ?? "inherit" }}
-                >
+                <tr style={{ borderBottom: `1px solid ${borderColor}`, color: color ?? "inherit" }}>
                   <td>{icon}</td>
-                  <td>
-                    {renderer
-                      ? `${renderer(action.data.value.getRawValue(), partLabel)}`
-                      : `${type} ${partLabel}'s ${portLabel} = ${value}`}
-                  </td>
+                  <td>{label}</td>
                 </tr>
               );
             })}

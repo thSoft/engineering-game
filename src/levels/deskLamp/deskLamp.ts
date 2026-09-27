@@ -1,4 +1,4 @@
-import { assertion, defineLevel } from "../../engine/levels.ts";
+import { defineLevel, portAssertion } from "../../engine/levels.ts";
 import { createPartInstance, inPort, outPort } from "../../engine/parts.tsx";
 import { action } from "../../engine/simulation.ts";
 
@@ -21,8 +21,8 @@ export const DeskLamp = defineLevel("deskLamp", {
       ],
     },
     assertions: [
-      assertion(2, outPort(lightbulb, "lit"), true),
-      assertion(3, outPort(lightbulb, "lit"), false),
+      portAssertion(2, outPort(lightbulb, "lit"), true),
+      portAssertion(3, outPort(lightbulb, "lit"), false),
     ],
   },
   userName: "Ada",
