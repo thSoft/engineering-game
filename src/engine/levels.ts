@@ -1,4 +1,5 @@
 import _ from "lodash";
+import { displayPortValue, getPortRefLabel } from "../components/utils.tsx";
 import {
   getDefinitionOfPort,
   OutputPortRef,
@@ -18,7 +19,6 @@ import {
   SimulationInput,
   SimulationResult,
 } from "./simulation";
-import { displayPortValue, getPortRefLabel } from "../components/utils.tsx";
 
 export type LevelDefinitionId = string & { __brand: "LevelDefinitionId" };
 
@@ -45,7 +45,7 @@ export type TestCase = {
 
 export type Assertion<D = any> = {
   time: number;
-  calculate: (simulationResult: SimulationResult) => AssertionResult<D>;
+  calculate: (levelState: LevelState, simulationResult: SimulationResult) => AssertionResult<D>;
   getStepLabel: (levelState: LevelState) => string;
   getLanePath: (levelState: LevelState) => string[];
   timelineActionLabel: string;
@@ -65,7 +65,7 @@ export function portAssertion<
 ): Assertion<PortAssertionDebugInfo> {
   return {
     time,
-    calculate: (simulationResult) => {
+    calculate(__, simulationResult) {
       const actualValue = getPortValueAt(portRef, time, simulationResult);
       return {
         success: _.isEqual(actualValue, expectedValue),
@@ -74,7 +74,7 @@ export function portAssertion<
         },
       };
     },
-    getStepLabel: (levelState) => {
+    getStepLabel(levelState) {
       const definition = getDefinitionOfPort(portRef, levelState.parts);
       const { partLabel, portLabel } = getPortRefLabel(portRef, levelState.parts);
       const renderer = definition?.renderAssertion;
@@ -82,7 +82,7 @@ export function portAssertion<
         ? `${renderer(expectedValue, partLabel)}`
         : `${partLabel}'s ${portLabel} should be ${expectedValue}`;
     },
-    getLanePath: (levelState) => {
+    getLanePath(levelState) {
       const { partLabel, portLabel } = getPortRefLabel(portRef, levelState.parts);
       return [partLabel, portLabel];
     },
@@ -135,7 +135,7 @@ export function getInitialLevelState(levelDefinition: LevelDefinition): LevelSta
 export function evaluateTestCase(testCase: TestCase, levelState: LevelState): TestCaseResult {
   const simulationResult = simulate(testCase.input, levelState);
   const assertionResults: AssertionResult<any>[] = testCase.assertions.map((assertion) =>
-    assertion.calculate(simulationResult),
+    assertion.calculate(levelState, simulationResult),
   );
   return {
     testCase,

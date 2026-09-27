@@ -22,10 +22,11 @@ import {
   LevelState,
   simulate,
 } from "../engine/simulation.ts";
+import { gedackt8, PipeSoundState, schedulePipeSound } from "../parts/pipe/PipeSound.ts";
+import { Sound } from "../parts/pipe/pipe.tsx";
 import { deleteAction, setCurrentTime } from "../store/gameStore.ts";
 import { borderColor, iconSize } from "./designTokens.tsx";
 import { getTimelineActions, TimelineActionData } from "./utils.tsx";
-import { gedackt8, PipeSoundState, schedulePipeSound } from "../parts/pipe/PipeSound.ts";
 
 interface Props {
   levelState: LevelState;
@@ -197,7 +198,14 @@ export async function startPlayback(
   // A new run replaces any audible notes from an experiment or prior playback run
   synth.stopAll(true);
   const states = new Map<PartId, PipeSoundState>();
-  function schedule(time: number, state: PipeSoundState, key: PartId) {
+  function schedule(time: number, sound: Sound, channel: number, key: PartId) {
+    const state = {
+      playing: sound !== undefined,
+      frequency: sound?.frequency ?? 0,
+      stop: gedackt8,
+      channel,
+      velocity: 100,
+    };
     const previous = states.get(key);
     if (!previous || !_.isEqual(previous, state)) {
       schedulePipeSound(synth, state, previous, { time });
@@ -207,8 +215,8 @@ export async function startPlayback(
 
   // Current state of the pipes at the start time
   for (const { part, channel, soundPort } of pipeStates) {
-    const frequency = getPortValueAt(soundPort, startTime, simulationResult) ?? 0;
-    schedule(0, toPipeSoundState(frequency, channel), part.id);
+    const sound = getPortValueAt(soundPort, startTime, simulationResult);
+    schedule(0, sound, channel, part.id);
   }
 
   // Upcoming notes
@@ -217,14 +225,10 @@ export async function startPlayback(
     if (actionTime === undefined || actionTime <= startTime) continue;
     const time = actionTime - startTime;
     for (const { part, channel, soundPort } of pipeStates) {
-      const frequency = getPortValueAt(soundPort, actionTime, simulationResult) ?? 0;
-      schedule(time, toPipeSoundState(frequency, channel), part.id);
+      const sound = getPortValueAt(soundPort, actionTime, simulationResult);
+      schedule(time, sound, channel, part.id);
     }
   }
-}
-
-function toPipeSoundState(frequency: number, channel: number): PipeSoundState {
-  return { playing: frequency > 0, frequency, stop: gedackt8, channel, velocity: 100 };
 }
 
 export type CustomTimelineRow = TimelineRow & {

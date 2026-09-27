@@ -1,15 +1,20 @@
 import { defineLevel } from "../../engine/levels.ts";
 import { createPartInstance, inPort, PartInstance } from "../../engine/parts.tsx";
 import { action } from "../../engine/simulation.ts";
+import { soundAssertion } from "../../parts/pipe/pipe.tsx";
 import { pitches } from "../../parts/pitches.ts";
+import { gap } from "../../parts/windchest/WindchestView.tsx";
 
-const blower = createPartInstance("Blower", "blower", { x: 0, y: -400 });
+const padding = gap + 16;
 
-const padding = 30;
+const blower = createPartInstance("Blower", "blower", {
+  x: padding * (Object.keys(pitches).length + 1),
+  y: -40,
+});
 
 const organKeys: PartInstance<"OrganKey">[] = Object.entries(pitches).map(
   ([pitchId, pitch], index) =>
-    createPartInstance("OrganKey", `key${pitchId}`, { x: 0, y: padding * -index }, pitch.name),
+    createPartInstance("OrganKey", `key${pitchId}`, { x: padding * index, y: 0 }, pitch.name),
 );
 
 type MelodyNote = {
@@ -30,53 +35,75 @@ const bachToccataIntro: MelodyNote[] = [
   { note: "d4", duration: 1 / 2 },
 ];
 
-function getMelodyNoteActions(
+function getMelodyNoteActionsAndAssertions(
   time: number,
   pitchId: keyof typeof pitches,
   duration: number,
   bpm: number,
+  hasNextNote: boolean,
 ) {
   const index = Object.keys(pitches).indexOf(pitchId);
   const pressed = inPort(organKeys[index], "pressed");
-  return [
-    action(time, pressed, true),
-    action(time + toAbsoluteTime(bpm, duration), pressed, false),
-  ];
+  const endTime = time + toAbsoluteTime(bpm, duration);
+  return {
+    actions: [action(time, pressed, true), action(endTime, pressed, false)],
+    assertions: [
+      soundAssertion(time, { frequency: pitches[pitchId].frequency }),
+      ...(hasNextNote ? [] : [soundAssertion(endTime, undefined)]),
+    ],
+  };
 }
 
 function toAbsoluteTime(bpm: number, duration: number) {
   return (60 / bpm) * duration;
 }
 
-function getMelodyActions(melody: MelodyNote[], startBeat: number, bpm: number) {
+function getMelodyActionsAndAssertions(melody: MelodyNote[], startBeat: number, bpm: number) {
   return melody.reduce(
-    ({ actions, time }, { note, duration }) => {
+    ({ actions, assertions, time }, { note, duration }, index) => {
+      const endTime = time + toAbsoluteTime(bpm, duration);
+      if (!note) {
+        return {
+          actions,
+          assertions,
+          time: endTime,
+        };
+      }
+      const { actions: noteActions, assertions: noteAssertions } =
+        getMelodyNoteActionsAndAssertions(
+          time,
+          note,
+          duration,
+          bpm,
+          melody[index + 1]?.note !== undefined,
+        );
       return {
-        actions: [...actions, ...(note ? getMelodyNoteActions(time, note, duration, bpm) : [])],
-        time: time + toAbsoluteTime(bpm, duration),
+        actions: [...actions, ...noteActions],
+        assertions: [...assertions, ...noteAssertions],
+        time: endTime,
       };
     },
     {
-      actions: [] as ReturnType<typeof getMelodyNoteActions>,
+      actions: [] as ReturnType<typeof getMelodyNoteActionsAndAssertions>["actions"],
+      assertions: [] as ReturnType<typeof getMelodyNoteActionsAndAssertions>["assertions"],
       time: toAbsoluteTime(bpm, startBeat),
     },
-  ).actions;
+  );
 }
+
+const { actions, assertions } = getMelodyActionsAndAssertions(bachToccataIntro, 0.5, 32);
 
 export const Organ1Stop = defineLevel("organ1Stop", {
   label: "Organ with One Stop",
-  availableParts: ["Pipe", "Blower", "Windchest", "OrganKey"],
+  availableParts: ["Pipe", "Windchest"],
   fixedParts: [blower, ...organKeys],
   exposedPorts: [],
   testCase: {
     input: {
       startTime: 0,
-      actions: [
-        action(0, inPort(blower, "toggle"), true),
-        ...getMelodyActions(bachToccataIntro, 0.5, 32),
-      ],
+      actions: [action(0, inPort(blower, "toggle"), true), ...actions],
     },
-    assertions: [],
+    assertions,
   },
   userName: "Jean",
   userNeedQuote: "",

@@ -5,10 +5,11 @@ import { PortView } from "../../components/PortView.tsx";
 import socketImg from "../../components/parts/shared/socket.svg";
 import { ParameterDescriptor, PortDescriptor } from "../../engine/parts.tsx";
 import { gedackt8, PipeSound } from "./PipeSound.ts";
+import { Sound } from "./pipe.tsx";
 
 interface Props {
   air: PortDescriptor<boolean>;
-  sound: PortDescriptor<number>;
+  sound: PortDescriptor<Sound>;
   length: ParameterDescriptor<number>;
   partIndex: number;
   isExperiment: boolean;
@@ -35,8 +36,8 @@ export function PipeView({ air, sound, length, partIndex, isExperiment }: Props)
       </PortView>
       {isExperiment && (
         <PipeSound
-          playing={sound.value > 0}
-          frequency={sound.value}
+          playing={sound.value !== undefined}
+          frequency={sound.value?.frequency ?? 0}
           stop={gedackt8}
           channel={partIndex}
         />

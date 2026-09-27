@@ -1,6 +1,17 @@
+import _ from "lodash";
 import z from "zod";
-import { definePart } from "../../engine/parts.tsx";
+import { Assertion } from "../../engine/levels.ts";
+import { definePart, isPartInstanceOf, outPort } from "../../engine/parts.tsx";
+import { getPortValueAt } from "../../engine/simulation.ts";
 import { PipeView } from "./PipeView.tsx";
+
+export const soundSchema = z.optional(
+  z.object({
+    frequency: z.number(), // Frequency of the sound emitted by the pipe, in Hertz
+  }),
+);
+
+export type Sound = z.infer<typeof soundSchema>;
 
 export const Pipe = definePart({
   label: "Pipe",
@@ -25,11 +36,10 @@ export const Pipe = definePart({
   },
   outputPorts: {
     sound: {
-      // Frequency of the sound emitted by the pipe, in Hertz
       label: "sound",
       kind: "flow",
-      schema: z.number(),
-      defaultValue: 0,
+      schema: soundSchema,
+      defaultValue: undefined,
     },
   },
   color: "#00d492",
@@ -46,6 +56,40 @@ export const Pipe = definePart({
     );
   },
   compute: ({ air }, { length }) => ({
-    sound: air ? 343.2 / (2 * (length / 100)) : 0,
+    sound: air ? { frequency: 343.2 / (2 * (length / 100)) } : undefined,
   }),
 });
+
+export function soundAssertion(time: number, expectedSound: Sound): Assertion<undefined> {
+  return {
+    time,
+    calculate(levelState, simulationResult) {
+      const soundPorts = levelState.parts
+        .filter(isPartInstanceOf("Pipe"))
+        .map((pipe) => outPort(pipe, "sound"));
+      const success =
+        expectedSound !== undefined
+          ? soundPorts.some((portRef) => {
+              const actualSound = getPortValueAt(portRef, time, simulationResult);
+              return (
+                actualSound !== undefined &&
+                Math.abs(actualSound.frequency - expectedSound.frequency) <= 2
+              );
+            })
+          : soundPorts.every((portRef) =>
+              _.isEqual(getPortValueAt(portRef, time, simulationResult), undefined),
+            );
+      return {
+        success,
+        debugInfo: undefined,
+      };
+    },
+    getLanePath() {
+      return ["Sound"];
+    },
+    getStepLabel() {
+      return `User should hear ${expectedSound !== undefined ? `${expectedSound.frequency} Hz` : "nothing"}`;
+    },
+    timelineActionLabel: expectedSound !== undefined ? `${expectedSound.frequency}` : "OFF",
+  };
+}

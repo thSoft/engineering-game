@@ -10,8 +10,9 @@ interface Props {
   airOuts: Record<string, PortDescriptor<boolean>>;
 }
 
+export const gap = 24;
+
 export function WindchestView({ airIn, valves, airOuts }: Props) {
-  const gap = 24;
   return (
     <Flex align="center">
       <Flex vertical align="end">
