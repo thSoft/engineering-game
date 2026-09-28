@@ -7,7 +7,7 @@ import { gap } from "../../parts/windchest/WindchestView.tsx";
 
 const padding = gap + 16;
 
-const blower = createPartInstance("Blower", "blower", {
+const windSupply = createPartInstance("WindSupply", "windSupply", {
   x: padding * (Object.keys(pitches).length + 1),
   y: -40,
 });
@@ -96,12 +96,12 @@ const { actions, assertions } = getMelodyActionsAndAssertions(bachToccataIntro, 
 export const Organ1Stop = defineLevel("organ1Stop", {
   label: "Organ with One Stop",
   availableParts: ["Pipe", "Windchest"],
-  fixedParts: [blower, ...organKeys],
+  fixedParts: [windSupply, ...organKeys],
   exposedPorts: [],
   testCase: {
     input: {
       startTime: 0,
-      actions: [action(0, inPort(blower, "toggle"), true), ...actions],
+      actions: [action(0, inPort(windSupply, "toggle"), true), ...actions],
     },
     assertions,
   },

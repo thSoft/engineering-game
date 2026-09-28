@@ -10,7 +10,7 @@ interface Props {
   airOut: PortDescriptor<boolean>;
 }
 
-export function BlowerView({ toggle, airOut }: Props) {
+export function WindSupplyView({ toggle, airOut }: Props) {
   return (
     <Flex>
       <PortView portDescriptor={airOut} position={Position.Left}>

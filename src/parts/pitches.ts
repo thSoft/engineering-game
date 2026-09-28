@@ -12,4 +12,4 @@ export const pitches = {
   as4: { name: "A#4", frequency: 466.16, black: true },
   b4: { name: "B4", frequency: 493.88 },
   c5: { name: "C5", frequency: 523.25 },
-};
+} as const;

@@ -5,13 +5,13 @@ import { definePart, isPartInstanceOf, outPort } from "../../engine/parts.tsx";
 import { getPortValueAt } from "../../engine/simulation.ts";
 import { PipeView } from "./PipeView.tsx";
 
-export const soundSchema = z.optional(
+export const Sound = z.optional(
   z.object({
     frequency: z.number(), // Frequency of the sound emitted by the pipe, in Hertz
   }),
 );
 
-export type Sound = z.infer<typeof soundSchema>;
+export type Sound = z.infer<typeof Sound>;
 
 export const Pipe = definePart({
   label: "Pipe",
@@ -38,7 +38,7 @@ export const Pipe = definePart({
     sound: {
       label: "sound",
       kind: "flow",
-      schema: soundSchema,
+      schema: Sound,
       defaultValue: undefined,
     },
   },

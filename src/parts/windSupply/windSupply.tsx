@@ -1,8 +1,8 @@
 import z from "zod";
 import { definePart } from "../../engine/parts.tsx";
-import { BlowerView } from "./BlowerView.tsx";
+import { WindSupplyView } from "./WindSupplyView.tsx";
 
-export const Blower = definePart({
+export const WindSupply = definePart({
   label: "Blower",
   parameters: {},
   inputPorts: {
@@ -26,7 +26,7 @@ export const Blower = definePart({
   color: "#00adee",
   description: "Provides air flow",
   render: ({ toggle }, _, { airOut }) => {
-    return <BlowerView toggle={toggle} airOut={airOut} />;
+    return <WindSupplyView toggle={toggle} airOut={airOut} />;
   },
   compute: ({ toggle }) => ({
     airOut: toggle,
