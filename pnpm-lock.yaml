@@ -151,6 +151,9 @@ importers:
       rooks:
         specifier: ^9.9.0
         version: 9.9.0(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
+      spessasynth_core:
+        specifier: ^4.3.22
+        version: 4.3.22
       spessasynth_lib:
         specifier: ^4.3.14
         version: 4.3.14

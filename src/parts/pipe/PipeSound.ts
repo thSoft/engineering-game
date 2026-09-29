@@ -1,5 +1,6 @@
 import _ from "lodash";
 import { useEffect, useRef } from "react";
+import { MIDIControllers } from "spessasynth_core";
 import type { WorkletSynthesizer } from "spessasynth_lib";
 import { getOrganSynth } from "../../engine/organAudio.ts";
 
@@ -34,15 +35,27 @@ export function schedulePipeSound(
 ) {
   if (previous?.playing) {
     const { note } = frequencyToMidi(previous.frequency);
-    synth.noteOff(previous.channel, note, options);
+    synth.noteOff(toMelodicChannel(previous.channel), note, options);
   }
 
   if (current.playing) {
+    const actualChannel = toMelodicChannel(current.channel);
+    const bankHigh7Bits = current.stop.bank >> 7;
+    synth.controllerChange(actualChannel, MIDIControllers.bankSelect, bankHigh7Bits, options);
+    const bankLow7Bits = current.stop.bank & 0x7f;
+    synth.controllerChange(actualChannel, MIDIControllers.bankSelectLSB, bankLow7Bits, options);
+    synth.programChange(actualChannel, current.stop.program, options);
     const { note, pitchBend } = frequencyToMidi(current.frequency);
-    synth.programChange(current.channel, current.stop.program, options);
-    synth.pitchWheel(current.channel, pitchBend, options);
-    synth.noteOn(current.channel, note, current.velocity, options);
+    synth.pitchWheel(actualChannel, pitchBend, options);
+    synth.noteOn(actualChannel, note, current.velocity, options);
   }
+}
+
+/** Transforms channel numbers to avoid percussion channels. */
+function toMelodicChannel(channel: number) {
+  const block = Math.floor(channel / 15);
+  const offset = channel % 15;
+  return block * 16 + (offset >= 9 ? offset + 1 : offset);
 }
 
 /** Plays live experiment changes immediately. Timeline playback uses schedulePipeSound instead. */
