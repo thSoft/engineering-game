@@ -2,6 +2,8 @@ import {
   Controls,
   type EdgeChange,
   type NodeChange,
+  NodePositionChange,
+  NodeRemoveChange,
   NodeTypes,
   ReactFlow,
   useReactFlow,
@@ -192,8 +194,8 @@ interface Props {
 }
 
 export default function Workbench({ levelState, levelDefinition }: Props) {
-  const parts = levelState?.parts ?? [];
-  const connections = levelState?.connections ?? [];
+  const parts = levelState.parts;
+  const connections = levelState.connections;
 
   const [selectedConnectionId, setSelectedConnectionId] = useState<ConnectionId | undefined>(
     undefined,
@@ -275,14 +277,18 @@ export default function Workbench({ levelState, levelDefinition }: Props) {
 
   const onNodesChange = (changes: NodeChange<PartNodeType>[]) => {
     for (const change of changes) {
-      if (change.type === "position" && change.position) {
+      if (change.type === "position" && change.position && !isFixed(change)) {
         // Write every drag tick — Zustand is authoritative for positions
         movePart(toPartId(change.id), change.position);
       }
-      if (change.type === "remove") {
+      if (change.type === "remove" && !isFixed(change)) {
         deletePart(toPartId(change.id));
         setPendingPortRef(undefined);
       }
+    }
+
+    function isFixed(change: NodePositionChange | NodeRemoveChange) {
+      return levelDefinition.fixedParts.some((fixedPart) => fixedPart.id === change.id);
     }
     // applyNodeChanges is not called — RF reads positions from the store,
     // so there is no internal RF node state to patch.
