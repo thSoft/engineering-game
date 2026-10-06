@@ -1,12 +1,10 @@
 import { Position } from "@xyflow/react";
-import offImg from "../../components/parts/shared/powerIndicator/off.svg";
-import onImg from "../../components/parts/shared/powerIndicator/on.svg";
-import styles from "../../components/parts/shared/shared.module.css";
-import socketImg from "../../components/parts/shared/socket.svg";
 import { PortView } from "../../components/PortView.tsx";
 import { PortDescriptor } from "../../engine/parts.tsx";
-import connectorImg from "./connector.svg";
-import outletImg from "./outlet.svg";
+import plugImg from "./plug.svg";
+import { InteractiveSvg } from "../InteractiveSvg.tsx";
+import { transitionSettings } from "../../components/designTokens.tsx";
+import { getIndicatorStyle } from "../utils.tsx";
 
 interface Props {
   plugged: PortDescriptor<boolean>;
@@ -15,31 +13,23 @@ interface Props {
 
 export function PlugView({ plugged, powerOut }: Props) {
   return (
-    <div style={{ display: "flex", flexDirection: "row", alignItems: "center" }}>
-      <svg
-        width="45"
-        height="48"
-        style={{ cursor: "pointer" }}
-        onClick={(e) => {
-          e.stopPropagation();
-          return plugged.setValue(!plugged.value);
-        }}
-      >
-        <image
-          href={connectorImg}
-          style={{
-            transform: plugged.value ? "translateX(-13px)" : "none",
-            transition: "transform 0.04s ease-in-out",
-          }}
-        />
-        <image href={outletImg} />
-      </svg>
-      <div className={styles.compartment91a4ffa918eb}>
-        <img src={plugged.value ? onImg : offImg} alt={plugged.value ? "On" : "Off"} />
-        <PortView portDescriptor={powerOut} position={Position.Right}>
-          <img src={socketImg} alt="Socket" />
-        </PortView>
-      </div>
-    </div>
+    <InteractiveSvg
+      props={{ src: plugImg }}
+      styles={{
+        connector: `
+          cursor: pointer;
+          transition: transform ${transitionSettings};
+          transform: ${plugged.value ? "translateX(-13px)" : "none"};`,
+        plugged: getIndicatorStyle(plugged),
+      }}
+      onClicks={{
+        connector: () => {
+          plugged.setValue(!plugged.value);
+        },
+      }}
+      overlays={{
+        powerOut: () => <PortView portDescriptor={powerOut} position={Position.Right} />,
+      }}
+    />
   );
 }

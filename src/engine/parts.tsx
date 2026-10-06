@@ -73,6 +73,7 @@ export function createPartInstance<K extends PartDefinitionId>(
   id: string,
   position: PartPosition,
   label?: string,
+  parameterValues?: ParameterValues<PartDefinitions[K]["parameters"]>,
 ): PartInstance<K> {
   const partId = toPartId(id);
   const createPortInstance = (portKey: string): PortInstance => ({
@@ -84,12 +85,14 @@ export function createPartInstance<K extends PartDefinitionId>(
     position,
     label: label ?? definition.label,
     definitionId: partDefinitionId,
-    parameterValues: Object.fromEntries(
-      Object.entries(definition.parameters).map(([paramKey, paramDef]) => [
-        paramKey,
-        paramDef.defaultValue,
-      ]),
-    ) as ParameterValues<PartDefinitions[K]["parameters"]>,
+    parameterValues:
+      parameterValues ??
+      (Object.fromEntries(
+        Object.entries(definition.parameters).map(([paramKey, paramDef]) => [
+          paramKey,
+          paramDef.defaultValue,
+        ]),
+      ) as ParameterValues<PartDefinitions[K]["parameters"]>),
     portInstances: [
       ...Object.keys(definition.inputPorts).map((key) => createPortInstance(key)),
       ...Object.keys(definition.outputPorts).map((key) => createPortInstance(key)),

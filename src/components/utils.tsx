@@ -126,22 +126,22 @@ export function getTimelineActions(
     ...simulationActions.map((action, index) => {
       const portDefinition = getDefinitionOfPort(action.portRef, levelState.parts);
       return timelineAction(
-        index,
+        `action-${index}`,
         action.time,
         new ActionValue(action.portRef, portDefinition, action.value),
       );
     }),
     ...simulationAssertions.map((assertion, index) => {
       return timelineAction(
-        index,
+        `assertion-${index}`,
         assertion.time,
         new AssertionValue(assertion, testCaseResult?.assertionResults[index]),
       );
     }),
   ];
-  function timelineAction(index: number, time: number, value: TimelineValue): TimelineAction {
+  function timelineAction(id: string, time: number, value: TimelineValue): TimelineAction {
     return {
-      id: index.toString(),
+      id,
       start: time,
       end: time + 0.1,
       effectId: "",

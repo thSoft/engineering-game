@@ -1,11 +1,11 @@
 import babel from "@rolldown/plugin-babel";
 import tailwindcss from "@tailwindcss/vite";
 import react, { reactCompilerPreset } from "@vitejs/plugin-react";
+import { copyFile, mkdir } from "node:fs/promises";
+import { createRequire } from "node:module";
+import { dirname, resolve } from "node:path";
 import { defineConfig, type Plugin } from "vite";
 import checker from "vite-plugin-checker";
-import { copyFile, mkdir } from "node:fs/promises";
-import { dirname, resolve } from "node:path";
-import { createRequire } from "node:module";
 
 function copySpessaSynthProcessor(): Plugin {
   return {

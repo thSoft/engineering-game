@@ -4,7 +4,7 @@ import { action } from "../../engine/simulation.ts";
 
 export const plug = createPartInstance("Plug", "plug-0", { x: -150, y: 4 });
 export const switchPart = createPartInstance("Switch", "switch-0", { x: 5.5, y: 4 });
-export const lightbulb = createPartInstance("Lightbulb", "lightbulb-0", { x: 150, y: -42 });
+export const lightbulb = createPartInstance("Lightbulb", "lightbulb-0", { x: 150, y: -44 });
 
 export const DeskLamp = defineLevel("deskLamp", {
   label: "Desk Lamp",

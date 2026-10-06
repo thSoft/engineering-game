@@ -1,6 +1,6 @@
 import { PartDefinitionId, PartDefinitions } from "../engine/parts.tsx";
 import { Lightbulb } from "./lightbulb/lightbulb.tsx";
-import { OrganKey } from "./organKey/organKey.tsx";
+import { OrganKeyboard } from "./organKeyboard/organKeyboard.tsx";
 import { Pipe } from "./pipe/pipe.tsx";
 import { Plug } from "./plug/plug.tsx";
 import { Switch } from "./switch/switch.tsx";
@@ -14,7 +14,7 @@ export const partDefinitions = {
   Pipe,
   WindSupply,
   Windchest,
-  OrganKey,
+  OrganKeyboard,
 } as const;
 
 export function getPartDefinitionById<Id extends PartDefinitionId>(

@@ -19,20 +19,20 @@ export function WindchestView({ airIn, valves, airOuts }: Props) {
         <Flex gap={gap}>
           {Object.entries(airOuts).map(([name, portDescriptor]) => (
             <PortView key={name} portDescriptor={portDescriptor} position={Position.Top}>
-              <img src={socketImg} alt="Socket" />
+              <img src={socketImg} alt="Socket" style={{ width: 16, height: 16 }} />
             </PortView>
           ))}
         </Flex>
         <Flex gap={gap}>
           {Object.entries(valves).map(([name, portDescriptor]) => (
             <PortView key={name} portDescriptor={portDescriptor} position={Position.Bottom}>
-              <img src={socketImg} alt="Socket" />
+              <img src={socketImg} alt="Socket" style={{ width: 16, height: 16 }} />
             </PortView>
           ))}
         </Flex>
       </Flex>
       <PortView key="airIn" portDescriptor={airIn} position={Position.Right}>
-        <img src={socketImg} alt="Socket" />
+        <img src={socketImg} alt="Socket" style={{ width: 16, height: 16 }} />
       </PortView>
     </Flex>
   );

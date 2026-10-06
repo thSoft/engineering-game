@@ -1,0 +1,186 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg
+   width="88"
+   height="48"
+   fill="none"
+   version="1.1"
+   id="svg41"
+   sodipodi:docname="Switch.svg"
+   inkscape:version="1.4.4 (dcaf3e7, 2026-05-05)"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <defs
+     id="defs41" />
+  <sodipodi:namedview
+     id="namedview41"
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1.0"
+     inkscape:showpageshadow="2"
+     inkscape:pageopacity="0.0"
+     inkscape:pagecheckerboard="0"
+     inkscape:deskcolor="#d1d1d1"
+     inkscape:zoom="8.6308889"
+     inkscape:cx="60.828034"
+     inkscape:cy="39.972708"
+     inkscape:window-width="1920"
+     inkscape:window-height="1021"
+     inkscape:window-x="0"
+     inkscape:window-y="31"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="g38" />
+  <g
+     class="frame-container-shadows"
+     id="g39"
+     inkscape:label="switch">
+    <rect
+       width="88"
+       height="48"
+       class="frame-background"
+       rx="2"
+       ry="2"
+       style="fill:#b1b2b5;fill-opacity:1"
+       id="rect1"
+       x="0"
+       y="0" />
+    <g
+       class="frame-children"
+       id="g38"
+       inkscape:label="children">
+      <circle
+         cx="12"
+         cy="24"
+         r="8"
+         class="fills"
+         style="fill:#131313;fill-opacity:1"
+         id="circle1"
+         inkscape:label="powerIn" />
+      <path
+         d="m 30,24 -6,3.464 v -6.928 z"
+         class="fills"
+         style="fill:#ff2330;fill-opacity:1"
+         id="path2"
+         inkscape:label="powerInIndicator" />
+      <g
+         class="frame-container-shadows"
+         id="g30"
+         inkscape:label="center">
+        <g
+           class="frame-children"
+           id="g13"
+           inkscape:label="plate">
+          <path
+             d="M 32,14.175 V 42.952 C 32,43.531 32.445,44 32.993,44 H 55.007 C 55.555,44 56,43.53 56,42.952 V 5.048 C 56,4.47 55.555,4 55.007,4 H 32.993 C 32.445,4 32,4.47 32,5.048 v 6.973"
+             class="fills"
+             style="fill:#ccc3a8"
+             id="path8"
+             inkscape:label="base" />
+          <ellipse
+             cx="53.515999"
+             cy="6.5469999"
+             class="fills"
+             rx="0.82800001"
+             ry="0.87400001"
+             style="fill:#dfdbcc"
+             transform="matrix(-1,0,0,1,107.031,0)"
+             id="ellipse8"
+             inkscape:label="screw" />
+          <ellipse
+             cx="34.519001"
+             cy="6.5469999"
+             class="fills"
+             rx="0.82800001"
+             ry="0.87400001"
+             style="fill:#dfdbcc"
+             transform="matrix(-1,0,0,1,69.039,0)"
+             id="ellipse9"
+             inkscape:label="screw" />
+          <ellipse
+             cx="53.515999"
+             cy="41.400002"
+             class="fills"
+             rx="0.82800001"
+             ry="0.87400001"
+             style="fill:#dfdbcc"
+             transform="matrix(-1,0,0,1,107.031,0)"
+             id="ellipse10"
+             inkscape:label="screw" />
+          <ellipse
+             cx="34.519001"
+             cy="41.400002"
+             class="fills"
+             rx="0.82800001"
+             ry="0.87400001"
+             style="fill:#dfdbcc"
+             transform="matrix(-1,0,0,1,69.039,0)"
+             id="ellipse11"
+             inkscape:label="screw" />
+          <path
+             d="M 44,10.875 A 0.51,0.51 0 0 0 44.498,10.35 V 6.4 A 0.51,0.51 0 0 0 44,5.875 0.51,0.51 0 0 0 43.502,6.4 v 3.95 c 0,0.29 0.223,0.525 0.498,0.525"
+             class="fills"
+             style="fill:#099c1b;fill-opacity:1"
+             id="path11"
+             inkscape:label="on" />
+          <path
+             d="m 44,42.125 c 1.306,0 2.369,-1.122 2.369,-2.5 0,-1.378 -1.063,-2.5 -2.369,-2.5 -1.306,0 -2.369,1.122 -2.369,2.5 0,1.378 1.063,2.5 2.369,2.5 m 0,-4.05 c 0.81,0 1.47,0.695 1.47,1.55 0,0.855 -0.66,1.55 -1.47,1.55 -0.81,0 -1.47,-0.695 -1.47,-1.55 0,-0.855 0.66,-1.55 1.47,-1.55"
+             class="fills"
+             style="fill:#b61922;fill-opacity:1"
+             id="path12"
+             inkscape:label="off" />
+          <path
+             d="m 49.42,13.891 v 19.837 c 0,0.63 -0.485,1.14 -1.081,1.14 H 39.66 c -0.596,0 -1.08,-0.51 -1.08,-1.14 V 13.89 c 0,-0.63 0.484,-1.141 1.08,-1.141 h 8.678 c 0.596,0 1.08,0.511 1.08,1.141"
+             class="fills"
+             style="fill:#9a9a9a;fill-opacity:1"
+             id="path13"
+             inkscape:label="gap" />
+        </g>
+        <g
+           class="frame-children"
+           id="g25"
+           inkscape:label="toggle">
+          <path
+             d="m 49.419,24.569 v 9.159 c 0,0.63 -0.485,1.14 -1.081,1.14 H 39.66 c -0.597,0 -1.082,-0.51 -1.082,-1.14 v -9.159 c 0,-0.63 0.485,-1.141 1.082,-1.141 h 8.677 c 0.596,0 1.08,0.511 1.08,1.141"
+             class="fills"
+             style="fill:#ffffff;stroke-miterlimit:10"
+             id="path17" />
+          <path
+             d="m 49.419,24.569 v 9.159 c 0,0.63 -0.485,1.14 -1.081,1.14 H 39.66 c -0.597,0 -1.082,-0.51 -1.082,-1.14 v -9.159 c 0,-0.63 0.485,-1.141 1.082,-1.141 h 8.677 c 0.596,0 1.08,0.511 1.08,1.141"
+             class="stroke-shape"
+             style="fill:none;stroke:#e7eced;stroke-width:2;stroke-miterlimit:10;stroke-opacity:1"
+             id="path18" />
+          <path
+             d="m 42.916,30.292 h 2.168"
+             class="stroke-shape"
+             style="fill:none;stroke:#afb6bb;stroke-width:1;stroke-linecap:round;stroke-miterlimit:10;stroke-opacity:1"
+             id="path20" />
+          <path
+             d="m 42.916,29.148 h 2.168"
+             class="stroke-shape"
+             style="fill:none;stroke:#afb6bb;stroke-width:1;stroke-linecap:round;stroke-miterlimit:10;stroke-opacity:1"
+             id="path22" />
+          <path
+             d="m 42.916,28.004 h 2.168"
+             class="stroke-shape"
+             style="fill:none;stroke:#afb6bb;stroke-width:1;stroke-linecap:round;stroke-miterlimit:10;stroke-opacity:1"
+             id="path24" />
+        </g>
+      </g>
+      <path
+         d="m 66,24 -6,3.464 v -6.928 z"
+         class="fills"
+         style="fill:#ff2330;fill-opacity:1"
+         id="path33"
+         inkscape:label="powerOutIndicator" />
+      <circle
+         cx="76"
+         cy="24"
+         r="8"
+         class="fills"
+         style="fill:#131313;fill-opacity:1"
+         id="circle37"
+         inkscape:label="powerOut" />
+    </g>
+  </g>
+</svg>

@@ -11,6 +11,7 @@
     "test": "vitest"
   },
   "dependencies": {
+    "@emotion/react": "^11.14.0",
     "@keplar-404/react-timeline-editor": "^1.0.11",
     "@keplar-404/timeline-engine": "^1.0.11",
     "@tailwindcss/vite": "^4.3.3",
@@ -24,6 +25,7 @@
     "nanoid": "^6.0.0",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
+    "react-svg": "^19.1.6",
     "rooks": "^9.9.0",
     "spessasynth_core": "^4.3.22",
     "spessasynth_lib": "^4.3.14",

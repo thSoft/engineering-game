@@ -4,8 +4,8 @@ import { getPortPath, PortDescriptor } from "../engine/parts.tsx";
 
 import { getPortColor } from "./utils.tsx";
 
-interface Props {
-  children: ReactNode;
+interface Props extends React.HTMLAttributes<HTMLDivElement> {
+  children?: ReactNode;
   portDescriptor: PortDescriptor<any>;
   position?: Position;
 }
@@ -24,10 +24,10 @@ export function PortView({ children, portDescriptor, position }: Props) {
         cursor: "pointer",
         border: `2px solid ${getPortColor(portDescriptor.definition.kind, portDescriptor.visualState)}`,
         background: "none",
-        width: "16px",
-        height: "16px",
-        position: "static",
         transform: "none",
+        position: "static",
+        width: "100%",
+        height: "100%",
       }}
     >
       {children}

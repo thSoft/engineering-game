@@ -78,7 +78,10 @@ export default function AcceptanceView({ levelState, levelDefinition, testCaseRe
               const label = action.data.value.getStepLabel(levelState);
               const { icon, color } = action.data.value.getDisplayInfo();
               return (
-                <tr style={{ borderBottom: `1px solid ${borderColor}`, color: color ?? "inherit" }}>
+                <tr
+                  key={action.id}
+                  style={{ borderBottom: `1px solid ${borderColor}`, color: color ?? "inherit" }}
+                >
                   <td>{icon}</td>
                   <td>{label}</td>
                 </tr>

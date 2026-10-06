@@ -1,21 +1,18 @@
 import { defineLevel } from "../../engine/levels.ts";
-import { createPartInstance, inPort, PartInstance } from "../../engine/parts.tsx";
+import { createPartInstance, inPort } from "../../engine/parts.tsx";
 import { action } from "../../engine/simulation.ts";
 import { soundAssertion } from "../../parts/pipe/pipe.tsx";
 import { pitches } from "../../parts/pitches.ts";
-import { gap } from "../../parts/windchest/WindchestView.tsx";
-
-const padding = gap + 16;
 
 const windSupply = createPartInstance("WindSupply", "windSupply", {
-  x: padding * (Object.keys(pitches).length + 1),
-  y: -40,
+  x: 1200,
+  y: -80,
 });
 
-const organKeys: PartInstance<"OrganKey">[] = Object.entries(pitches).map(
-  ([pitchId, pitch], index) =>
-    createPartInstance("OrganKey", `key${pitchId}`, { x: padding * index, y: 0 }, pitch.name),
-);
+const organKeyboard = createPartInstance("OrganKeyboard", "organKeyboard", {
+  x: 0,
+  y: 0,
+});
 
 type MelodyNote = {
   note?: keyof typeof pitches;
@@ -42,8 +39,7 @@ function getMelodyNoteActionsAndAssertions(
   bpm: number,
   hasNextNote: boolean,
 ) {
-  const index = Object.keys(pitches).indexOf(pitchId);
-  const pressed = inPort(organKeys[index], "pressed");
+  const pressed = inPort(organKeyboard, pitchId);
   const endTime = time + toAbsoluteTime(bpm, duration);
   return {
     actions: [action(time, pressed, true), action(endTime, pressed, false)],
@@ -96,7 +92,7 @@ const { actions, assertions } = getMelodyActionsAndAssertions(bachToccataIntro, 
 export const Organ1Stop = defineLevel("organ1Stop", {
   label: "Organ with One Stop",
   availableParts: ["Pipe", "Windchest"],
-  fixedParts: [windSupply, ...organKeys],
+  fixedParts: [windSupply, organKeyboard],
   exposedPorts: [],
   testCase: {
     input: {
