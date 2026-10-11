@@ -5,7 +5,7 @@ import { soundAssertion } from "../../parts/pipe/pipe.tsx";
 import { pitches } from "../../parts/pitches.ts";
 
 const windSupply = createPartInstance("WindSupply", "windSupply", {
-  x: 1200,
+  x: 640,
   y: -80,
 });
 

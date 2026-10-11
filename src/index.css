@@ -9,3 +9,7 @@
 .react-flow__node {
   z-index: -1 !important;
 }
+
+.ant-slider .ant-slider-handle::after {
+    display: none;
+}

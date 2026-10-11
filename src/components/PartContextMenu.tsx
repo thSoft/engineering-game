@@ -14,7 +14,7 @@ export default function PartContextMenu({ partId, children }: Props) {
   return (
     <Dropdown
       {...dropdownProps}
-      trigger={["click"]}
+      trigger={["contextMenu"]}
       menu={{
         items: [
           {

@@ -25,7 +25,7 @@ function createActionTriggered(name: string): PortDefinition<boolean> {
   };
 }
 
-export const actionTriggeredPortPrefix = "actionTriggered" as const;
+export const actionTriggeredPortPrefix = "actionTriggered_" as const;
 
 export const actionTriggeredPorts = mapValuesWithKey(pitches, actionTriggeredPortPrefix, (pitch) =>
   createActionTriggered(pitch.name),
