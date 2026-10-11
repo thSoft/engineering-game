@@ -143,8 +143,8 @@ export function TimelineView({ levelState, levelDefinition, playing, setPlaying 
                     fontSize: "12px",
                   }}
                 >
-                  {row.lanePath.map((segment) => (
-                    <td>{segment}</td>
+                  {row.lanePath.map((segment, index) => (
+                    <td key={index}>{segment}</td>
                   ))}
                 </tr>
               ))}

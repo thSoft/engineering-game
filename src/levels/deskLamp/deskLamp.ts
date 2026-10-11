@@ -15,14 +15,14 @@ export const DeskLamp = defineLevel("deskLamp", {
     input: {
       startTime: 0,
       actions: [
-        action(1, inPort(plug, "plugged"), true),
-        action(2, inPort(switchPart, "toggle"), true),
-        action(3, inPort(switchPart, "toggle"), false),
+        action(0.5, inPort(plug, "plugged"), true),
+        action(1, inPort(switchPart, "toggle"), true),
+        action(2, inPort(switchPart, "toggle"), false),
       ],
     },
     assertions: [
-      portAssertion(2, outPort(lightbulb, "lit"), true),
-      portAssertion(3, outPort(lightbulb, "lit"), false),
+      portAssertion(1, outPort(lightbulb, "lit"), true),
+      portAssertion(2, outPort(lightbulb, "lit"), false),
     ],
   },
   userName: "Ada",
