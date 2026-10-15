@@ -27,46 +27,55 @@ export function PipeView({ air, sound, length, partIndex, isExperiment }: Props)
     <div>
       <InteractiveSvg
         props={{ src: holzgedacktPipeImg }}
-        styles={{
-          pipe: `
+        styles={[
+          {
+            label: "pipe",
+            declarations: `
             transform: scaleY(${deferredLength / maxLengthValue});
             transform-origin: bottom;
             transform-box: fill-box;`,
-        }}
-        overlays={{
-          airIn: () => <PortView key="air" portDescriptor={air} position={Position.Bottom} />,
-          tunableLength: () => (
-            <Slider
-              step={0.5}
-              className="nodrag" // Prevent React Flow handling drag
-              min={minLengthValue}
-              max={maxLengthValue}
-              value={deferredLength}
-              onChange={(e) => length.setValue(e)}
-              tooltip={{ formatter: (value) => `${value} cm` }}
-              vertical
-              style={{ height: "100%" }}
-              styles={{
-                handle: {
-                  background: `url("${holzgedacktTuningCapImg}") no-repeat center`,
-                  backgroundColor: "transparent",
-                  border: "none",
-                  backgroundSize: "contain",
-                  cursor: "ns-resize",
-                  width: "32px",
-                  height: "18px",
-                  transform: "translateX(0) translateY(0)",
-                },
-                rail: {
-                  background: "transparent",
-                },
-                track: {
-                  background: "transparent",
-                },
-              }}
-            />
-          ),
-        }}
+          },
+        ]}
+        overlays={[
+          {
+            label: "airIn",
+            render: () => <PortView key="air" portDescriptor={air} position={Position.Bottom} />,
+          },
+          {
+            label: "tunableLength",
+            render: () => (
+              <Slider
+                step={0.5}
+                className="nodrag" // Prevent React Flow handling drag
+                min={minLengthValue}
+                max={maxLengthValue}
+                value={deferredLength}
+                onChange={(e) => length.setValue(e)}
+                tooltip={{ formatter: (value) => `${value} cm` }}
+                vertical
+                style={{ height: "100%" }}
+                styles={{
+                  handle: {
+                    background: `url("${holzgedacktTuningCapImg}") no-repeat center`,
+                    backgroundColor: "transparent",
+                    border: "none",
+                    backgroundSize: "contain",
+                    cursor: "ns-resize",
+                    width: "32px",
+                    height: "18px",
+                    transform: "translateX(0) translateY(0)",
+                  },
+                  rail: {
+                    background: "transparent",
+                  },
+                  track: {
+                    background: "transparent",
+                  },
+                }}
+              />
+            ),
+          },
+        ]}
       />
       {isExperiment && (
         <PipeSound

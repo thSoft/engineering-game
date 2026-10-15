@@ -1,8 +1,10 @@
 import { Position } from "@xyflow/react";
-import { Flex } from "antd";
-import socketImg from "../../components/parts/shared/socket.svg";
 import { PortView } from "../../components/PortView.tsx";
 import { PortDescriptor } from "../../engine/parts.tsx";
+import { InteractiveSvg } from "../InteractiveSvg.tsx";
+import windchestImg from "./windchest.svg";
+import { airOutPortPrefix } from "./windchest.tsx";
+import { getPulledDownStyle } from "../utils.tsx";
 
 interface Props {
   airIn: PortDescriptor<boolean>;
@@ -10,30 +12,38 @@ interface Props {
   airOuts: Record<string, PortDescriptor<boolean>>;
 }
 
-export const gap = 32;
-
 export function WindchestView({ airIn, valves, airOuts }: Props) {
+  const airInPort = {
+    label: "airIn",
+    render: () => <PortView key="airIn" portDescriptor={airIn} position={Position.Right} />,
+  };
+  const valvePorts = Object.entries(valves).map(([parentLabel, portDescriptor]) => ({
+    label: "hook",
+    parentLabel,
+    render: () => (
+      <PortView key={parentLabel} portDescriptor={portDescriptor} position={Position.Bottom} />
+    ),
+  }));
+  const airOutPorts = Object.entries(airOuts).map(([portLabel, portDescriptor]) => {
+    const parentLabel = portLabel.slice(airOutPortPrefix.length); // Remove the prefix
+    return {
+      label: "pipeHole",
+      parentLabel,
+      render: () => (
+        <PortView key={portLabel} portDescriptor={portDescriptor} position={Position.Top} />
+      ),
+    };
+  });
   return (
-    <Flex align="center">
-      <Flex vertical align="end">
-        <Flex gap={gap}>
-          {Object.entries(airOuts).map(([name, portDescriptor]) => (
-            <PortView key={name} portDescriptor={portDescriptor} position={Position.Top}>
-              <img src={socketImg} alt="Socket" style={{ width: 16, height: 16 }} />
-            </PortView>
-          ))}
-        </Flex>
-        <Flex gap={gap}>
-          {Object.entries(valves).map(([name, portDescriptor]) => (
-            <PortView key={name} portDescriptor={portDescriptor} position={Position.Bottom}>
-              <img src={socketImg} alt="Socket" style={{ width: 16, height: 16 }} />
-            </PortView>
-          ))}
-        </Flex>
-      </Flex>
-      <PortView key="airIn" portDescriptor={airIn} position={Position.Right}>
-        <img src={socketImg} alt="Socket" style={{ width: 16, height: 16 }} />
-      </PortView>
-    </Flex>
+    <InteractiveSvg
+      props={{ src: windchestImg }}
+      styles={Object.entries(valves).map(([parentLabel, { value }]) => ({
+        label: "movingParts",
+        parentLabel,
+        declarations: getPulledDownStyle(value),
+      }))}
+      overlays={[airInPort, ...valvePorts, ...airOutPorts]}
+      boundingBoxDependencies={[valves]}
+    />
   );
 }

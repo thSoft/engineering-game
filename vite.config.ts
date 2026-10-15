@@ -6,6 +6,7 @@ import { createRequire } from "node:module";
 import { dirname, resolve } from "node:path";
 import { defineConfig, type Plugin } from "vite";
 import checker from "vite-plugin-checker";
+import { flattenSvgUse } from "./build/flattenSvgUse.ts";
 
 function copySpessaSynthProcessor(): Plugin {
   return {
@@ -29,6 +30,7 @@ function copySpessaSynthProcessor(): Plugin {
 // https://vitejs.dev/config/
 export default defineConfig({
   plugins: [
+    flattenSvgUse(),
     react(),
     babel({
       presets: [reactCompilerPreset()],

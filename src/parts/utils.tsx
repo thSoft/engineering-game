@@ -5,9 +5,13 @@ export function getIndicatorStyle(descriptor: PortDescriptor<boolean>) {
 }
 
 export function visibleIf(descriptor: PortDescriptor<boolean>) {
-  return `visibility: ${descriptor.value ? "visible" : "hidden"}`;
+  return `visibility: ${descriptor.value ? "visible" : "hidden"};`;
 }
 
 export function hiddenIf(descriptor: PortDescriptor<boolean>) {
-  return `visibility: ${!descriptor.value ? "visible" : "hidden"}`;
+  return `visibility: ${!descriptor.value ? "visible" : "hidden"};`;
+}
+
+export function getPulledDownStyle(value: boolean) {
+  return `translate: 0 ${value ? 8 : 0}px;`;
 }

@@ -1,7 +1,6 @@
 import { useNodeId, useUpdateNodeInternals } from "@xyflow/react";
-import { Props, ReactSVG } from "react-svg";
+import { Props as ReactSVGProps, ReactSVG } from "react-svg";
 import {
-  BaseSyntheticEvent,
   EventHandler,
   MouseEventHandler,
   PointerEventHandler,
@@ -10,22 +9,27 @@ import {
   useEffect,
   useState,
 } from "react";
-import _ from "lodash";
 import { css } from "@emotion/react";
 
 type ReactSvgTarget = SVGSVGElement | HTMLSpanElement | HTMLDivElement;
 
-interface _Props {
+interface LabelTarget {
+  label: string;
+  /* Prefix added to cloned element labels by the SVG loader. */
+  parentLabel?: string;
+}
+
+interface Props {
   /* ReactSVG props */
-  props: Props;
+  props: ReactSVGProps;
   /* Label to CSS */
-  styles?: Record<string, string>;
+  styles?: (LabelTarget & { declarations: string })[];
   /* Label to click handler */
-  onClicks?: Record<string, MouseEventHandler<ReactSvgTarget>>;
+  onClicks?: (LabelTarget & { handler: MouseEventHandler<ReactSvgTarget> })[];
   /* Label to drag handler */
-  onDrags?: Record<string, PointerEventHandler<ReactSvgTarget>>;
+  onDrags?: (LabelTarget & { handler: PointerEventHandler<ReactSvgTarget> })[];
   /* Label to overlay renderer */
-  overlays?: Record<string, () => ReactNode>;
+  overlays?: (LabelTarget & { render: () => ReactNode })[];
   /* Anything the bounding boxes depend on */
   boundingBoxDependencies?: any[];
 }
@@ -39,18 +43,16 @@ type BoundingBox = {
 
 export function InteractiveSvg({
   props,
-  styles = {},
-  onClicks = {},
-  onDrags = {},
-  overlays = {},
+  styles = [],
+  onClicks = [],
+  onDrags = [],
+  overlays = [],
   boundingBoxDependencies = [],
-}: _Props) {
+}: Props) {
   const [boundingBoxes, setBoundingBoxes] = useState<Record<string, BoundingBox>>({});
   const nodeId = useNodeId();
   const updateNodeInternals = useUpdateNodeInternals();
-  const [dragState, setDragState] = useState<{
-    label: string;
-  } | null>(null);
+  const [dragState, setDragState] = useState<LabelTarget | null>(null);
   const [ownerSVGElement, setOwnerSVGElement] = useState<SVGSVGElement | null>(null);
   useEffect(() => {
     if (ownerSVGElement !== null) {
@@ -64,14 +66,18 @@ export function InteractiveSvg({
     target.setPointerCapture(event.pointerId);
     handle(
       event,
-      _.mapValues(onDrags, (_, label) => () => {
-        setDragState({ label });
-      }),
+      onDrags.map(({ label, parentLabel }) => ({
+        label,
+        parentLabel,
+        handler: () => {
+          setDragState({ label, parentLabel });
+        },
+      })),
     );
   };
   const handlePointerMove = (event: React.PointerEvent<ReactSvgTarget>) => {
     if (dragState !== null) {
-      onDrags[dragState.label]?.(event);
+      onDrags.find((target) => sameTarget(target, dragState))?.handler(event);
     }
   };
   const handlePointerUp = (_: React.PointerEvent<ReactSvgTarget>) => {
@@ -81,19 +87,22 @@ export function InteractiveSvg({
     <span style={{ position: "relative" }}>
       <ReactSVG
         {...props}
-        css={Object.entries(styles).map(([label, declarations]) => style(label, declarations))}
+        css={styles.flatMap(({ label, parentLabel, declarations }) =>
+          style(getTargetLabel({ label, parentLabel }), declarations),
+        )}
         onClick={(event) => handle(event, onClicks)}
         onPointerDown={handlePointerDown}
         onPointerUp={handlePointerUp}
         onPointerMove={handlePointerMove}
         afterInjection={setOwnerSVGElement}
       />
-      {_.map(overlays, (renderOverlay, label) => {
-        const rect = boundingBoxes[label];
+      {overlays.map(({ label, parentLabel, render }) => {
+        const targetLabel = getTargetLabel({ label, parentLabel });
+        const rect = boundingBoxes[targetLabel];
         if (!rect) return null;
         return (
           <span
-            key={label}
+            key={targetLabel}
             style={{
               position: "absolute",
               left: `${rect.x}px`,
@@ -102,7 +111,7 @@ export function InteractiveSvg({
               height: `${rect.height}px`,
             }}
           >
-            {renderOverlay()}
+            {render()}
           </span>
         );
       })}
@@ -112,14 +121,12 @@ export function InteractiveSvg({
   function updateBoundingBoxes(svg: SVGSVGElement) {
     setBoundingBoxes(
       Object.fromEntries(
-        Object.keys(overlays).flatMap((label) => {
-          const element = svg.querySelector(labelSelector(label));
-          if (element instanceof SVGGraphicsElement) {
-            const boundingBox = getTransformedBBox(element);
-            return [[label, boundingBox]];
-          } else {
-            return [];
-          }
+        overlays.flatMap(({ label, parentLabel }) => {
+          const targetLabel = getTargetLabel({ label, parentLabel });
+          const element = svg.querySelector(labelSelector(targetLabel));
+          return element instanceof SVGGraphicsElement
+            ? [[targetLabel, getTransformedBBox(element)]]
+            : [];
         }),
       ),
     );
@@ -179,17 +186,24 @@ function style(label: string, declarations: string) {
 
 function handle<Event extends SyntheticEvent<any>>(
   event: Event,
-  handlers: Record<string, EventHandler<Event>>,
+  handlers: (LabelTarget & { handler: EventHandler<Event> })[],
 ) {
-  for (const [label, handler] of Object.entries(handlers)) {
-    if (targets(event, label)) {
+  for (const { label, parentLabel, handler } of handlers) {
+    if (
+      event.target instanceof Element &&
+      event.target.closest(labelSelector(getTargetLabel({ label, parentLabel })))
+    ) {
       handler(event);
     }
   }
 }
 
-function targets(event: BaseSyntheticEvent, label: string) {
-  return event.target instanceof Element && event.target.closest(labelSelector(label));
+function getTargetLabel({ label, parentLabel }: LabelTarget) {
+  return parentLabel ? `${parentLabel}_${label}` : label;
+}
+
+function sameTarget(a: LabelTarget, b: LabelTarget) {
+  return a.label === b.label && a.parentLabel === b.parentLabel;
 }
 
 function labelSelector(label: string) {

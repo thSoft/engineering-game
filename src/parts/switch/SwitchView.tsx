@@ -16,23 +16,35 @@ export function SwitchView({ powerIn, powerOut, toggle }: Props) {
   return (
     <InteractiveSvg
       props={{ src: switchImg }}
-      styles={{
-        powerInIndicator: getIndicatorStyle(powerIn),
-        toggle: `
+      styles={[
+        { label: "powerInIndicator", declarations: getIndicatorStyle(powerIn) },
+        {
+          label: "toggle",
+          declarations: `
           cursor: pointer;
           transition: transform ${transitionSettings};
           transform: ${toggle.value ? "translateY(-10px)" : "none"};`,
-        powerOutIndicator: getIndicatorStyle(powerOut),
-      }}
-      onClicks={{
-        toggle: () => {
-          toggle.setValue(!toggle.value);
         },
-      }}
-      overlays={{
-        powerIn: () => <PortView portDescriptor={powerIn} position={Position.Left} />,
-        powerOut: () => <PortView portDescriptor={powerOut} position={Position.Right} />,
-      }}
+        { label: "powerOutIndicator", declarations: getIndicatorStyle(powerOut) },
+      ]}
+      onClicks={[
+        {
+          label: "toggle",
+          handler: () => {
+            toggle.setValue(!toggle.value);
+          },
+        },
+      ]}
+      overlays={[
+        {
+          label: "powerIn",
+          render: () => <PortView portDescriptor={powerIn} position={Position.Left} />,
+        },
+        {
+          label: "powerOut",
+          render: () => <PortView portDescriptor={powerOut} position={Position.Right} />,
+        },
+      ]}
     />
   );
 }

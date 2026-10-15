@@ -4,31 +4,25 @@ import { mapValues, mapValuesWithKey } from "../../engine/utils.ts";
 import { pitches } from "../pitches.ts";
 import { OrganKeyboardView } from "./OrganKeyboardView.tsx";
 
-function createPressed(name: string): PortDefinition<boolean> {
-  return {
-    label: `${name} pressed`,
-    kind: "state",
-    schema: z.boolean(),
-    defaultValue: false,
-    renderAction: (value, partLabel) => (value ? `Press ${partLabel}` : `Release ${partLabel}`),
-  };
-}
-
-export const pressedPorts = mapValues(pitches, (pitch) => createPressed(pitch.name));
-
-function createActionTriggered(name: string): PortDefinition<boolean> {
-  return {
-    label: `${name} action triggered`,
-    kind: "flow",
-    schema: z.boolean(),
-    defaultValue: false,
-  };
-}
+export const pressedPorts = mapValues(pitches, (pitch): PortDefinition<boolean> => ({
+  label: `${pitch.name} pressed`,
+  kind: "state",
+  schema: z.boolean(),
+  defaultValue: false,
+  renderAction: (value, partLabel) => (value ? `Press ${partLabel}` : `Release ${partLabel}`),
+}));
 
 export const actionTriggeredPortPrefix = "actionTriggered_" as const;
 
-export const actionTriggeredPorts = mapValuesWithKey(pitches, actionTriggeredPortPrefix, (pitch) =>
-  createActionTriggered(pitch.name),
+export const actionTriggeredPorts = mapValuesWithKey(
+  pitches,
+  actionTriggeredPortPrefix,
+  (pitch): PortDefinition<boolean> => ({
+    label: `${pitch.name} action triggered`,
+    kind: "flow",
+    schema: z.boolean(),
+    defaultValue: false,
+  }),
 );
 
 export const OrganKeyboard = definePart({
@@ -38,13 +32,8 @@ export const OrganKeyboard = definePart({
   outputPorts: actionTriggeredPorts,
   color: "#ffffff",
   description: "",
-  render: (pressedPortDescriptors, _, actionTriggeredPortDescriptors) => {
-    return (
-      <OrganKeyboardView
-        pressed={pressedPortDescriptors}
-        actionTriggered={actionTriggeredPortDescriptors}
-      />
-    );
+  render: (pressed, _, actionTriggered) => {
+    return <OrganKeyboardView pressed={pressed} actionTriggered={actionTriggered} />;
   },
   compute: (inputs) => mapValuesWithKey(pitches, actionTriggeredPortPrefix, (__, id) => inputs[id]),
 });

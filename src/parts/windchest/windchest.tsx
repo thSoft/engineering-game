@@ -4,43 +4,41 @@ import { mapValues, mapValuesWithKey } from "../../engine/utils.ts";
 import { pitches } from "../pitches.ts";
 import { WindchestView } from "./WindchestView.tsx";
 
-function createValve(name: string): PortDefinition<boolean> {
-  return {
-    label: name,
+const airInPort: PortDefinition<boolean> = {
+  label: "air in",
+  kind: "flow",
+  schema: z.boolean(),
+  defaultValue: false,
+};
+
+const valvePorts = mapValues(pitches, (pitch): PortDefinition<boolean> => ({
+  label: pitch.name,
+  kind: "flow",
+  schema: z.boolean(),
+  defaultValue: false,
+}));
+
+export const airOutPortPrefix = "air_" as const;
+
+const airOutPorts = mapValuesWithKey(
+  pitches,
+  airOutPortPrefix,
+  (pitch): PortDefinition<boolean> => ({
+    label: pitch.name,
     kind: "flow",
     schema: z.boolean(),
     defaultValue: false,
-  };
-}
-
-const valves = mapValues(pitches, (pitch) => createValve(pitch.name));
-
-function createAirOut(name: string): PortDefinition<boolean> {
-  return {
-    label: name,
-    kind: "flow",
-    schema: z.boolean(),
-    defaultValue: false,
-  };
-}
-
-const airOutPortPrefix = "air" as const;
-
-const airOuts = mapValuesWithKey(pitches, airOutPortPrefix, (pitch) => createAirOut(pitch.name));
+  }),
+);
 
 export const Windchest = definePart({
   label: "Windchest",
   parameters: {},
   inputPorts: {
-    airIn: {
-      label: "air in",
-      kind: "flow",
-      schema: z.boolean(),
-      defaultValue: false,
-    },
-    ...valves,
+    airIn: airInPort,
+    ...valvePorts,
   },
-  outputPorts: airOuts,
+  outputPorts: airOutPorts,
   color: "#99ddff",
   description: "Controls the flow of air to the pipes",
   render: ({ airIn, ...valves }, _, airOuts) => {

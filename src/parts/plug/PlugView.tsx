@@ -15,21 +15,30 @@ export function PlugView({ plugged, powerOut }: Props) {
   return (
     <InteractiveSvg
       props={{ src: plugImg }}
-      styles={{
-        connector: `
+      styles={[
+        {
+          label: "connector",
+          declarations: `
           cursor: pointer;
           transition: transform ${transitionSettings};
           transform: ${plugged.value ? "translateX(-13px)" : "none"};`,
-        plugged: getIndicatorStyle(plugged),
-      }}
-      onClicks={{
-        connector: () => {
-          plugged.setValue(!plugged.value);
         },
-      }}
-      overlays={{
-        powerOut: () => <PortView portDescriptor={powerOut} position={Position.Right} />,
-      }}
+        { label: "plugged", declarations: getIndicatorStyle(plugged) },
+      ]}
+      onClicks={[
+        {
+          label: "connector",
+          handler: () => {
+            plugged.setValue(!plugged.value);
+          },
+        },
+      ]}
+      overlays={[
+        {
+          label: "powerOut",
+          render: () => <PortView portDescriptor={powerOut} position={Position.Right} />,
+        },
+      ]}
     />
   );
 }

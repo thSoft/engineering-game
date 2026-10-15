@@ -14,14 +14,17 @@ export function LightbulbView({ powerIn, lit }: Props) {
   return (
     <InteractiveSvg
       props={{ src: lightbulbImg }}
-      styles={{
-        lit: visibleIf(lit),
-        unlit: hiddenIf(lit),
-        litIndicator: getIndicatorStyle(powerIn),
-      }}
-      overlays={{
-        powerIn: () => <PortView portDescriptor={powerIn} position={Position.Left} />,
-      }}
+      styles={[
+        { label: "lit", declarations: visibleIf(lit) },
+        { label: "unlit", declarations: hiddenIf(lit) },
+        { label: "litIndicator", declarations: getIndicatorStyle(powerIn) },
+      ]}
+      overlays={[
+        {
+          label: "powerIn",
+          render: () => <PortView portDescriptor={powerIn} position={Position.Left} />,
+        },
+      ]}
     />
   );
 }
