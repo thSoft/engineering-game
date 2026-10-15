@@ -1,19 +1,19 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <svg
-   width="518.85431"
-   height="215.173"
-   id="screenshot-e8875ea4-8fa4-80be-8008-ba8c253b60a8"
-   viewBox="0 0 518.85431 215.17301"
-   fill="none"
-   version="1.1"
-   sodipodi:docname="organKeyboard.svg"
-   inkscape:version="1.4.4 (dcaf3e7, 2026-05-05)"
-   xml:space="preserve"
-   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
-   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
-   xmlns:xlink="http://www.w3.org/1999/xlink"
-   xmlns="http://www.w3.org/2000/svg"
-   xmlns:svg="http://www.w3.org/2000/svg"><defs
+        width="518.85431"
+        height="220"
+        id="screenshot-e8875ea4-8fa4-80be-8008-ba8c253b60a8"
+        viewBox="0 0 518.85431 220"
+        fill="none"
+        version="1.1"
+        sodipodi:docname="organKeyboard.svg"
+        inkscape:version="1.4.4 (dcaf3e7, 2026-05-05)"
+        xml:space="preserve"
+        xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+        xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+        xmlns:xlink="http://www.w3.org/1999/xlink"
+        xmlns="http://www.w3.org/2000/svg"
+><defs
    id="defs200"><pattern
    inkscape:collect="always"
    xlink:href="#fill-0-render-28"
@@ -573,16 +573,16 @@
    inkscape:pagecheckerboard="0"
    inkscape:deskcolor="#d1d1d1"
    showgrid="false"
-   inkscape:zoom="0.84109249"
-   inkscape:cx="225.89668"
-   inkscape:cy="89.764206"
-   inkscape:window-width="1920"
+   inkscape:zoom="1.7471005"
+   inkscape:cx="123.06104"
+   inkscape:cy="147.95943"
+   inkscape:window-width="1728"
    inkscape:window-height="698"
    inkscape:window-x="0"
-   inkscape:window-y="31"
+   inkscape:window-y="68"
    inkscape:window-maximized="0"
-   inkscape:current-layer="screenshot-e8875ea4-8fa4-80be-8008-ba8c253b60a8" />
-    
+   inkscape:current-layer="g37" />
+
     <g
    id="g41"
    inkscape:label="action_as4"><use
@@ -592,14 +592,7 @@
    inkscape:label="actionTriggered_as4"
    x="0"
    y="0" />
-        <use
-   xlink:href="#symbol37"
-   id="use53"
-   inkscape:label="tracker_as4"
-   transform="translate(367.85388,-265.86673)"
-   style="fill:none"
-   x="0"
-   y="0" />
+
         <g
    id="shape-ff5d414d-6088-8044-8008-ba2db54b75a5"
    style="fill:none"
@@ -633,14 +626,7 @@
    inkscape:label="actionTriggered_gs4"
    x="0"
    y="0" />
-        <use
-   xlink:href="#symbol37"
-   id="use52-6-3-4-3-6"
-   inkscape:label="tracker_gs4"
-   transform="translate(303.37833,-265.92348)"
-   style="fill:none"
-   x="0"
-   y="0" />
+
         <g
    id="shape-ff5d414d-6088-8044-8008-ba2db54b75a6"
    style="fill:none"
@@ -674,14 +660,7 @@
    inkscape:label="actionTriggered_fs4"
    x="0"
    y="0" />
-        <use
-   xlink:href="#symbol37"
-   id="use52-6-3-4"
-   inkscape:label="tracker_fs4"
-   transform="translate(238.37644,-265.92348)"
-   style="fill:none"
-   x="0"
-   y="0" />
+
         <g
    id="shape-ff5d414d-6088-8044-8008-ba2db54b75a7"
    style="fill:none"
@@ -715,14 +694,7 @@
    inkscape:label="actionTriggered_ds4"
    x="0"
    y="0" />
-        <use
-   xlink:href="#symbol37"
-   id="use52"
-   inkscape:label="tracker_ds4"
-   transform="translate(108.37268,-265.92348)"
-   style="fill:none"
-   x="0"
-   y="0" />
+
         <g
    class="frame-children"
    id="g14"
@@ -757,14 +729,7 @@
    inkscape:label="actionTriggered_cs4"
    x="0"
    y="0" />
-        <use
-   xlink:href="#symbol37"
-   id="use51"
-   inkscape:label="tracker_cs4"
-   transform="translate(43.370791,-265.92348)"
-   style="fill:none"
-   x="0"
-   y="0" />
+
         <g
    id="shape-ff5d414d-6088-8044-8008-ba2db54b75aa"
    style="fill:none"
@@ -798,14 +763,7 @@
    inkscape:label="actionTriggered_c5"
    x="0"
    y="0" />
-        <use
-   xlink:href="#symbol37"
-   id="use54"
-   inkscape:label="tracker_c5"
-   transform="translate(465.9212,-265.86673)"
-   style="fill:none"
-   x="0"
-   y="0" />
+
         <g
    id="g1"
    inkscape:label="c5"
@@ -837,14 +795,7 @@
    inkscape:label="actionTriggered_b4"
    x="0"
    y="0" />
-        <use
-   xlink:href="#symbol37"
-   id="use53-2"
-   inkscape:label="tracker_b4"
-   transform="translate(400.87717,-265.92348)"
-   style="fill:none"
-   x="0"
-   y="0" />
+
         <g
    class="frame-container-wrapper"
    id="g102"
@@ -873,14 +824,7 @@
    inkscape:label="actionTriggered_a4"
    x="0"
    y="0" />
-        <use
-   xlink:href="#symbol37"
-   id="use52-6-3-4-3-6-7"
-   inkscape:label="tracker_a4"
-   transform="translate(335.87131,-265.92348)"
-   style="fill:none"
-   x="0"
-   y="0" />
+
         <g
    id="shape-ff5d414d-6088-8044-8008-ba2db67c106e"
    style="fill:none"
@@ -908,14 +852,7 @@
    inkscape:label="actionTriggered_g4"
    x="0"
    y="0" />
-        <use
-   xlink:href="#symbol37"
-   id="use52-6-3-4-3"
-   inkscape:label="tracker_g4"
-   transform="translate(270.87739,-265.92348)"
-   style="fill:none"
-   x="0"
-   y="0" />
+
         <g
    id="shape-ff5d414d-6088-8044-8008-ba2db67c106f"
    style="fill:none"
@@ -943,14 +880,7 @@
    inkscape:label="actionTriggered_f4"
    x="0"
    y="0" />
-        <use
-   xlink:href="#symbol37"
-   id="use52-6-3"
-   inkscape:label="tracker_f4"
-   transform="translate(205.86754,-265.92348)"
-   style="fill:none"
-   x="0"
-   y="0" />
+
         <g
    id="shape-ff5d414d-6088-8044-8008-ba2db67c1070"
    style="fill:none"
@@ -978,14 +908,7 @@
    inkscape:label="actionTriggered_e4"
    x="0"
    y="0" />
-        <use
-   xlink:href="#symbol37"
-   id="use52-6"
-   inkscape:label="tracker_e4"
-   transform="translate(140.86566,-265.92348)"
-   style="fill:none"
-   x="0"
-   y="0" />
+
         <g
    id="shape-ff5d414d-6088-8044-8008-ba2db67c1071"
    style="fill:none"
@@ -1013,14 +936,7 @@
    inkscape:label="actionTriggered_d4"
    x="0"
    y="0" />
-        <use
-   xlink:href="#symbol37"
-   id="use51-0"
-   inkscape:label="tracker_d4"
-   transform="translate(75.909898,-265.86673)"
-   style="fill:none"
-   x="0"
-   y="0" />
+
         <g
    class="frame-container-shadows"
    id="g65"
@@ -1049,13 +965,7 @@
    inkscape:label="actionTriggered_c4"
    x="0"
    y="0" />
-        <use
-   xlink:href="#symbol37"
-   id="use37"
-   inkscape:label="tracker_c4"
-   x="0"
-   y="0"
-   transform="translate(10.866511,-265.92348)" />
+
         <g
    class="frame-children"
    id="g56"
@@ -1075,10 +985,10 @@
    fill="url(#fill-0-render-22)"
    id="path55"
    style="fill:url(#pattern2)" /></g></g><g
-   id="symbol37"
-   transform="translate(-10.866511,265.92348)"
-   inkscape:label="tracker"><title
-   id="title38">#tracker</title>
+   id="symbol1"
+   transform="translate(-2.4017772,265.79668)"
+   inkscape:label="action"><title
+   id="title37">#hook</title>
         <rect
    style="fill:#b8a17c;fill-opacity:1;stroke-width:1.25183"
    id="rect16"
@@ -1086,12 +996,8 @@
    height="91.659386"
    x="30.734192"
    y="24"
-   inkscape:label="tracker" /></g><g
-   id="symbol1"
-   transform="translate(-2.4017772,265.79668)"
-   inkscape:label="hook"><title
-   id="title37">#hook</title>
-        <path
+   inkscape:label="tracker"
+   transform="translate(-8.4647338,0.1268)" /><path
    style="fill:#e6e7e8;stroke-width:0.0649022"
    d="m 24.567172,16.820507 v 7.306295 h -2.297714 v -9.142881 c 0,-0.631401 0.51414,-1.142833 1.148858,-1.142833 3.223178,0 5.834544,-2.654288 5.742076,-5.8806281 -0.08558,-2.9788421 -2.582084,-5.4639791 -5.576596,-5.5480171 -2.918704,-0.08217 -5.370965,2.016619 -5.831679,4.7731701 -0.0896,0.534311 -0.528456,0.941152 -1.073048,0.941152 h -0.11492 c -0.685866,0 -1.193694,-0.593142 -1.090294,-1.2468851 0.657756,-4.165723 4.559316,-7.27488004 9.043341,-6.67998704 3.573008,0.47371 6.348096,3.20342104 6.858722,6.75314204 0.618645,4.3005542 -2.23056,8.1520092 -6.168302,9.0549032 -0.377942,0.08635 -0.640446,0.426837 -0.640446,0.812569"
    id="path3"

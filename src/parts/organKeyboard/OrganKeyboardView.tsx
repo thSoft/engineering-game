@@ -1,6 +1,6 @@
 import { PortDescriptors } from "../../engine/parts.tsx";
 import { actionTriggeredPorts, pressedPorts } from "./organKeyboard.tsx";
-import organKeyboardImg from "./OrganKeyboard.svg";
+import organKeyboardImg from "./organKeyboard.svg";
 import { InteractiveSvg } from "../InteractiveSvg.tsx";
 import { Position } from "@xyflow/react";
 import { PortView } from "../../components/PortView.tsx";
