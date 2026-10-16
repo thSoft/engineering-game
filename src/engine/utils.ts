@@ -36,3 +36,7 @@ export function mapValuesWithKey<
 
   return result as PrefixKeys<T, Prefix, R>;
 }
+
+export function keys<T extends object, K extends keyof T>(object: T): Array<K> {
+  return Object.keys(object) as Array<K>;
+}

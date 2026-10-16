@@ -13,6 +13,16 @@ export const Sound = z.optional(
 
 export type Sound = z.infer<typeof Sound>;
 
+const speedOfSound = 343.2;
+
+export function lengthToFrequency(length: any) {
+  return speedOfSound / (2 * (length / 100));
+}
+
+export function frequencyToLength(frequency: any) {
+  return (speedOfSound / (2 * frequency)) * 100;
+}
+
 export const Pipe = definePart({
   label: "Pipe",
   parameters: {
@@ -56,7 +66,7 @@ export const Pipe = definePart({
     );
   },
   compute: ({ air }, { length }) => ({
-    sound: air ? { frequency: 343.2 / (2 * (length / 100)) } : undefined,
+    sound: air ? { frequency: lengthToFrequency(length) } : undefined,
   }),
 });
 

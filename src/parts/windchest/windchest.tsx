@@ -4,14 +4,14 @@ import { mapValues, mapValuesWithKey } from "../../engine/utils.ts";
 import { pitches } from "../pitches.ts";
 import { WindchestView } from "./WindchestView.tsx";
 
-const airInPort: PortDefinition<boolean> = {
+export const airInPort: PortDefinition<boolean> = {
   label: "air in",
   kind: "flow",
   schema: z.boolean(),
   defaultValue: false,
 };
 
-const valvePorts = mapValues(pitches, (pitch): PortDefinition<boolean> => ({
+export const valvePorts = mapValues(pitches, (pitch): PortDefinition<boolean> => ({
   label: pitch.name,
   kind: "flow",
   schema: z.boolean(),
@@ -20,7 +20,7 @@ const valvePorts = mapValues(pitches, (pitch): PortDefinition<boolean> => ({
 
 export const airOutPortPrefix = "air_" as const;
 
-const airOutPorts = mapValuesWithKey(
+export const airOutPorts = mapValuesWithKey(
   pitches,
   airOutPortPrefix,
   (pitch): PortDefinition<boolean> => ({

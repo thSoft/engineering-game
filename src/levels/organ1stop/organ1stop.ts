@@ -4,12 +4,12 @@ import { action } from "../../engine/simulation.ts";
 import { soundAssertion } from "../../parts/pipe/pipe.tsx";
 import { pitches } from "../../parts/pitches.ts";
 
-const windSupply = createPartInstance("WindSupply", "windSupply", {
+export const windSupply = createPartInstance("WindSupply", "windSupply", {
   x: 640,
   y: -80,
 });
 
-const organKeyboard = createPartInstance("OrganKeyboard", "organKeyboard", {
+export const organKeyboard = createPartInstance("OrganKeyboard", "organKeyboard", {
   x: 0,
   y: 0,
 });
