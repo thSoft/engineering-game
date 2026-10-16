@@ -5,13 +5,32 @@ import { readFile } from "node:fs/promises";
 import { basename } from "node:path";
 import type { Plugin } from "vite";
 
-type XmlDocument = ReturnType<InstanceType<typeof DOMParser>["parseFromString"]>;
-type XmlElement = NonNullable<XmlDocument["documentElement"]>;
-
 const svgNamespace = "http://www.w3.org/2000/svg";
 const inkscapeNamespace = "http://www.inkscape.org/namespaces/inkscape";
 const xlinkNamespace = "http://www.w3.org/1999/xlink";
 
+/**
+ * Vite plugin that flattens <use> elements in SVG files into their referenced content.
+ * Usage:
+ * - In your Vite config, add the plugin:
+ * <pre>
+ *   import { flattenSvgUse } from "./build/flattenSvgUse.ts";
+ *   export default defineConfig({
+ *     plugins: [flattenSvgUse(), ...otherPlugins],
+ *   });
+ * </pre>
+ *
+ * - In your code, import SVG files as usual. The plugin will automatically flatten <use> elements.
+ * - Optional query parameter `?raw` can be added to the import to skip flattening and get the raw SVG content.
+ *
+ * Example:
+ * <pre>
+ *   import myIcon from "./icon.svg"; // Flattens <use> elements
+ *   import rawIcon from "./icon.svg?raw"; // Gets raw SVG content without flattening
+ * </pre>
+ *
+ * The plugin ensures that all IDs in the flattened SVG are unique and rewrites references accordingly.
+ */
 export function flattenSvgUse(): Plugin {
   let isBuild = false;
   return {
@@ -58,20 +77,22 @@ export function flattenSvgDocument(source: string) {
 
   let cloneNumber = 0;
   expandUses(svg, document, ids, new Map(), () => ++cloneNumber, new Set());
-  return new XMLSerializer().serializeToString(document);
+	return new XMLSerializer().serializeToString(document);
 }
 
+const NODE_TYPE_ELEMENT = 1;
+
 function expandUses(
-  root: XmlElement,
-  document: XmlDocument,
+  root: HTMLElement,
+  document: Document,
   ids: Set<string>,
   originalIds: Map<string, string>,
   nextCloneNumber: () => number,
   referenceStack: Set<string>,
 ) {
-  for (const child of Array.from(root.childNodes)) {
-    if (child.nodeType !== 1) continue;
-    const element = child as XmlElement;
+	for (const child of Array.from(root.childNodes)) {
+	  if (child.nodeType !== NODE_TYPE_ELEMENT) continue;
+    const element = child as HTMLElement;
     if (element.localName === "use") {
       const expanded = expandUse(
         element,
@@ -90,9 +111,9 @@ function expandUses(
 }
 
 function expandUse(
-  use: XmlElement,
-  scope: XmlElement,
-  document: XmlDocument,
+  use: HTMLElement,
+  scope: HTMLElement,
+  document: Document,
   ids: Set<string>,
   originalIds: Map<string, string>,
   nextCloneNumber: () => number,
@@ -111,7 +132,7 @@ function expandUse(
 
   const instanceLabel = getLabel(use);
   const cloneNumber = nextCloneNumber();
-  const clone = template.cloneNode(true) as XmlElement;
+  const clone = template.cloneNode(true) as HTMLElement;
   const idMap = assignCloneIds(clone, ids, originalIds, cloneNumber);
   rewriteReferences(clone, idMap);
   prefixCloneLabels(clone, instanceLabel);
@@ -149,7 +170,7 @@ function expandUse(
   return group;
 }
 
-function materializeSymbol(symbol: XmlElement, document: XmlDocument) {
+function materializeSymbol(symbol: HTMLElement, document: Document) {
   const group = document.createElementNS(svgNamespace, "g");
   for (const attribute of Array.from(symbol.attributes)) {
     if (
@@ -166,7 +187,7 @@ function materializeSymbol(symbol: XmlElement, document: XmlDocument) {
 }
 
 function assignCloneIds(
-  root: XmlElement,
+  root: HTMLElement,
   ids: Set<string>,
   originalIds: Map<string, string>,
   cloneNumber: number,
@@ -185,7 +206,7 @@ function assignCloneIds(
   return idMap;
 }
 
-function rewriteReferences(root: XmlElement, idMap: Map<string, string>) {
+function rewriteReferences(root: HTMLElement, idMap: Map<string, string>) {
   for (const element of [root, ...Array.from(root.getElementsByTagName("*"))]) {
     for (const attribute of Array.from(element.attributes)) {
       const value =
@@ -204,7 +225,7 @@ function rewriteReferences(root: XmlElement, idMap: Map<string, string>) {
   }
 }
 
-function prefixCloneLabels(root: XmlElement, instanceLabel: string | null) {
+function prefixCloneLabels(root: HTMLElement, instanceLabel: string | null) {
   if (!instanceLabel) return;
   for (const element of [root, ...Array.from(root.getElementsByTagName("*"))]) {
     const label = getLabel(element);
@@ -212,14 +233,14 @@ function prefixCloneLabels(root: XmlElement, instanceLabel: string | null) {
   }
 }
 
-function getLabel(element: XmlElement) {
+function getLabel(element: HTMLElement) {
   for (const attribute of Array.from(element.attributes)) {
     if (attribute.localName === "label") return attribute.value;
   }
   return null;
 }
 
-function setLabel(element: XmlElement, label: string) {
+function setLabel(element: HTMLElement, label: string) {
   for (const attribute of Array.from(element.attributes)) {
     if (attribute.localName === "label") {
       element.setAttributeNS(attribute.namespaceURI, attribute.name, label);
@@ -229,9 +250,9 @@ function setLabel(element: XmlElement, label: string) {
   element.setAttributeNS(inkscapeNamespace, "inkscape:label", label);
 }
 
-function findById(document: XmlDocument | XmlElement, id: string): XmlElement | null {
-  if (document.nodeType === 1 && (document as XmlElement).getAttribute("id") === id) {
-    return document as XmlElement;
+function findById(document: Document | HTMLElement, id: string): HTMLElement | null {
+  if (document.nodeType === NODE_TYPE_ELEMENT && (document as HTMLElement).getAttribute("id") === id) {
+    return document as HTMLElement;
   }
   return (
     Array.from(document.getElementsByTagName("*")).find(
