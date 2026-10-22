@@ -1,9 +1,10 @@
 import { Position } from "@xyflow/react";
-import Checkbox from "antd/es/checkbox/Checkbox";
-import Flex from "antd/es/flex/index";
-import socketImg from "../../components/parts/shared/socket.svg";
 import { PortView } from "../../components/PortView.tsx";
 import { PortDescriptor } from "../../engine/parts.tsx";
+import { InteractiveSvg } from "../InteractiveSvg.tsx";
+import windSupplyImg from "./windSupply.svg";
+import { transitionSettings } from "../../components/designTokens.tsx";
+import { getToggleStyle } from "../utils.tsx";
 
 interface Props {
   toggle: PortDescriptor<boolean>;
@@ -12,11 +13,31 @@ interface Props {
 
 export function WindSupplyView({ toggle, airOut }: Props) {
   return (
-    <Flex>
-      <PortView portDescriptor={airOut} position={Position.Left}>
-        <img src={socketImg} alt="Socket" />
-      </PortView>
-      <Checkbox checked={toggle.value} onChange={() => toggle.setValue(!toggle.value)} />
-    </Flex>
+    <InteractiveSvg
+      props={{ src: windSupplyImg }}
+      styles={[
+        {
+          label: "moving",
+          declarations: `
+          transition: transform ${transitionSettings};
+          ${getToggleStyle(toggle)}`,
+        },
+        { label: "interactive", declarations: "cursor: pointer;" },
+      ]}
+      onClicks={[
+        {
+          label: "interactive",
+          handler: () => {
+            toggle.setValue(!toggle.value);
+          },
+        },
+      ]}
+      overlays={[
+        {
+          label: "airOut",
+          render: () => <PortView portDescriptor={airOut} position={Position.Right} />,
+        },
+      ]}
+    />
   );
 }

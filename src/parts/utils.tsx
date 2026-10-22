@@ -15,3 +15,7 @@ export function hiddenIf(descriptor: PortDescriptor<boolean>) {
 export function getPulledDownStyle(value: boolean) {
   return `translate: 0 ${value ? 8 : 0}px;`;
 }
+
+export function getToggleStyle(toggle: PortDescriptor<boolean>) {
+  return `transform: ${toggle.value ? "translateY(-10px)" : "none"};`;
+}

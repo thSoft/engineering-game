@@ -3,7 +3,7 @@ import { definePart } from "../../engine/parts.tsx";
 import { WindSupplyView } from "./WindSupplyView.tsx";
 
 export const WindSupply = definePart({
-  label: "Wind supply",
+  label: "Wind Supply",
   parameters: {},
   inputPorts: {
     toggle: {

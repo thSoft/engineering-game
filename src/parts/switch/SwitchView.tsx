@@ -4,7 +4,7 @@ import { PortView } from "../../components/PortView.tsx";
 import { PortDescriptor } from "../../engine/parts.tsx";
 import switchImg from "./switch.svg";
 import { InteractiveSvg } from "../InteractiveSvg.tsx";
-import { getIndicatorStyle } from "../utils.tsx";
+import { getIndicatorStyle, getToggleStyle } from "../utils.tsx";
 
 interface Props {
   powerIn: PortDescriptor<boolean>;
@@ -19,17 +19,16 @@ export function SwitchView({ powerIn, powerOut, toggle }: Props) {
       styles={[
         { label: "powerInIndicator", declarations: getIndicatorStyle(powerIn) },
         {
-          label: "toggle",
+          label: "moving",
           declarations: `
-          cursor: pointer;
           transition: transform ${transitionSettings};
-          transform: ${toggle.value ? "translateY(-10px)" : "none"};`,
+          ${getToggleStyle(toggle)}`,
         },
         { label: "powerOutIndicator", declarations: getIndicatorStyle(powerOut) },
       ]}
       onClicks={[
         {
-          label: "toggle",
+          label: "interactive",
           handler: () => {
             toggle.setValue(!toggle.value);
           },
