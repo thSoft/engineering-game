@@ -37,7 +37,7 @@ interface Props {
 
 export const TIMELINE_HEIGHT = 200;
 
-const HEADER_WIDTH = 160;
+const HEADER_WIDTH = 200;
 
 export function TimelineView({ levelState, levelDefinition, playing, setPlaying }: Props) {
   const behaviorMode = levelState.behaviorMode;
@@ -161,7 +161,7 @@ export function TimelineView({ levelState, levelDefinition, playing, setPlaying 
           disableDrag={true}
           gridSnap={true}
           style={{ width: "100%", height: 200 }}
-          editorData={timelineData}
+          editorData={_.flatten(Object.values(groupedTimelineData))}
           getActionRender={TimelineActionView}
           effects={{}}
           onCursorDragEnd={(time) => {

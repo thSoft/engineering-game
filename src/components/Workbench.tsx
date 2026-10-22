@@ -364,6 +364,7 @@ export default function Workbench({ levelState, levelDefinition }: Props) {
         proOptions={{ hideAttribution: true }}
         colorMode="dark"
         selectNodesOnDrag={false}
+        minZoom={0.25}
       >
         <Controls />
       </ReactFlow>

@@ -53,17 +53,14 @@ export function PipeView({ air, sound, length, partIndex, isExperiment }: Props)
                 onChange={(e) => length.setValue(e)}
                 tooltip={{ formatter: (value) => `${value} cm` }}
                 vertical
-                style={{ height: "100%" }}
                 styles={{
                   handle: {
                     background: `url("${holzgedacktTuningCapImg}") no-repeat center`,
                     backgroundColor: "transparent",
                     border: "none",
-                    backgroundSize: "contain",
+                    backgroundSize: "cover",
                     cursor: "ns-resize",
-                    width: "32px",
-                    height: "18px",
-                    transform: "translateX(0) translateY(0)",
+                    transform: "translateX(0) translateY(0) scale(10)",
                   },
                   rail: {
                     background: "transparent",
