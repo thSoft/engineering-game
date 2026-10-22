@@ -69,6 +69,7 @@ export function TimelineView({ levelState, levelDefinition, playing, setPlaying 
       ? evaluateTestCase(levelDefinition.testCase, levelState)
       : undefined;
   const timelineData = getTimelineData(levelDefinition, levelState, testCaseResult);
+  const groupedTimelineData = _.groupBy(timelineData, (row) => row.lanePath[0]);
 
   const rowHeight = 32;
   const cursorHeight = 10;
@@ -132,22 +133,24 @@ export function TimelineView({ levelState, levelDefinition, playing, setPlaying 
             }}
           >
             <tbody>
-              {timelineData.map((row) => (
-                <tr
-                  key={row.id}
-                  style={{
-                    height: `${rowHeight}px`, // Must match Timeline's rowHeight prop
-                    lineHeight: `${rowHeight}px`,
-                    borderBottom: `1px solid ${borderColor}`,
-                    paddingLeft: "10px",
-                    fontSize: "12px",
-                  }}
-                >
-                  {row.lanePath.map((segment, index) => (
-                    <td key={index}>{segment}</td>
-                  ))}
-                </tr>
-              ))}
+              {Object.keys(groupedTimelineData).map((primaryLabel) => {
+                const rows = groupedTimelineData[primaryLabel];
+                return rows.map((row, index) => (
+                  <tr
+                    key={row.lanePath.toString()}
+                    style={{
+                      height: `${rowHeight}px`, // Must match Timeline's rowHeight prop
+                      lineHeight: `${rowHeight}px`,
+                      borderBottom: `1px solid ${borderColor}`,
+                      paddingLeft: "10px",
+                      fontSize: "12px",
+                    }}
+                  >
+                    {index === 0 && <td rowSpan={rows.length}>{primaryLabel}</td>}
+                    <td>{row.lanePath.slice(1)}</td>
+                  </tr>
+                ));
+              })}
             </tbody>
           </table>
         </Flex>
@@ -251,11 +254,11 @@ function getTimelineData(
   );
   return Object.entries(timelineActionsGroupedByLane).map(([lanePath, actions]) => {
     return {
-      id: lanePath.toString(),
+      id: JSON.stringify(lanePath),
       lanePath:
         actions.length > 0 && actions[0].data instanceof TimelineActionData
           ? actions[0].data.value.getLanePath(levelState)
-          : [],
+          : ["Anything"],
       actions,
     };
   });
