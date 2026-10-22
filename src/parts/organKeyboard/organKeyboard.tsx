@@ -9,7 +9,7 @@ export const pressedPorts = mapValues(pitches, (pitch): PortDefinition<boolean> 
   kind: "state",
   schema: z.boolean(),
   defaultValue: false,
-  renderAction: (value, partLabel) => (value ? `Press ${partLabel}` : `Release ${partLabel}`),
+  renderAction: (value) => (value ? `Press ${pitch.name}` : `Release ${pitch.name}`),
 }));
 
 export const actionTriggeredPortPrefix = "actionTriggered_" as const;
