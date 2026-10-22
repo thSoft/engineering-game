@@ -11,7 +11,12 @@ function App() {
     <LevelSelector />
   );
   return (
-    <ConfigProvider theme={{ algorithm: [theme.darkAlgorithm], token: { fontSize: 16 } }}>
+    <ConfigProvider
+      theme={{
+        algorithm: [theme.darkAlgorithm],
+        token: { fontSize: 16, fontFamily: "Nunito Variable" },
+      }}
+    >
       {content}
     </ConfigProvider>
   );

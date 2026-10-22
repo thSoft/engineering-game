@@ -13,3 +13,7 @@
 .ant-slider .ant-slider-handle::after {
     display: none;
 }
+
+body {
+  font-family: 'Nunito Variable', sans-serif;
+}
