@@ -102,6 +102,6 @@ export const Organ1Stop = defineLevel("organ1Stop", {
     assertions,
   },
   userName: "Jean",
-  userNeedQuote: "",
-  successQuote: "",
+  userNeedQuote: "I want to play on a small organ.",
+  successQuote: "Yay! Now I can play my favorite Bach chorales!",
 });
