@@ -112,7 +112,7 @@ importers:
       '@emotion/react':
         specifier: ^11.14.0
         version: 11.14.0(@types/react@19.2.17)(react@19.2.8)
-      '@fontsource/varela-round':
+      '@fontsource-variable/sn-pro':
         specifier: ^5.3.0
         version: 5.3.0
       '@keplar-404/react-timeline-editor':
@@ -408,8 +408,8 @@ packages:
   '@emotion/weak-memoize@0.4.0':
     resolution: {integrity: sha512-snKqtPW01tN0ui7yu9rGv69aJXr/a/Ywvl11sUjNtEcRc+ng/mQriFL0wLXMef74iHa/EkftbDzU9F8iFbH+zg==}
 
-  '@fontsource/varela-round@5.3.0':
-    resolution: {integrity: sha512-g+A+D+L4jFceYaD7NsejZNLDejU4sKdhqsKo6BqLO5X+YriSmPJtUe9RnP2o5kGo1/nSnrGUHvVL8N3t8Djatw==}
+  '@fontsource-variable/sn-pro@5.3.0':
+    resolution: {integrity: sha512-4Xu46ein75l15vAwryh/ChYfBoS1ONBqZsLT9hxRrtBDiGkgfcp0XsJD2Z8ZKmm3fhFaZayww2SIp/AKMl/Jsg==}
 
   '@interactjs/types@1.10.28':
     resolution: {integrity: sha512-vPmu4HWmsg0Fub3BPKGk7DuozkhgVK84TVkziY47v8Uh0A14gph55/vVRaQN4oZov0lGNJNK6Jyddim2qd/4vw==}
@@ -2423,7 +2423,7 @@ snapshots:
 
   '@emotion/weak-memoize@0.4.0': {}
 
-  '@fontsource/varela-round@5.3.0': {}
+  '@fontsource-variable/sn-pro@5.3.0': {}
 
   '@interactjs/types@1.10.28': {}
 

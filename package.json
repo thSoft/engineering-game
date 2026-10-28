@@ -13,7 +13,7 @@
   },
   "dependencies": {
     "@emotion/react": "^11.14.0",
-    "@fontsource/varela-round": "^5.3.0",
+    "@fontsource-variable/sn-pro": "^5.3.0",
     "@keplar-404/react-timeline-editor": "^1.0.11",
     "@keplar-404/timeline-engine": "^1.0.11",
     "@tailwindcss/vite": "^4.3.3",
