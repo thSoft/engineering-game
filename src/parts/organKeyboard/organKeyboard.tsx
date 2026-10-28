@@ -1,13 +1,13 @@
-import z from "zod";
-import { definePart, PortDefinition } from "../../engine/parts.tsx";
+import { definePart, PortDefinition } from "../../engine/parts.ts";
 import { mapValues, mapValuesWithKey } from "../../engine/utils.ts";
 import { pitches } from "../pitches.ts";
 import { OrganKeyboardView } from "./OrganKeyboardView.tsx";
+import { mechanical } from "../../ports/mechanical.ts";
 
 export const pressedPorts = mapValues(pitches, (pitch): PortDefinition<boolean> => ({
   label: `${pitch.name} pressed`,
   kind: "state",
-  schema: z.boolean(),
+  type: mechanical,
   defaultValue: false,
   renderAction: (value) => (value ? `Press ${pitch.name}` : `Release ${pitch.name}`),
 }));
@@ -20,7 +20,7 @@ export const actionTriggeredPorts = mapValuesWithKey(
   (pitch): PortDefinition<boolean> => ({
     label: `${pitch.name} action triggered`,
     kind: "flow",
-    schema: z.boolean(),
+    type: mechanical,
     defaultValue: false,
   }),
 );

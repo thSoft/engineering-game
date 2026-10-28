@@ -14,7 +14,7 @@ import {
   TestCaseResult,
 } from "../engine/levels.ts";
 import { getOrganSynth, resetOrganSynth } from "../engine/organAudio.ts";
-import { isPartInstanceOf, outPort, PartId } from "../engine/parts.tsx";
+import { isPartInstanceOf, outPort, PartId } from "../engine/parts.ts";
 import {
   BehaviorMode,
   getPortValueAt,
@@ -23,10 +23,11 @@ import {
   simulate,
 } from "../engine/simulation.ts";
 import { gedackt8, PipeSoundState, schedulePipeSound } from "../parts/pipe/PipeSound.ts";
-import { Sound } from "../parts/pipe/pipe.tsx";
 import { deleteAction, setCurrentTime } from "../store/gameStore.ts";
 import { borderColor, iconSize } from "./designTokens.tsx";
 import { getTimelineActions, TimelineActionData } from "./utils.tsx";
+
+import { Sound } from "../ports/sound.ts";
 
 interface Props {
   levelState: LevelState;

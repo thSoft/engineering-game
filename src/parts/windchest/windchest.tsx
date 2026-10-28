@@ -1,20 +1,21 @@
-import z from "zod";
-import { definePart, PortDefinition } from "../../engine/parts.tsx";
+import { definePart, PortDefinition } from "../../engine/parts.ts";
 import { mapValues, mapValuesWithKey } from "../../engine/utils.ts";
 import { pitches } from "../pitches.ts";
 import { WindchestView } from "./WindchestView.tsx";
+import { mechanical } from "../../ports/mechanical.ts";
+import { air } from "../../ports/air.ts";
 
 export const airInPort: PortDefinition<boolean> = {
   label: "air in",
   kind: "flow",
-  schema: z.boolean(),
+  type: air,
   defaultValue: false,
 };
 
 export const valvePorts = mapValues(pitches, (pitch): PortDefinition<boolean> => ({
   label: pitch.name,
   kind: "flow",
-  schema: z.boolean(),
+  type: mechanical,
   defaultValue: false,
 }));
 
@@ -26,7 +27,7 @@ export const airOutPorts = mapValuesWithKey(
   (pitch): PortDefinition<boolean> => ({
     label: pitch.name,
     kind: "flow",
-    schema: z.boolean(),
+    type: air,
     defaultValue: false,
   }),
 );

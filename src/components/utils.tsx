@@ -10,15 +10,9 @@ import {
   PortDefinition,
   PortKind,
   PortRef,
-} from "../engine/parts";
+} from "../engine/parts.ts";
 import { BehaviorMode, getSimulationInput, LevelState } from "../engine/simulation";
-import {
-  connectableColor,
-  eventColor,
-  flowOffColor,
-  selectedColor,
-  stateColor,
-} from "./designTokens.tsx";
+import { connectableColor, eventColor, selectedColor, stateColor } from "./designTokens.tsx";
 import type { PortVisualState } from "./PartNode";
 
 export function displayPortValue(portValue: any): string {
@@ -165,7 +159,7 @@ export function getPortColor(portKind: PortKind, visual: PortVisualState): strin
   if (visual === "connectable") return connectableColor;
   if (portKind === "state") return stateColor;
   if (portKind === "event") return eventColor;
-  return flowOffColor;
+  return "#8CA0B3";
 }
 
 export function getColorStyle(color?: string) {

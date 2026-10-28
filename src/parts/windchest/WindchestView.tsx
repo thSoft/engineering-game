@@ -1,6 +1,6 @@
 import { Position } from "@xyflow/react";
 import { PortView } from "../../components/PortView.tsx";
-import { PortDescriptor } from "../../engine/parts.tsx";
+import { PortDescriptor } from "../../engine/parts.ts";
 import { InteractiveSvg } from "../InteractiveSvg.tsx";
 import windchestImg from "./windchest.svg";
 import { airOutPortPrefix } from "./windchest.tsx";

@@ -1,9 +1,13 @@
 import { Edge, EdgeProps, getSmoothStepPath } from "@xyflow/react";
-import { ConnectionId } from "../engine/connections.ts";
+import { Connection } from "../engine/connections.ts";
 import ConnectionContextMenu from "./ConnectionContextMenu.tsx";
+import { PortDefinitionWithHelpers } from "../engine/parts.ts";
+import { selectedColor } from "./designTokens.tsx";
 
 export type ConnectionEdgeData = {
-  id: ConnectionId;
+  connection: Connection;
+  sourceValue: unknown;
+  sourceDefinition: PortDefinitionWithHelpers<any> | undefined;
 };
 
 export const CONNECTION_TYPE = "connection" as const;
@@ -17,10 +21,9 @@ export function ConnectionEdge({
   targetY,
   sourcePosition,
   targetPosition,
-  style,
   markerEnd,
   data,
-  selected,
+  selected = false,
 }: EdgeProps<ConnectionEdgeType>) {
   const [pathShape] = getSmoothStepPath({
     sourceX,
@@ -30,23 +33,18 @@ export function ConnectionEdge({
     sourcePosition,
     targetPosition,
   });
-
-  const path = (
-    <path
-      d={pathShape}
-      fill="none"
-      stroke={style?.stroke ?? "#fff"}
-      strokeWidth={style?.strokeWidth ?? 2}
-      strokeLinecap="round"
-      markerEnd={markerEnd}
-      style={style}
-    />
+  if (data === undefined || data.sourceDefinition === undefined) return null;
+  const styles = data.sourceDefinition.type.renderConnection(
+    data.sourceValue,
+    selected,
+    selectedColor,
   );
-  return data ? (
-    <ConnectionContextMenu connectionId={data.id} open={selected}>
-      {path}
+  const paths = styles.map((style) => (
+    <path d={pathShape} fill="none" strokeLinecap="round" markerEnd={markerEnd} style={style} />
+  ));
+  return (
+    <ConnectionContextMenu connectionId={data.connection.id} open={selected}>
+      <>{paths}</>
     </ConnectionContextMenu>
-  ) : (
-    path
   );
 }

@@ -1,6 +1,6 @@
-import z from "zod";
-import { definePart } from "../../engine/parts.tsx";
+import { definePart } from "../../engine/parts.ts";
 import { LightbulbView } from "./LightbulbView.tsx";
+import { power } from "../../ports/power.ts";
 
 export const Lightbulb = definePart({
   label: "Lightbulb",
@@ -9,7 +9,7 @@ export const Lightbulb = definePart({
     powerIn: {
       label: "power in",
       kind: "flow",
-      schema: z.boolean(),
+      type: power,
       defaultValue: false,
     },
   },
@@ -17,7 +17,7 @@ export const Lightbulb = definePart({
     lit: {
       label: "lit",
       kind: "flow",
-      schema: z.boolean(),
+      type: power,
       defaultValue: false,
       renderAssertion: (expectedValue, partLabel) =>
         expectedValue ? `${partLabel} should be lit` : `${partLabel} should not be lit`,

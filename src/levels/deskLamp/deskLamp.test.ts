@@ -1,6 +1,6 @@
 import { test } from "vitest";
 import { connect } from "../../engine/connections.ts";
-import { inPort, outPort } from "../../engine/parts.tsx";
+import { inPort, outPort } from "../../engine/parts.ts";
 import { testLevel } from "../../engine/testing.ts";
 import { DeskLamp, lightbulb, plug, switchPart } from "./deskLamp.ts";
 

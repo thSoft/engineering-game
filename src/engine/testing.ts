@@ -1,7 +1,7 @@
 import { evaluateTestCase, getInitialLevelState, LevelDefinition } from "./levels.ts";
 import { Connection } from "./connections.ts";
 import { expect } from "vitest";
-import { PartInstance } from "./parts.tsx";
+import { PartInstance } from "./parts.ts";
 
 export function testLevel(
   levelDefinition: LevelDefinition,

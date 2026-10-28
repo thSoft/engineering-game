@@ -1,7 +1,7 @@
-import { ReactNode } from "react";
+import { CSSProperties, ReactNode } from "react";
 import z from "zod";
 import type { PortVisualState } from "../components/PartNode";
-import { getPartDefinitionById, partDefinitions } from "../parts/partDefinitions.tsx";
+import { getPartDefinitionById, partDefinitions } from "../parts/partDefinitions.ts";
 
 // Parts
 
@@ -163,7 +163,7 @@ export type PortKind = "state" | "flow" | "event";
 export type PortDefinition<T> = {
   label: string;
   kind: PortKind;
-  schema: z.ZodType<T>;
+  type: PortType<T>;
   defaultValue: T;
   renderAction?: (value: T, partLabel: string) => string;
   renderAssertion?: (expectedValue: T, partLabel: string) => string;
@@ -270,4 +270,9 @@ export type PortDescriptor<V> = {
 
 export type PortDescriptors<T extends Record<string, PortDefinition<any>>> = {
   [K in keyof T]: PortDescriptor<PortValue<T[K]>>;
+};
+
+export type PortType<T> = {
+  schema: z.ZodType<T>;
+  renderConnection: (value: T, selected: boolean, selectedColor: string) => CSSProperties[];
 };

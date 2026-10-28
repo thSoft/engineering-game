@@ -1,5 +1,5 @@
 import { test } from "vitest";
-import { createPartInstance, inPort, outPort } from "../../engine/parts.tsx";
+import { createPartInstance, inPort, outPort } from "../../engine/parts.ts";
 import { testLevel } from "../../engine/testing.ts";
 import { Organ1Stop, organKeyboard, windSupply } from "./organ1stop.ts";
 import { actionTriggeredPorts } from "../../parts/organKeyboard/organKeyboard.tsx";

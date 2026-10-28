@@ -1,6 +1,7 @@
-import z from "zod";
-import { definePart } from "../../engine/parts.tsx";
+import { definePart } from "../../engine/parts.ts";
 import { PlugView } from "./PlugView.tsx";
+import { mechanical } from "../../ports/mechanical.ts";
+import { power } from "../../ports/power.ts";
 
 export const Plug = definePart({
   label: "Plug",
@@ -9,7 +10,7 @@ export const Plug = definePart({
     plugged: {
       label: "plugged",
       kind: "state",
-      schema: z.boolean(),
+      type: mechanical,
       defaultValue: false,
       renderAction: (value, partLabel) => (value ? `Plug in ${partLabel}` : `Unplug ${partLabel}`),
     },
@@ -18,7 +19,7 @@ export const Plug = definePart({
     powerOut: {
       label: "power out",
       kind: "flow",
-      schema: z.boolean(),
+      type: power,
       defaultValue: false,
     },
   },

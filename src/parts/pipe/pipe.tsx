@@ -1,17 +1,11 @@
 import _ from "lodash";
 import z from "zod";
 import { Assertion } from "../../engine/levels.ts";
-import { definePart, isPartInstanceOf, outPort } from "../../engine/parts.tsx";
+import { definePart, isPartInstanceOf, outPort } from "../../engine/parts.ts";
 import { getPortValueAt } from "../../engine/simulation.ts";
 import { PipeView } from "./PipeView.tsx";
-
-export const Sound = z.optional(
-  z.object({
-    frequency: z.number(), // Frequency of the sound emitted by the pipe, in Hertz
-  }),
-);
-
-export type Sound = z.infer<typeof Sound>;
+import { sound, Sound } from "../../ports/sound.ts";
+import { air } from "../../ports/air.ts";
 
 const speedOfSound = 343.2;
 
@@ -38,7 +32,7 @@ export const Pipe = definePart({
       // Whether air is going into the pipe
       label: "air",
       kind: "flow",
-      schema: z.boolean(),
+      type: air,
       defaultValue: false,
       renderAction: (value, partLabel) =>
         value ? `Start blowing ${partLabel}` : `Stop blowing ${partLabel}`,
@@ -48,7 +42,7 @@ export const Pipe = definePart({
     sound: {
       label: "sound",
       kind: "flow",
-      schema: Sound,
+      type: sound,
       defaultValue: undefined,
     },
   },

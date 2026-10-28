@@ -1,7 +1,7 @@
 import Dropdown from "antd/es/dropdown/dropdown";
 import { Trash2 } from "lucide-react";
 import { ReactNode } from "react";
-import { PartId } from "../engine/parts.tsx";
+import { PartId } from "../engine/parts.ts";
 import { deletePart } from "../store/gameStore.ts";
 import { dropdownProps, iconSize } from "./designTokens.tsx";
 

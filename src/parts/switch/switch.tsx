@@ -1,6 +1,7 @@
-import z from "zod";
-import { definePart } from "../../engine/parts.tsx";
+import { definePart } from "../../engine/parts.ts";
 import { SwitchView } from "./SwitchView.tsx";
+import { power } from "../../ports/power.ts";
+import { mechanical } from "../../ports/mechanical.ts";
 
 export const Switch = definePart({
   label: "Switch",
@@ -9,13 +10,13 @@ export const Switch = definePart({
     powerIn: {
       label: "power in",
       kind: "flow",
-      schema: z.boolean(),
+      type: power,
       defaultValue: false,
     },
     toggle: {
       label: "toggle",
       kind: "state",
-      schema: z.boolean(),
+      type: mechanical,
       defaultValue: false,
       renderAction: (value, partLabel) =>
         value ? `Turn on ${partLabel}` : `Turn off ${partLabel}`,
@@ -25,7 +26,7 @@ export const Switch = definePart({
     powerOut: {
       label: "power out",
       kind: "flow",
-      schema: z.boolean(),
+      type: power,
       defaultValue: false,
     },
   },

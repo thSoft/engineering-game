@@ -1,7 +1,7 @@
 import { Boxes } from "lucide-react";
 import { useState } from "react";
-import { PartDefinitionId } from "../engine/parts";
-import { getPartDefinitionById } from "../parts/partDefinitions.tsx";
+import { PartDefinitionId } from "../engine/parts.ts";
+import { getPartDefinitionById } from "../parts/partDefinitions.ts";
 import { addPart } from "../store/gameStore.ts";
 import { getColorStyle } from "./utils.tsx";
 

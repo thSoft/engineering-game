@@ -1,5 +1,5 @@
 import { Position } from "@xyflow/react";
-import { PortDescriptor } from "../../engine/parts.tsx";
+import { PortDescriptor } from "../../engine/parts.ts";
 import { PortView } from "../../components/PortView.tsx";
 import { InteractiveSvg } from "../InteractiveSvg.tsx";
 import lightbulbImg from "./lightbulb.svg";

@@ -22,7 +22,7 @@ import {
   PartPosition,
   PortRef,
   refPort,
-} from "../engine/parts";
+} from "../engine/parts.ts";
 import {
   Action,
   BehaviorMode,

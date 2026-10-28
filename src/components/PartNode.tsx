@@ -7,7 +7,7 @@ import {
   PartInstance,
   PortDefinition,
   PortDescriptors,
-} from "../engine/parts";
+} from "../engine/parts.ts";
 import PartContextMenu from "./PartContextMenu";
 
 export type PortVisualState = "idle" | "selected" | "connectable" | "blocked";

@@ -1,4 +1,4 @@
-import { PartDefinitionId, PartDefinitions } from "../engine/parts.tsx";
+import { PartDefinitionId, PartDefinitions } from "../engine/parts.ts";
 import { Lightbulb } from "./lightbulb/lightbulb.tsx";
 import { OrganKeyboard } from "./organKeyboard/organKeyboard.tsx";
 import { Pipe } from "./pipe/pipe.tsx";

@@ -1,13 +1,14 @@
 import { Position } from "@xyflow/react";
 import { useDeferredValue } from "react";
 import { PortView } from "../../components/PortView.tsx";
-import { ParameterDescriptor, PortDescriptor } from "../../engine/parts.tsx";
+import { ParameterDescriptor, PortDescriptor } from "../../engine/parts.ts";
 import { gedackt8, PipeSound } from "./PipeSound.ts";
-import { Sound } from "./pipe.tsx";
 import { InteractiveSvg } from "../InteractiveSvg.tsx";
 import holzgedacktPipeImg from "./holzgedackt/pipe.svg";
 import holzgedacktTuningCapImg from "./holzgedackt/tuningCap.svg?inline";
 import { Slider } from "antd";
+
+import { Sound } from "../../ports/sound.ts";
 
 interface Props {
   air: PortDescriptor<boolean>;

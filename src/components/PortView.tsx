@@ -1,6 +1,6 @@
 import { Handle, Position } from "@xyflow/react";
 import { ReactNode } from "react";
-import { getPortPath, PortDescriptor } from "../engine/parts.tsx";
+import { getPortPath, PortDescriptor } from "../engine/parts.ts";
 
 import { getPortColor } from "./utils.tsx";
 

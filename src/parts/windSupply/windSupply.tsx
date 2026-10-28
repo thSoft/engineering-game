@@ -1,6 +1,7 @@
-import z from "zod";
-import { definePart } from "../../engine/parts.tsx";
+import { definePart } from "../../engine/parts.ts";
 import { WindSupplyView } from "./WindSupplyView.tsx";
+import { mechanical } from "../../ports/mechanical.ts";
+import { air } from "../../ports/air.ts";
 
 export const WindSupply = definePart({
   label: "Wind Supply",
@@ -9,7 +10,7 @@ export const WindSupply = definePart({
     toggle: {
       label: "toggle",
       kind: "state",
-      schema: z.boolean(),
+      type: mechanical,
       defaultValue: false,
       renderAction: (value, partLabel) =>
         value ? `Turn on ${partLabel}` : `Turn off ${partLabel}`,
@@ -19,7 +20,7 @@ export const WindSupply = definePart({
     airOut: {
       label: "air out",
       kind: "flow",
-      schema: z.boolean(),
+      type: air,
       defaultValue: false,
     },
   },

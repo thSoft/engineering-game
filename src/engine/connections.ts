@@ -1,6 +1,12 @@
 import _ from "lodash";
 import { nanoid } from "nanoid";
-import { InputPortRef, OutputPortRef, PartDefinitionId, PartDefinitions, PortRef } from "./parts";
+import {
+  InputPortRef,
+  OutputPortRef,
+  PartDefinitionId,
+  PartDefinitions,
+  PortRef,
+} from "./parts.ts";
 
 export type ConnectionId = string & { __brand: "ConnectionId" };
 

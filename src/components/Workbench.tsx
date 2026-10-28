@@ -1,4 +1,6 @@
 import {
+  Background,
+  BackgroundVariant,
   Controls,
   type EdgeChange,
   type NodeChange,
@@ -30,7 +32,7 @@ import {
   PortRef,
   refPort,
   toPartId,
-} from "../engine/parts";
+} from "../engine/parts.ts";
 import {
   BehaviorMode,
   getPortValueAt,
@@ -39,7 +41,7 @@ import {
   simulate,
   SimulationResult,
 } from "../engine/simulation";
-import { partDefinitions } from "../parts/partDefinitions.tsx";
+import { partDefinitions } from "../parts/partDefinitions.ts";
 import {
   addConnection,
   addPart,
@@ -50,14 +52,13 @@ import {
   setPortValue,
 } from "../store/gameStore";
 import { CONNECTION_TYPE, ConnectionEdge, ConnectionEdgeType } from "./ConnectionEdge.tsx";
-import { connectableColor, flowOffColor, flowOnColor, selectedColor } from "./designTokens";
+import { connectableColor, workbenchBackgroundColor } from "./designTokens";
 import PartNode, {
   PART_TYPE,
   type PartNodeData,
   PartNodeType,
   type PortVisualState,
 } from "./PartNode";
-import { getPortColor } from "./utils.tsx";
 
 const nodeTypes: NodeTypes = { [PART_TYPE]: PartNode };
 
@@ -162,13 +163,7 @@ function buildEdge(
   const source = connection.source;
   const target = connection.target;
   const sourceValue = getPortValueAt(source, currentTime, simulationResult);
-  const flowOn = sourceValue === true;
   const sourceDefinition = getDefinitionOfPort(source, parts);
-  const color = selected
-    ? selectedColor
-    : source
-      ? getPortColor(sourceDefinition?.kind ?? "state", "idle")
-      : flowOffColor;
   return {
     id: connection.id,
     type: CONNECTION_TYPE,
@@ -177,13 +172,10 @@ function buildEdge(
     sourceHandle: getPortPath(source),
     targetHandle: getPortPath(target),
     selected,
-    style: {
-      strokeWidth: 4,
-      stroke: color,
-      filter: flowOn ? `drop-shadow(0px 0px 2px ${flowOnColor})` : undefined,
-    },
     data: {
-      id: connection.id,
+      connection,
+      sourceValue,
+      sourceDefinition,
     },
   };
 }
@@ -355,7 +347,7 @@ export default function Workbench({ levelState, levelDefinition }: Props) {
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}
         onPaneClick={onPaneClick}
-        onEdgeClick={(_, edge) => setSelectedConnectionId(edge.data?.id)}
+        onEdgeClick={(_, edge) => setSelectedConnectionId(edge.data?.connection.id)}
         nodesConnectable={false}
         deleteKeyCode="Delete"
         multiSelectionKeyCode="Shift"
@@ -367,6 +359,7 @@ export default function Workbench({ levelState, levelDefinition }: Props) {
         minZoom={0.25}
       >
         <Controls />
+        <Background bgColor={workbenchBackgroundColor} variant={BackgroundVariant.Dots} />
       </ReactFlow>
     </div>
   );

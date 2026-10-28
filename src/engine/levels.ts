@@ -8,7 +8,7 @@ import {
   PartInstance,
   PortRef,
   PortValue,
-} from "./parts";
+} from "./parts.ts";
 import {
   BehaviorMode,
   getPortValueAt,

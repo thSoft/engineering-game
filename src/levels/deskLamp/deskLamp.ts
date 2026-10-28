@@ -1,5 +1,5 @@
 import { defineLevel, portAssertion } from "../../engine/levels.ts";
-import { createPartInstance, inPort, outPort } from "../../engine/parts.tsx";
+import { createPartInstance, inPort, outPort } from "../../engine/parts.ts";
 import { action } from "../../engine/simulation.ts";
 
 export const plug = createPartInstance("Plug", "plug-0", { x: -150, y: 4 });

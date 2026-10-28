@@ -1,4 +1,4 @@
-import { PortDescriptor } from "../engine/parts.tsx";
+import { PortDescriptor } from "../engine/parts.ts";
 
 export function getIndicatorStyle(descriptor: PortDescriptor<boolean>) {
   return `fill: ${descriptor.value ? "lime" : "red"} !important;`;

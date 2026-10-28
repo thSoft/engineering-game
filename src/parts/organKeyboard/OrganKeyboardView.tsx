@@ -1,4 +1,4 @@
-import { PortDescriptors } from "../../engine/parts.tsx";
+import { PortDescriptors } from "../../engine/parts.ts";
 import { actionTriggeredPorts, pressedPorts } from "./organKeyboard.tsx";
 import organKeyboardImg from "./organKeyboard.svg";
 import { InteractiveSvg } from "../InteractiveSvg.tsx";

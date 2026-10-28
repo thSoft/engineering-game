@@ -1,5 +1,5 @@
 import { defineLevel } from "../../engine/levels.ts";
-import { createPartInstance, inPort } from "../../engine/parts.tsx";
+import { createPartInstance, inPort } from "../../engine/parts.ts";
 import { action } from "../../engine/simulation.ts";
 import { soundAssertion } from "../../parts/pipe/pipe.tsx";
 import { pitches } from "../../parts/pitches.ts";

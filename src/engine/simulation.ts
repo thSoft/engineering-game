@@ -14,7 +14,7 @@ import {
   PortRef,
   PortValue,
   refPort,
-} from "./parts";
+} from "./parts.ts";
 
 export type SimulationInput = {
   startTime: number;
