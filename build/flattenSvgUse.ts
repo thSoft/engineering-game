@@ -1,6 +1,7 @@
 /// <reference lib="dom" />
 
 import { DOMParser, XMLSerializer } from "@xmldom/xmldom";
+import type { Document as XmlDocument, Element as XmlElement } from "@xmldom/xmldom";
 import { readFile } from "node:fs/promises";
 import { basename } from "node:path";
 import type { Plugin } from "vite";
@@ -83,8 +84,8 @@ export function flattenSvgDocument(source: string) {
 const NODE_TYPE_ELEMENT = 1;
 
 function expandUses(
-  root: HTMLElement,
-  document: Document,
+  root: XmlElement,
+  document: XmlDocument,
   ids: Set<string>,
   originalIds: Map<string, string>,
   nextCloneNumber: () => number,
@@ -92,7 +93,7 @@ function expandUses(
 ) {
 	for (const child of Array.from(root.childNodes)) {
 	  if (child.nodeType !== NODE_TYPE_ELEMENT) continue;
-    const element = child as HTMLElement;
+    const element = child as XmlElement;
     if (element.localName === "use") {
       const expanded = expandUse(
         element,
@@ -111,9 +112,9 @@ function expandUses(
 }
 
 function expandUse(
-  use: HTMLElement,
-  scope: HTMLElement,
-  document: Document,
+  use: XmlElement,
+  scope: XmlElement,
+  document: XmlDocument,
   ids: Set<string>,
   originalIds: Map<string, string>,
   nextCloneNumber: () => number,
@@ -132,7 +133,7 @@ function expandUse(
 
   const instanceLabel = getLabel(use);
   const cloneNumber = nextCloneNumber();
-  const clone = template.cloneNode(true) as HTMLElement;
+  const clone = template.cloneNode(true) as XmlElement;
   const idMap = assignCloneIds(clone, ids, originalIds, cloneNumber);
   rewriteReferences(clone, idMap);
   prefixCloneLabels(clone, instanceLabel);
@@ -170,7 +171,7 @@ function expandUse(
   return group;
 }
 
-function materializeSymbol(symbol: HTMLElement, document: Document) {
+function materializeSymbol(symbol: XmlElement, document: XmlDocument) {
   const group = document.createElementNS(svgNamespace, "g");
   for (const attribute of Array.from(symbol.attributes)) {
     if (
@@ -187,7 +188,7 @@ function materializeSymbol(symbol: HTMLElement, document: Document) {
 }
 
 function assignCloneIds(
-  root: HTMLElement,
+  root: XmlElement,
   ids: Set<string>,
   originalIds: Map<string, string>,
   cloneNumber: number,
@@ -206,7 +207,7 @@ function assignCloneIds(
   return idMap;
 }
 
-function rewriteReferences(root: HTMLElement, idMap: Map<string, string>) {
+function rewriteReferences(root: XmlElement, idMap: Map<string, string>) {
   for (const element of [root, ...Array.from(root.getElementsByTagName("*"))]) {
     for (const attribute of Array.from(element.attributes)) {
       const value =
@@ -225,7 +226,7 @@ function rewriteReferences(root: HTMLElement, idMap: Map<string, string>) {
   }
 }
 
-function prefixCloneLabels(root: HTMLElement, instanceLabel: string | null) {
+function prefixCloneLabels(root: XmlElement, instanceLabel: string | null) {
   if (!instanceLabel) return;
   for (const element of [root, ...Array.from(root.getElementsByTagName("*"))]) {
     const label = getLabel(element);
@@ -233,14 +234,14 @@ function prefixCloneLabels(root: HTMLElement, instanceLabel: string | null) {
   }
 }
 
-function getLabel(element: HTMLElement) {
+function getLabel(element: XmlElement) {
   for (const attribute of Array.from(element.attributes)) {
     if (attribute.localName === "label") return attribute.value;
   }
   return null;
 }
 
-function setLabel(element: HTMLElement, label: string) {
+function setLabel(element: XmlElement, label: string) {
   for (const attribute of Array.from(element.attributes)) {
     if (attribute.localName === "label") {
       element.setAttributeNS(attribute.namespaceURI, attribute.name, label);
@@ -250,9 +251,12 @@ function setLabel(element: HTMLElement, label: string) {
   element.setAttributeNS(inkscapeNamespace, "inkscape:label", label);
 }
 
-function findById(document: Document | HTMLElement, id: string): HTMLElement | null {
-  if (document.nodeType === NODE_TYPE_ELEMENT && (document as HTMLElement).getAttribute("id") === id) {
-    return document as HTMLElement;
+function findById(document: XmlDocument | XmlElement, id: string): XmlElement | null {
+  if (
+    document.nodeType === NODE_TYPE_ELEMENT &&
+    (document as XmlElement).getAttribute("id") === id
+  ) {
+    return document as XmlElement;
   }
   return (
     Array.from(document.getElementsByTagName("*")).find(
