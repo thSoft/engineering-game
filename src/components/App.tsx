@@ -14,7 +14,7 @@ function App() {
     <ConfigProvider
       theme={{
         algorithm: [theme.darkAlgorithm],
-        token: { fontSize: 16, fontFamily: "Nunito Variable" },
+        token: { fontSize: 16, fontFamily: "Varela Round" },
       }}
     >
       {content}
