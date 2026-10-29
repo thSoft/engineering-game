@@ -50,8 +50,8 @@ function PartNode({ data }: NodeProps<PartNodeType>) {
       )}
     </span>
   ) : (
-    <div className="flex items-center gap-2 mb-1">
-      <span className="text-sm font-semibold text-slate-100">{instance.label}</span>
+    <div className="part-node-label">
+      <span>{instance.label}</span>
     </div>
   );
   return partDescriptor.isFixed ? (

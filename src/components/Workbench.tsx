@@ -319,21 +319,18 @@ export default function Workbench({ levelState, levelDefinition }: Props) {
   const edgeTypes = { [CONNECTION_TYPE]: ConnectionEdge };
 
   return (
-    <div className="h-full w-full" onDragOver={onDragOver} onDrop={onDrop}>
+    <div className="workbench" onDragOver={onDragOver} onDrop={onDrop}>
       {pendingPortRef && (
-        <div className="absolute top-3 left-1/2 -translate-x-1/2 z-10 pointer-events-none">
+        <div className="connection-hint-container">
           <div
-            className={`flex items-center gap-2 rounded-full bg-slate-800/95 border shadow-lg px-4 py-1.5 text-xs font-medium`}
+            className="connection-hint"
             style={{
               color: connectableColor,
               borderColor: connectableColor,
               boxShadow: `0 0 3px ${connectableColor}`,
             }}
           >
-            <span
-              className="w-2 h-2 rounded-full animate-pulse"
-              style={{ backgroundColor: connectableColor }}
-            />
+            <span className="connection-hint-dot" style={{ backgroundColor: connectableColor }} />
             Click a highlighted port to connect, or click canvas to cancel
           </div>
         </div>

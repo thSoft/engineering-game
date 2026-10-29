@@ -1,13 +1,39 @@
-@import "tailwindcss";
+@import "@keplar-404/react-timeline-editor/dist/react-timeline-editor.css";
 
-@import '@keplar-404/react-timeline-editor/dist/react-timeline-editor.css';
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+    border: 0 solid;
+}
+
+body {
+    font-family: 'SN Pro Variable', sans-serif;
+    margin: 0;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+    font-size: inherit;
+    font-weight: inherit;
+}
+
+button {
+    background-color: transparent;
+    background-image: none;
+    cursor: pointer;
+}
 
 .react-flow__minimap {
-  border-radius: 6px;
+    border-radius: 6px;
 }
 
 .react-flow__node {
-  z-index: -1 !important;
+    z-index: -1 !important;
 }
 
 .ant-slider .ant-slider-handle::after {
@@ -15,5 +41,202 @@
 }
 
 body {
-  font-family: 'SN Pro Variable', sans-serif;
+    font-family: "SN Pro Variable", sans-serif;
+}
+
+.app-shell {
+    display: flex;
+    flex-direction: column;
+    width: 100vw;
+    height: 100vh;
+    overflow: hidden;
+    background-color: #0f172a;
+    color: #f1f5f9;
+}
+
+.level-main {
+    position: relative;
+    display: flex;
+    flex: 1 1 0%;
+    overflow: hidden;
+}
+
+.project-icon {
+    flex-shrink: 0;
+    color: #34d399;
+}
+
+.project-title {
+    color: #94a3b8;
+}
+
+.truncate-text {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.workbench {
+    width: 100%;
+    height: 100%;
+}
+
+.connection-hint-container {
+    position: absolute;
+    top: 0.75rem;
+    left: 50%;
+    z-index: 10;
+    transform: translateX(-50%);
+    pointer-events: none;
+}
+
+.connection-hint {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    border: 1px solid;
+    border-radius: 9999px;
+    padding: 0.375rem 1rem;
+    background-color: rgb(30 41 59 / 95%);
+    box-shadow: 0 10px 15px -3px rgb(0 0 0 / 10%),
+    0 4px 6px -4px rgb(0 0 0 / 10%);
+    font-size: 0.75rem;
+    font-weight: 500;
+    line-height: 1rem;
+}
+
+.connection-hint-dot {
+    width: 0.5rem;
+    height: 0.5rem;
+    flex: none;
+    border-radius: 9999px;
+    animation: connection-hint-pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@keyframes connection-hint-pulse {
+    50% {
+        opacity: 0.5;
+    }
+}
+
+.part-palette {
+    flex-shrink: 0;
+    width: 2.5rem;
+    flex-direction: column;
+    overflow: hidden;
+    border-right: 1px solid #334155;
+}
+
+.part-palette-open {
+    width: 12rem;
+}
+
+.part-palette-toggle {
+    display: flex;
+    width: 100%;
+    height: 2.5rem;
+    flex-shrink: 0;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    border-bottom: 1px solid rgb(51 65 85 / 60%);
+    color: #64748b;
+    transition: color 150ms cubic-bezier(0.4, 0, 0.2, 1),
+    background-color 150ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.part-palette-toggle:hover {
+    color: #cbd5e1;
+    background-color: rgb(51 65 85 / 40%);
+}
+
+.part-palette-heading {
+    color: #64748b;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+}
+
+.part-palette-content {
+    display: flex;
+    flex: 1 1 0%;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.part-palette-list {
+    display: flex;
+    flex: 1 1 0%;
+    flex-direction: column;
+    gap: 0.375rem;
+    overflow-y: auto;
+    padding: 0.5rem;
+}
+
+.part-palette-item {
+    display: flex;
+    flex-direction: column;
+    gap: 0.125rem;
+    border: 1px solid;
+    border-radius: 0.5rem;
+    padding: 0.5rem 0.625rem;
+    cursor: grab;
+    user-select: none;
+    transition: all 150ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.part-palette-item:active {
+    cursor: grabbing;
+}
+
+.part-palette-item-heading {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.part-palette-item-label {
+    color: #e2e8f0;
+    font-size: 0.75rem;
+    font-weight: 600;
+    line-height: 1rem;
+}
+
+.part-palette-item-description {
+    padding-left: 1.25rem;
+    color: #64748b;
+    font-size: 10px;
+    line-height: 1.25;
+}
+
+.part-palette-footer {
+    border-top: 1px solid rgb(51 65 85 / 60%);
+    padding: 0.5rem 0.75rem;
+}
+
+.part-palette-footer-text {
+    color: #475569;
+    font-size: 10px;
+    line-height: 1.25;
+}
+
+.part-node-label {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.25rem;
+}
+
+.part-node-label span {
+    color: #f1f5f9;
+    font-size: 0.875rem;
+    font-weight: 600;
+    line-height: 1.25rem;
+}
+
+@media (min-width: 640px) {
+    .part-palette {
+        display: flex;
+    }
 }

@@ -11,13 +11,13 @@ function LevelSelector() {
   const showNewLevels = useGameStore.showNewLevels();
   const levelStates = useGameStore.levelStates();
   return (
-    <div className="h-screen w-screen flex flex-col bg-slate-900 text-slate-100 overflow-hidden">
+    <div className="app-shell">
       {showNewLevels && <NewLevels />}
       {/* ── Header ── */}
       <header style={headerStyle}>
         <Flex gap={8} align="center">
-          <Cpu size={18} className="text-emerald-400 shrink-0" />
-          <h1 className="text-slate-400">Engineering Game</h1>
+          <Cpu size={18} className="project-icon" />
+          <h1 className="project-title">Engineering Game</h1>
         </Flex>
         <Flex
           gap={8}
@@ -25,7 +25,7 @@ function LevelSelector() {
           align="center"
           style={{ position: "absolute", left: "50%", transform: "translateX(-50%)" }}
         >
-          <h2 className="truncate">Projects</h2>
+          <h2 className="truncate-text">Projects</h2>
         </Flex>
       </header>
       <main>

@@ -26,26 +26,20 @@ export default function PartPalette({ availableParts }: Props) {
 
   return (
     availableParts.length > 0 && (
-      <div
-        className={`sm:flex flex-col shrink-0 border-r border-slate-700 overflow-hidden ${paletteOpen ? "w-48" : "w-10"}`}
-      >
+      <div className={`part-palette${paletteOpen ? " part-palette-open" : ""}`}>
         {/* Collapse toggle */}
         <button
           onClick={() => setPaletteOpen((v) => !v)}
           aria-label={paletteOpen ? "Collapse parts panel" : "Expand parts panel"}
-          className="flex items-center justify-center h-10 gap-2 w-full shrink-0 border-b border-slate-700/60 text-slate-500 hover:text-slate-300 hover:bg-slate-700/40 transition"
+          className="part-palette-toggle"
           title="Parts"
         >
           <Boxes size={16} />
-          {paletteOpen && (
-            <p className="text-[11px] font-semibold uppercase tracking-widest text-slate-500">
-              Parts
-            </p>
-          )}
+          {paletteOpen && <p className="part-palette-heading">Parts</p>}
         </button>
         {paletteOpen && (
-          <div className="flex flex-col flex-1 overflow-hidden">
-            <div className="p-2 space-y-1.5 flex-1 overflow-y-auto">
+          <div className="part-palette-content">
+            <div className="part-palette-list">
               {availableParts.map((id) => {
                 const { label, color, description } = getPartDefinitionById(id);
                 const colorStyle = getColorStyle(color);
@@ -56,28 +50,24 @@ export default function PartPalette({ availableParts }: Props) {
                     draggable
                     onDragStart={(e) => handleDragStart(e, id)}
                     onClick={() => handleClick(id)}
-                    className={`flex flex-col gap-0.5 rounded-lg border px-2.5 py-2 cursor-grab active:cursor-grabbing select-none transition`}
+                    className="part-palette-item"
                     title={`Click or drag to add ${label}`}
                     style={colorStyle}
                   >
-                    <div className="flex items-center gap-2">
+                    <div className="part-palette-item-heading">
                       {/* TODO render part in small non-interactively */}
-                      <span className="text-xs font-semibold text-slate-200">{label}</span>
+                      <span className="part-palette-item-label">{label}</span>
                     </div>
                     {description && (
-                      <span className="text-[10px] text-slate-500 leading-tight pl-5">
-                        {description}
-                      </span>
+                      <span className="part-palette-item-description">{description}</span>
                     )}
                   </div>
                 );
               })}
             </div>
 
-            <div className="px-3 py-2 border-t border-slate-700/60">
-              <p className="text-[10px] text-slate-600 leading-tight">
-                Click or drag onto canvas to add.
-              </p>
+            <div className="part-palette-footer">
+              <p className="part-palette-footer-text">Click or drag onto canvas to add.</p>
             </div>
           </div>
         )}

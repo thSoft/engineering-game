@@ -21,7 +21,7 @@ function Level({ levelDefinitionId }: Props) {
   const testCaseResult = evaluateTestCase(levelDefinition.testCase, levelState);
 
   return (
-    <div className="h-screen w-screen flex flex-col bg-slate-900 text-slate-100 overflow-hidden">
+    <div className="app-shell">
       <GoalView levelDefinition={levelDefinition} levelState={levelState} />
       <SuccessView levelDefinition={levelDefinition} levelState={levelState} />
 
@@ -29,7 +29,7 @@ function Level({ levelDefinitionId }: Props) {
       <LevelHeader levelDefinition={levelDefinition} levelState={levelState} />
 
       {/* ── Body ── */}
-      <main className="flex-1 flex overflow-hidden relative">
+      <main className="level-main">
         {/* Left panel: Part palette */}
         <PartPalette availableParts={levelDefinition.availableParts} />
 
