@@ -9,7 +9,8 @@
     "font:set": "node scripts/set-font.mjs",
     "lint": "oxlint",
     "preview": "vite preview",
-    "test": "vitest"
+    "test": "vitest",
+    "publish": "pnpm build && gh-pages -d dist"
   },
   "dependencies": {
     "@emotion/react": "^11.14.0",
@@ -43,6 +44,7 @@
     "@vitejs/plugin-react": "^6.0.4",
     "@xmldom/xmldom": "^0.9.12",
     "babel-plugin-react-compiler": "^1.0.0",
+    "gh-pages": "^6.3.0",
     "oxlint": "^1.75.0",
     "prettier": "^3.9.6",
     "tailwindcss": "^4.3.3",

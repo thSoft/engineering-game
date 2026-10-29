@@ -8,6 +8,7 @@ import { copySpessaSynthProcessor } from "./build/copySpessaSynthProcessor.ts";
 
 // https://vitejs.dev/config/
 export default defineConfig({
+  base: "/engineering-game/",
   plugins: [
     flattenSvgUse(),
     react(),

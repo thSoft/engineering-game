@@ -3,10 +3,13 @@
 ## Getting Started
 
 - [Install `pnpm`](https://pnpm.io/installation)
-- Run `setup.sh`
-- Open the folder in [Visual Studio Code](https://code.visualstudio.com/download)
+- Open the folder in [WebStorm](https://www.jetbrains.com/webstorm/download/)
 - Run the following launch configuration: _Run_
-- Open the _Local_ link
+
+## Publishing
+
+- Run `pnpm run publish`
+- Open the [published game](https://thsoft.github.io/engineering-game/)
 
 ## Changing the font
 
